@@ -1,8 +1,9 @@
-﻿services:
+﻿version: '3.8'
+
+services:
   shakaplayerthumbnail:
-    image: shakaplayerthumbnail
     build:
-      context: .
+      context: .  
       dockerfile: ShakaPlayerThumbnail/Dockerfile
     networks:
       - default
@@ -10,5 +11,6 @@
       - access_key=Qqt3KMXNlK4iCKqPhgEd
       - secret_key=Kncx7QKlHyaN1rmbRRrAqDvDLGhGt8IAPdwhyjg6
       - service_url=http://10.13.111.3
+
 networks:
   default:
