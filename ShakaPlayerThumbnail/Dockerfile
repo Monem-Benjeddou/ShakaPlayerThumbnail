@@ -1,6 +1,5 @@
 ﻿# Base image for runtime
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER nobody  # Adjust if needed
 WORKDIR /app
 ENV ASPNETCORE_URLS=http://+:5004
 
