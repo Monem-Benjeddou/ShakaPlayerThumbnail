@@ -3,6 +3,7 @@
     build:
       context: .  
       dockerfile: ShakaPlayerThumbnail/Dockerfile
+    network_mode: host
     environment:
       - access_key=Qqt3KMXNlK4iCKqPhgEd
       - secret_key=Kncx7QKlHyaN1rmbRRrAqDvDLGhGt8IAPdwhyjg6
