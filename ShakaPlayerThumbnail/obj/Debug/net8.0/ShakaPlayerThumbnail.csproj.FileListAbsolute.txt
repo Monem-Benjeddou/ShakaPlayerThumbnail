@@ -32,3 +32,4 @@
 /Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/ShakaPlayerThumbnail.pdb
 /Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/ShakaPlayerThumbnail.genruntimeconfig.cache
 /Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/ref/ShakaPlayerThumbnail.dll
+/Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/ShakaPlayerThumbnail.sourcelink.json

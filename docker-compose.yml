@@ -4,8 +4,11 @@
     build:
       context: .
       dockerfile: ShakaPlayerThumbnail/Dockerfile
-    network_mode: host
+    networks:
+      - default
     environment:
       - access_key=Qqt3KMXNlK4iCKqPhgEd
       - secret_key=Kncx7QKlHyaN1rmbRRrAqDvDLGhGt8IAPdwhyjg6
       - service_url=http://10.13.111.3
+networks:
+  default:
