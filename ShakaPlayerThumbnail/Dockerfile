@@ -2,10 +2,6 @@
 USER $APP_UID
 WORKDIR /app
 ENV ASPNETCORE_URLS=http://+:5004
-ENV ASPNETCORE_ENVIRONMENT=Development
-ENV access_key=Qqt3KMXNlK4iCKqPhgEd
-ENV secret_key=Kncx7QKlHyaN1rmbRRrAqDvDLGhGt8IAPdwhyjg6
-ENV service_url=http://10.13.111.3
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY ["ShakaPlayerThumbnail/ShakaPlayerThumbnail.csproj", "ShakaPlayerThumbnail/"]
