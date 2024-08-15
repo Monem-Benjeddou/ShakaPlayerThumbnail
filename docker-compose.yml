@@ -1,6 +1,5 @@
 ﻿services:
   shakaplayerthumbnail:
-    image: shakaplayerthumbnail
     build:
       context: .  
       dockerfile: ShakaPlayerThumbnail/Dockerfile
