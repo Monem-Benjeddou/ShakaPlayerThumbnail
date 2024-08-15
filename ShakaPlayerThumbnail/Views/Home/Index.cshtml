@@ -1,0 +1,108 @@
+﻿@model string
+<h2>Shaka Player in .NET MVC</h2>
+<div>
+  <video id="video" controls autoplay aria-label="Video player"></video>
+  <div id="seekBar" style="position: relative;"></div>
+</div>
+<div id="thumb" role="tooltip" aria-hidden="true" style="position: absolute; display: none; background-size: cover; background-repeat: no-repeat; z-index: 10;"></div>
+<div id="error" role="alert" style="color: red;"></div>
+<style>
+  #video {
+    width: 100%;
+  }
+  #thumb {
+    z-index: 100; 
+    width: 160px; 
+    height: 90px; 
+    pointer-events: none; 
+    border-radius: 5px;
+  }
+  #seekBar {
+    position: absolute;
+    bottom: 20px; 
+    left: 0;
+    right: 0;
+    height: 5px;
+    background-color: rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    z-index: 10; 
+
+  }
+
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    const video = document.getElementById('video');
+    const errorDisplay = document.getElementById('error');
+    const thumbElement = document.getElementById('thumb');
+    const seekBar = document.getElementById('seekBar');
+
+    const player = new shaka.Player(video);
+
+    player.addEventListener('error', (event) => {
+      errorDisplay.textContent = `Error: ${event.detail.message}`;
+    });
+    
+    try {
+      const videoUrl = "@Html.Raw(Model)";
+      await player.load(videoUrl); 
+      await setupThumbnails(player, thumbElement);
+    } catch (error) {
+      errorDisplay.textContent = `Error loading video: ${error.message}`;
+    }
+  });
+
+  async function setupThumbnails(player, thumbElement) {
+    try {
+      const thumbnailTrack = await player.addThumbnailsTrack('/previews/thumbnails.vtt');
+
+      seekBar.addEventListener('mousemove', debounce(async (event) => {
+        const duration = player.seekRange().end;
+        const percent = event.offsetX / seekBar.clientWidth;
+        const position = percent * duration;
+
+        try {
+          const thumbnail = await player.getThumbnails(thumbnailTrack.id, position);
+
+          if (thumbnail && thumbnail.uris.length > 0) {
+            const imageUrl = thumbnail.uris[0].split('#')[0]; 
+
+            const x = thumbnail.positionX;
+            const y = thumbnail.positionY;
+            const width = thumbnail.width;
+            const height = thumbnail.height;
+
+            thumbElement.style.backgroundImage = `url(${imageUrl})`;
+            thumbElement.style.backgroundPosition = `-${x}px -${y}px`;
+            thumbElement.style.width = `${width}px`;
+            thumbElement.style.height = `${height}px`;
+
+            const thumbX = event.pageX - thumbElement.clientWidth / 2;
+            const thumbY = event.pageY - thumbElement.clientHeight - 10;
+            thumbElement.style.left = `${thumbX}px`;
+            thumbElement.style.top = `${thumbY}px`;
+            thumbElement.style.display = 'block';
+          }
+        } catch (error) {
+          console.error('Error getting thumbnail:', error);
+          errorDisplay.textContent = `Error getting thumbnail: ${error.message}`;
+        }
+      }, 5));
+
+      seekBar.addEventListener('mouseleave', () => {
+        thumbElement.style.display = 'none';
+      });
+    } catch (error) {
+      console.error('Failed to set up thumbnails:', error);
+      errorDisplay.textContent = `Failed to set up thumbnails: ${error.message}`;
+    }
+  }
+  function debounce(func, delay) {
+    let timer;
+    return function(...args) {
+      clearTimeout(timer);
+      timer = setTimeout(() => func.apply(this, args), delay);
+    };
+  }
+</script>

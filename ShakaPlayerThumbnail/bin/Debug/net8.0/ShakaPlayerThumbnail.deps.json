@@ -1,0 +1,59 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "ShakaPlayerThumbnail/1.0.0": {
+        "dependencies": {
+          "AWSSDK.S3": "3.7.400.5"
+        },
+        "runtime": {
+          "ShakaPlayerThumbnail.dll": {}
+        }
+      },
+      "AWSSDK.Core/3.7.400.5": {
+        "runtime": {
+          "lib/net8.0/AWSSDK.Core.dll": {
+            "assemblyVersion": "3.3.0.0",
+            "fileVersion": "3.7.400.5"
+          }
+        }
+      },
+      "AWSSDK.S3/3.7.400.5": {
+        "dependencies": {
+          "AWSSDK.Core": "3.7.400.5"
+        },
+        "runtime": {
+          "lib/net8.0/AWSSDK.S3.dll": {
+            "assemblyVersion": "3.3.0.0",
+            "fileVersion": "3.7.400.5"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "ShakaPlayerThumbnail/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "AWSSDK.Core/3.7.400.5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-QlQbLjs4BKkFKdlSDpFRqn+oeLFDpN1fT/ax4/vhDVMx2BZekbaKBGqnQYcvKLYuVRQTmvPMMlt6/EFdVZoBnQ==",
+      "path": "awssdk.core/3.7.400.5",
+      "hashPath": "awssdk.core.3.7.400.5.nupkg.sha512"
+    },
+    "AWSSDK.S3/3.7.400.5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-l4F7DsrZJOk2hKwlx2RpdRhbimQumvhs23v4EV3heFMv/dtiqKKstVSODRcbOWALL9+/AjCKV148pSixUk48gA==",
+      "path": "awssdk.s3/3.7.400.5",
+      "hashPath": "awssdk.s3.3.7.400.5.nupkg.sha512"
+    }
+  }
+}
