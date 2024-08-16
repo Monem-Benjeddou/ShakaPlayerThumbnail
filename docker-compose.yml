@@ -13,12 +13,13 @@
     build:
       context: .     
       dockerfile: NginxDockerfile
-      ports:
-        - "79:79"
-      networks:
-        - thumbnail-network
-      depends_on:
-        - shakaplayerthumbnail
+    depends_on:
+      - shakaplayerthumbnail
+    ports:
+      - "79:79"
+    networks:
+      - thumbnail-network
+
 networks:
   thumbnail-network:
     driver: bridge
