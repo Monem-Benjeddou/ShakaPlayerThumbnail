@@ -4,7 +4,7 @@
       context: .  
       dockerfile: ShakaPlayerThumbnail/Dockerfile
     networks:
-      - thumbnail-network   
+      - default 
     environment:
       - access_key=Qqt3KMXNlK4iCKqPhgEd
       - secret_key=Kncx7QKlHyaN1rmbRRrAqDvDLGhGt8IAPdwhyjg6
@@ -18,9 +18,7 @@
     ports:
       - "79:79"
     networks:
-      - thumbnail-network
+      - default
 
 networks:
-  thumbnail-network:
-    driver: host
-
+  default:
