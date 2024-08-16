@@ -7,7 +7,8 @@
       - access_key=Qqt3KMXNlK4iCKqPhgEd
       - secret_key=Kncx7QKlHyaN1rmbRRrAqDvDLGhGt8IAPdwhyjg6
       - service_url=http://10.13.111.3
-    network_mode: host
+    networks:
+      - thumbnail-network
 
   nginx:
     build:
@@ -17,8 +18,9 @@
       - shakaplayerthumbnail
     ports:
       - "79:79"
-    network_mode: host
+    networks:
+      - thumbnail-network
 
 networks:
   thumbnail-network:
-    driver: host
+    driver: bridge
