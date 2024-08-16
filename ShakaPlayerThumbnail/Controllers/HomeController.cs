@@ -50,7 +50,7 @@ namespace ShakaPlayerThumbnail.Controllers
                 Expires = DateTime.UtcNow.AddHours(1)
             };
 
-            var preSignUrl = _s3Client.GetPreSignedURL(parameters).Replace("https://", "http://");
+            var preSignUrl = _s3Client.GetPreSignedURL(parameters);
 
             string previewsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "previews");
             string outputImagePath = Path.Combine(previewsFolder, "output.png");
