@@ -42,7 +42,15 @@ namespace ShakaPlayerThumbnail.Controllers
 
         public IActionResult Index()
         {
-            var preSignUrl = "/IntoVideo.mp4";
+            var date = DateTime.Now;
+            var parameters = new GetPreSignedUrlRequest()
+            {
+                BucketName = "videos",
+                Key = "IntoVideo.mp4",
+                Expires = DateTime.UtcNow.AddHours(1)
+            };
+
+            var preSignUrl = _s3Client.GetPreSignedURL(parameters).Replace("https://", "http://");
 
             string previewsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "previews");
             string outputImagePath = Path.Combine(previewsFolder, "output.png");
