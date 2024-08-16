@@ -10,16 +10,15 @@
       - secret_key=Kncx7QKlHyaN1rmbRRrAqDvDLGhGt8IAPdwhyjg6
       - service_url=http://10.13.111.3
   nginx:
-    image: nginx:latest
-    container_name: nginx
-    ports:
-      - "79:79"
-    volumes:
-      - ./ShakaPlayerThumbnail/nginx.conf:/etc/nginx/conf.d/default.conf
-    networks:
-      - thumbnail-network
-    depends_on:
-      - shakaplayerthumbnail
+    build:
+      context: .     
+      dockerfile: NginxDockerfile
+      ports:
+        - "79:79"
+      networks:
+        - thumbnail-network
+      depends_on:
+        - shakaplayerthumbnail
 networks:
   thumbnail-network:
     driver: bridge
