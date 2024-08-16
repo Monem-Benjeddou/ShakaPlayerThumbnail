@@ -7,10 +7,20 @@
       - access_key=Qqt3KMXNlK4iCKqPhgEd
       - secret_key=Kncx7QKlHyaN1rmbRRrAqDvDLGhGt8IAPdwhyjg6
       - service_url=http://10.13.111.3
-    ports:
-      - "5006:5006"
     networks:
       - thumbnail-network
-    
+    ports:
+      - "5006:5006"
+  nginx:
+    build:
+      context: .
+      dockerfile: NginxDockerfile
+    depends_on:
+      - shakaplayerthumbnail
+    ports:
+      - "80:80"
+    networks:
+      - thumbnail-network
+
 networks:
   thumbnail-network:
