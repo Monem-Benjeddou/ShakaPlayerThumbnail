@@ -3,8 +3,24 @@
     build:
       context: .  
       dockerfile: ShakaPlayerThumbnail/Dockerfile
-    network_mode: host
+    networks:
+      - thumbnail-network   
     environment:
       - access_key=Qqt3KMXNlK4iCKqPhgEd
       - secret_key=Kncx7QKlHyaN1rmbRRrAqDvDLGhGt8IAPdwhyjg6
       - service_url=http://10.13.111.3
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./minio.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - thumbnail-network
+    depends_on:
+      - shakaplayerthumbnail
+networks:
+  thumbnail-network:
+    driver: default
+
