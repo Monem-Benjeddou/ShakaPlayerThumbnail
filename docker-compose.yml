@@ -18,7 +18,7 @@
     depends_on:
       - shakaplayerthumbnail
     ports:
-      - "79:80"
+      - "80:80"
     networks:
       - thumbnail-network
 

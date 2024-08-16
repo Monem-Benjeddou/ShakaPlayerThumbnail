@@ -55,7 +55,7 @@
 
   async function setupThumbnails(player, thumbElement) {
     try {
-      const thumbnailTrack = await player.addThumbnailsTrack('/previews/thum  bnails.vtt');
+      const thumbnailTrack = await player.addThumbnailsTrack('/previews/thumbnails.vtt');
 
       seekBar.addEventListener('mousemove', debounce(async (event) => {
         const duration = player.seekRange().end;

@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "SALn/cmJaApUVFChmJVTyqX+PE+bJiCkSMboaLhRyME=",
+  "Hash": "UAyp0/fgMT4XhEYh3PRmJ23B0wnuL0kS/sb2ayipPEM=",
   "Source": "ShakaPlayerThumbnail",
   "BasePath": "_content/ShakaPlayerThumbnail",
   "Mode": "Default",
@@ -91,6 +91,25 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot/favicon.ico"
+    },
+    {
+      "Identity": "/Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/IntoVideo.mp4",
+      "SourceId": "ShakaPlayerThumbnail",
+      "SourceType": "Discovered",
+      "ContentRoot": "/Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/",
+      "BasePath": "_content/ShakaPlayerThumbnail",
+      "RelativePath": "IntoVideo.mp4",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot/IntoVideo.mp4"
     },
     {
       "Identity": "/Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/js/shakaPlayer.js",

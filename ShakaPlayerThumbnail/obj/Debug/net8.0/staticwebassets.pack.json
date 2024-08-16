@@ -5,6 +5,10 @@
       "PackagePath": "staticwebassets/ShakaPlayerThumbnail.bundle.scp.css"
     },
     {
+      "Id": "/Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/IntoVideo.mp4",
+      "PackagePath": "staticwebassets/IntoVideo.mp4"
+    },
+    {
       "Id": "/Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/css/site.css",
       "PackagePath": "staticwebassets/css/site.css"
     },
