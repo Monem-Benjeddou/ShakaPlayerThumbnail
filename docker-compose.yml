@@ -22,4 +22,5 @@
       - default
 
 networks:
-  default:
+  thumbnail-network:
+    driver: host
