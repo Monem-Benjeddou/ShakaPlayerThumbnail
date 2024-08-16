@@ -9,7 +9,8 @@
       - service_url=http://10.13.111.3
     networks:
       - thumbnail-network
-
+    ports:
+      - "5006:5006"
   nginx:
     build:
       context: .
