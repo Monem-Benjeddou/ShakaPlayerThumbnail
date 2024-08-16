@@ -22,5 +22,5 @@
       - shakaplayerthumbnail
 networks:
   thumbnail-network:
-    driver: default
+    driver: bridge
 
