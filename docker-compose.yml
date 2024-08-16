@@ -22,5 +22,5 @@
 
 networks:
   thumbnail-network:
-    driver: bridge
+    driver: host
 
