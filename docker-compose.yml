@@ -7,6 +7,7 @@
       - access_key=Qqt3KMXNlK4iCKqPhgEd
       - secret_key=Kncx7QKlHyaN1rmbRRrAqDvDLGhGt8IAPdwhyjg6
       - service_url=http://10.13.111.3
+    network_mode: host
 
   nginx:
     build:
