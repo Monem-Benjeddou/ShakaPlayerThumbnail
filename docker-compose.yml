@@ -6,7 +6,7 @@
     environment:
       - access_key=OyNWsqRLkvWYokHckqm0
       - secret_key=Ia08qOvDO5guqma1dCp3p8vAXu3S8Jz0MnDbMzHU
-      - service_url=http://10.13.111.3
+      - service_url=https://minio.john-group.org
     networks:
       - thumbnail-network
     ports:

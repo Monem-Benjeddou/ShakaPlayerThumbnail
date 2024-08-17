@@ -14,7 +14,6 @@ namespace ShakaPlayerThumbnail.Controllers
         private readonly string _serviceUrl;
         private readonly string _accessKey;
         private readonly string _secretKey;
-        private const string _serverPort = ":9000";
         private readonly AmazonS3Client _s3Client;
         private readonly ILogger<HomeController> _logger;
 
@@ -32,7 +31,7 @@ namespace ShakaPlayerThumbnail.Controllers
 
             var config = new AmazonS3Config
             {
-                ServiceURL = _serviceUrl + _serverPort,
+                ServiceURL = _serviceUrl ,
                 ForcePathStyle = true
             };
 
