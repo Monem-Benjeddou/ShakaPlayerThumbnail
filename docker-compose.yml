@@ -4,8 +4,8 @@
       context: .
       dockerfile: ShakaPlayerThumbnail/Dockerfile
     environment:
-      - access_key=Qqt3KMXNlK4iCKqPhgEd
-      - secret_key=Kncx7QKlHyaN1rmbRRrAqDvDLGhGt8IAPdwhyjg6
+      - access_key=OyNWsqRLkvWYokHckqm0
+      - secret_key=Ia08qOvDO5guqma1dCp3p8vAXu3S8Jz0MnDbMzHU
       - service_url=http://10.13.111.3
     networks:
       - thumbnail-network
