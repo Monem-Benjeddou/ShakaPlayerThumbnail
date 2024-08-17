@@ -11,6 +11,25 @@
       - thumbnail-network
     ports:
       - "5006:5006"
+
+
+  minio:
+    image: quay.io/minio/minio
+    container_name: minio
+    restart: unless-stopped
+    command: server /data --console-address ":2001"
+    environment:
+      - MINIO_ROOT_USER=root
+      - MINIO_ROOT_PASSWORD=\AS60S;yD4cs4l`]3~|/8<xpY7VqJ4H
+    volumes:
+      - /home/monem/minio/data:/data
+    ports:
+      - "2000:2000"
+      - "2001:2001"
+    networks:
+      - thumbnail-network
+
+
   thumbnail-nginx:
     build:
       context: .
@@ -21,7 +40,6 @@
       - "80:80"
     networks:
       - thumbnail-network
-
 networks:
   thumbnail-network:
     driver: bridge
