@@ -44,17 +44,6 @@
   <h2 class="text-center mb-4">Shaka Player in .NET MVC</h2>
 
   <div class="card shadow p-4">
-    <form asp-controller="Home" asp-action="GetVideo" method="post" class="mb-4">
-      <div class="mb-3">
-        <h5>Please enter the video name</h5>
-        <input type="text" class="form-control" name="videoName" aria-label="Video name" placeholder="Enter video name" required />
-      </div>
-      <div class="d-grid gap-2">
-        <button type="submit" class="btn btn-primary">Get Video</button>
-      </div>
-    </form>
-
-
     <div class="video-container mb-4">
       <video id="video" class="rounded mb-3" controls autoplay aria-label="Video player"></video>
       <div id="seekBar" class="w-100 bg-light"></div>

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices.JavaScript;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -19,19 +20,18 @@ namespace ShakaPlayerThumbnail.Controllers
         public HomeController(ILogger<HomeController> logger)
         {
             _logger = logger;
-
-            // Get AWS credentials from environment variables
+            
             _secretKey = Environment.GetEnvironmentVariable("secret_key") ??
                          throw new Exception("Secret key not found");
             _accessKey = Environment.GetEnvironmentVariable("access_key") ??
                          throw new Exception("Access key not found");
             _serviceUrl = Environment.GetEnvironmentVariable("service_url") ??
-                          throw new Exception("Service URL not found");
+                          throw new Exception("Service url not found");
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            // Initialize the S3 client
             var config = new AmazonS3Config
             {
-                ServiceURL = _serviceUrl,
+                ServiceURL = _serviceUrl ,
                 ForcePathStyle = true
             };
 
@@ -39,82 +39,66 @@ namespace ShakaPlayerThumbnail.Controllers
             _s3Client = new AmazonS3Client(credentials, config);
         }
 
-        // Show the main page
         public IActionResult Index()
         {
             return View();
         }
 
-        [HttpPost]
-        public IActionResult GetVideo(string videoName)
+        public IActionResult GetVideo()
         {
-            // If no video name was provided, return an error message
-            if (string.IsNullOrWhiteSpace(videoName))
-            {
-                ViewBag.ErrorMessage = "No video name provided. Please enter a valid video name.";
-                return View("Index");
-            }
-
-            // Set up the S3 request parameters to retrieve the video
+            var date = DateTime.Now;
             var parameters = new GetPreSignedUrlRequest()
             {
                 BucketName = "videos",
-                Key = $"{videoName}.mp4", // Use the provided video name
+                Key = "video.mp4",
                 Expires = DateTime.UtcNow.AddHours(1)
             };
 
-            try
+            var preSignUrl = _s3Client.GetPreSignedURL(parameters);
+
+            string previewsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "previews");
+            string outputImagePath = Path.Combine(previewsFolder, "output.png");
+            string absoluteVideoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", preSignUrl);
+
+            if (Directory.Exists(previewsFolder)) return View((object)preSignUrl);
+            Directory.CreateDirectory(previewsFolder);
+            FfmpegTool.GenerateSpritePreview(absoluteVideoPath, outputImagePath);
+
+
+
+            return View((object)preSignUrl);
+        }
+
+        private int GetVideoDuration(string videoPath)
+        {
+            string arguments = $"-v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{videoPath}\"";
+
+            using (Process ffprobeProcess = new Process
+                   {
+                       StartInfo = new ProcessStartInfo
+                       {
+                           FileName = "ffprobe",
+                           Arguments = arguments,
+                           RedirectStandardOutput = true,
+                           RedirectStandardError = true,
+                           UseShellExecute = false,
+                           CreateNoWindow = true
+                       }
+                   })
             {
-                // Generate a pre-signed URL for the video
-                var preSignUrl = _s3Client.GetPreSignedURL(parameters);
+                ffprobeProcess.Start();
+                string result = ffprobeProcess.StandardOutput.ReadToEnd();
+                ffprobeProcess.WaitForExit();
 
-                // Generate the preview thumbnails if necessary
-                string previewsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "previews");
-
-                // Ensure that the previews folder exists
-                if (!Directory.Exists(previewsFolder))
-                {
-                    Directory.CreateDirectory(previewsFolder);
-                }
-
-                // Set up dynamic paths for thumbnails and previews based on video name
-                string thumbnailFileName = $"{videoName}_thumbnail.png";
-                string outputImagePath = Path.Combine(previewsFolder, thumbnailFileName);
-                string absoluteVideoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", preSignUrl);
-
-                // Generate the thumbnail using FFMpeg (or another method)
-                if (!System.IO.File.Exists(outputImagePath))
-                {
-                    FfmpegTool.GenerateSpritePreview(absoluteVideoPath, outputImagePath);
-                }
-
-                // Pass both the video URL and the thumbnail path to the view
-                ViewBag.ThumbnailUrl = Url.Content($"~/previews/{thumbnailFileName}");
-                return View("Index", (object)preSignUrl);
-            }
-            catch (AmazonS3Exception ex)
-            {
-                // Log and handle any S3-related errors
-                _logger.LogError(ex, "Error retrieving the video from S3.");
-                ViewBag.ErrorMessage = "Error retrieving the video. Please try again later.";
-                return View("Index");
-            }
-            catch (Exception ex)
-            {
-                // Log and handle general errors
-                _logger.LogError(ex, "An unexpected error occurred.");
-                ViewBag.ErrorMessage = "An unexpected error occurred. Please try again later.";
-                return View("Index");
+                return (int)Math.Ceiling(Convert.ToDouble(result));
             }
         }
 
-        // Show the privacy page
         public IActionResult Privacy()
         {
             return View();
         }
 
-        // Show error information
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
