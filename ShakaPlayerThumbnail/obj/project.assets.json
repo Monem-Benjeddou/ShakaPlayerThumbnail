@@ -107,11 +107,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/ShakaPlayerThumbnail.csproj",
+      "projectUniqueName": "/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/ShakaPlayerThumbnail.csproj",
       "projectName": "ShakaPlayerThumbnail",
-      "projectPath": "/Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/ShakaPlayerThumbnail.csproj",
+      "projectPath": "/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/ShakaPlayerThumbnail.csproj",
       "packagesPath": "/Users/macbook/.nuget/packages/",
-      "outputPath": "/Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/",
+      "outputPath": "/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/Users/macbook/.nuget/NuGet/NuGet.Config"

@@ -33,3 +33,38 @@
 /Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/ShakaPlayerThumbnail.genruntimeconfig.cache
 /Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/ref/ShakaPlayerThumbnail.dll
 /Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/ShakaPlayerThumbnail.sourcelink.json
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/bin/Debug/net8.0/appsettings.Development.json
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/bin/Debug/net8.0/appsettings.json
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/bin/Debug/net8.0/ShakaPlayerThumbnail.staticwebassets.runtime.json
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/bin/Debug/net8.0/ShakaPlayerThumbnail
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/bin/Debug/net8.0/ShakaPlayerThumbnail.deps.json
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/bin/Debug/net8.0/ShakaPlayerThumbnail.runtimeconfig.json
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/bin/Debug/net8.0/ShakaPlayerThumbnail.dll
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/bin/Debug/net8.0/ShakaPlayerThumbnail.pdb
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/bin/Debug/net8.0/AWSSDK.Core.dll
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/bin/Debug/net8.0/AWSSDK.S3.dll
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/ShakaPlayerThumbnail.csproj.AssemblyReference.cache
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/ShakaPlayerThumbnail.GeneratedMSBuildEditorConfig.editorconfig
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/ShakaPlayerThumbnail.AssemblyInfoInputs.cache
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/ShakaPlayerThumbnail.AssemblyInfo.cs
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/ShakaPlayerThumbnail.csproj.CoreCompileInputs.cache
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/ShakaPlayerThumbnail.MvcApplicationPartsAssemblyInfo.cache
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/ShakaPlayerThumbnail.RazorAssemblyInfo.cache
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/ShakaPlayerThumbnail.RazorAssemblyInfo.cs
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/ShakaPlayerThumbnail.sourcelink.json
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/staticwebassets.build.json
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/staticwebassets.development.json
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/staticwebassets/msbuild.ShakaPlayerThumbnail.Microsoft.AspNetCore.StaticWebAssets.props
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/staticwebassets/msbuild.build.ShakaPlayerThumbnail.props
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/staticwebassets/msbuild.buildMultiTargeting.ShakaPlayerThumbnail.props
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/staticwebassets/msbuild.buildTransitive.ShakaPlayerThumbnail.props
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/staticwebassets.pack.json
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/scopedcss/Views/Shared/_Layout.cshtml.rz.scp.css
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/scopedcss/bundle/ShakaPlayerThumbnail.styles.css
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/scopedcss/projectbundle/ShakaPlayerThumbnail.bundle.scp.css
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/ShakaPla.DE0CB938.Up2Date
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/ShakaPlayerThumbnail.dll
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/refint/ShakaPlayerThumbnail.dll
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/ShakaPlayerThumbnail.pdb
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/ShakaPlayerThumbnail.genruntimeconfig.cache
+/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/obj/Debug/net8.0/ref/ShakaPlayerThumbnail.dll

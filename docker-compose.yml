@@ -22,8 +22,6 @@
     environment:
       - MINIO_ROOT_USER=root
       - MINIO_ROOT_PASSWORD=\AS60S;yD4cs4l`]3~|/8<xpY7VqJ4H
-    volumes:
-      - /home/monem/minio/data:/data
     ports:
       - "2000:2000"
       - "2001:2001"
@@ -44,7 +42,3 @@
 networks:
   thumbnail-network:
     driver: bridge
-
-volumes:
-  ffmpeg-data:
-    driver: local
