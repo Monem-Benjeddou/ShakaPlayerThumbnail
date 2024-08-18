@@ -38,13 +38,9 @@ namespace ShakaPlayerThumbnail.Controllers
             var credentials = new BasicAWSCredentials(_accessKey, _secretKey);
             _s3Client = new AmazonS3Client(credentials, config);
         }
+        
 
         public IActionResult Index()
-        {
-            return View();
-        }
-
-        public IActionResult GetVideo()
         {
             var date = DateTime.Now;
             var parameters = new GetPreSignedUrlRequest()
