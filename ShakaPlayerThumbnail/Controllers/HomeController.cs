@@ -45,7 +45,7 @@ namespace ShakaPlayerThumbnail.Controllers
             return View();
         }
 
-        [HttpGet, HttpHead]
+        [HttpPost]
         public IActionResult GetVideo(string videoName)
         {
             // If no video name was provided, return an error message
