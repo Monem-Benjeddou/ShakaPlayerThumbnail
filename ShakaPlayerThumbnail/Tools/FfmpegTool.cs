@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text.Json;
 
 namespace ShakaPlayerThumbnail.Tools
 {
@@ -9,61 +10,64 @@ namespace ShakaPlayerThumbnail.Tools
         public static void GenerateSpritePreview(string videoPath, string outputImagePath)
         {
             int intervalSeconds = 12;
+            // Ensure the directory exists
             string directoryPath = Path.GetDirectoryName(outputImagePath);
             if (!Directory.Exists(directoryPath))
             {
                 Directory.CreateDirectory(directoryPath);
             }
 
+            // Get total video duration in seconds
             double videoDuration = GetVideoDuration(videoPath);
+            // Calculate the total number of frames
             int totalFrames = (int)Math.Ceiling(videoDuration / intervalSeconds);
+
+            // Calculate the number of rows for the tile (since we want a single column)
             int columns = totalFrames;
 
+            
+            // FFmpeg command to capture frames every `intervalSeconds` and tile them in a single column
             string arguments = $"-i \"{videoPath}\" -vf " +
-                               $"\"select=not(mod(t\\,{intervalSeconds}))," +
-                               "scale=320:-1," +
-                               $"tile={columns}x1\" " +
-                               $"-vsync vfr -y \"{outputImagePath}\"";
-            Console.WriteLine(arguments);
-            RunFFmpeg(arguments);
+                               $"\"select=not(mod(t\\,{intervalSeconds}))," +  // Capture frames every `intervalSeconds`
+                               "scale=320:-1," +                         // Scale the frames
+                               $"tile={columns}x1\" " +                     // Arrange them in a single column
+                               $"-vsync vfr -y \"{outputImagePath}\"";   // Output to the specified path
 
-            string previewsFolder = "/data/previews"; 
+            // Running the FFmpeg command
+            RunFFmpeg(arguments);
+            string previewsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "previews");
             string outputVttPath = Path.Combine(previewsFolder, "thumbnails.vtt");
             GenerateVTT(outputVttPath, videoDuration, 160, 90, columns, 1);
         }
 
         private static double GetVideoDuration(string videoPath)
         {
-            Console.WriteLine("Fetching video duration for: " + videoPath);
-            string arguments = $"-i \"{videoPath}\" -show_entries format=duration -v quiet -of csv=\"p=0\"";
-            Console.WriteLine("Thumbnails: ffmpeg " + arguments);
-            using (var process = new Process())
+            // Get the duration of the video in seconds using ffprobe
+            string ffprobeArguments = $"-v error -select_streams v:0 -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{videoPath}\"";
+            using (Process ffprobeProcess = new Process
+                   {
+                       StartInfo = new ProcessStartInfo
+                       {
+                           FileName = "ffprobe",
+                           Arguments = ffprobeArguments,
+                           RedirectStandardOutput = true,
+                           RedirectStandardError = true,
+                           UseShellExecute = false,
+                           CreateNoWindow = true
+                       }
+                   })
             {
-                process.StartInfo.FileName = "ffmpeg";
-                process.StartInfo.Arguments = arguments;
-                process.StartInfo.RedirectStandardOutput = true;
-                process.StartInfo.RedirectStandardError = true;
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.CreateNoWindow = true;
-                process.Start();
+                ffprobeProcess.Start();
+                string output = ffprobeProcess.StandardOutput.ReadToEnd();
+                ffprobeProcess.WaitForExit();
 
-                string result = process.StandardOutput.ReadToEnd();
-                string error = process.StandardError.ReadToEnd();
-                process.WaitForExit();
-
-                if (!string.IsNullOrEmpty(error))
-                {
-                    Console.WriteLine("Error fetching video duration: " + error);
-                    throw new InvalidOperationException($"Could not determine video duration. Error: {error}");
-                }
-
-                if (double.TryParse(result.Trim(), out double duration))
+                if (double.TryParse(output.Trim(), out double duration))
                 {
                     return duration;
                 }
                 else
                 {
-                    throw new InvalidOperationException("Could not parse video duration.");
+                    throw new InvalidOperationException("Could not determine video duration.");
                 }
             }
         }

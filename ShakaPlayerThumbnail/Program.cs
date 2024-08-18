@@ -21,11 +21,13 @@ app.UseStaticFiles();
 
 var provider = new FileExtensionContentTypeProvider();
 provider.Mappings[".vtt"] = "text/vtt";
+provider.Mappings[".mp4"] = "video/mp4";
 
 app.UseStaticFiles(new StaticFileOptions
 {
     ContentTypeProvider = provider
 });
+
 
 app.UseRouting();
 

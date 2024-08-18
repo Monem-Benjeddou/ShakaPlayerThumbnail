@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices.JavaScript;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -19,7 +20,7 @@ namespace ShakaPlayerThumbnail.Controllers
         public HomeController(ILogger<HomeController> logger)
         {
             _logger = logger;
-
+            
             _secretKey = Environment.GetEnvironmentVariable("secret_key") ??
                          throw new Exception("Secret key not found");
             _accessKey = Environment.GetEnvironmentVariable("access_key") ??
@@ -30,7 +31,7 @@ namespace ShakaPlayerThumbnail.Controllers
 
             var config = new AmazonS3Config
             {
-                ServiceURL = _serviceUrl,
+                ServiceURL = _serviceUrl ,
                 ForcePathStyle = true
             };
 
@@ -40,34 +41,30 @@ namespace ShakaPlayerThumbnail.Controllers
 
         public IActionResult Index()
         {
-            var parameters = new GetPreSignedUrlRequest
+            var date = DateTime.Now;
+            var parameters = new GetPreSignedUrlRequest()
             {
                 BucketName = "videos",
                 Key = "video.mp4",
-                Expires = DateTime.UtcNow.AddHours(2)
+                Expires = DateTime.UtcNow.AddHours(1)
             };
 
-            var preSignUrl =  _s3Client.GetPreSignedURL(parameters);
+            var preSignUrl = _s3Client.GetPreSignedURL(parameters);
 
-            string previewsFolder = "/data/previews";  
+            string previewsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "previews");
             string outputImagePath = Path.Combine(previewsFolder, "output.png");
-            string vttFilePath = Path.Combine(previewsFolder, "thumbnails.vtt");
+            var model = new Tuple<string, string>(preSignUrl, "/previews/thumbnails.vtt");
 
-            if (!Directory.Exists(previewsFolder))
-            {
-                Directory.CreateDirectory(previewsFolder);
-            }
-
+            if (Directory.Exists(previewsFolder)) 
+                return View((object)model);
+            Directory.CreateDirectory(previewsFolder);
             FfmpegTool.GenerateSpritePreview(preSignUrl, outputImagePath);
 
-            // Create URL for the VTT and PNG files in the Docker volume
-            string vttUrl = "/previews/thumbnails.vtt";
-            string pngUrl = "/previews/output.png";
 
-            // Return the pre-signed video URL and thumbnail URLs
-            var model = new Tuple<string, string>(preSignUrl, vttUrl);
+
             return View((object)model);
         }
+
 
         public IActionResult Privacy()
         {
