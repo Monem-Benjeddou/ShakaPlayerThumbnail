@@ -11,7 +11,8 @@
       - thumbnail-network
     ports:
       - "5006:5006"
-
+    volumes:
+      - ffmpeg-data:/app/data  # Mount the volume for FFmpeg files
 
   minio:
     image: quay.io/minio/minio
@@ -29,7 +30,6 @@
     networks:
       - thumbnail-network
 
-
   thumbnail-nginx:
     build:
       context: .
@@ -40,6 +40,12 @@
       - "80:80"
     networks:
       - thumbnail-network
+
 networks:
   thumbnail-network:
     driver: bridge
+
+volumes:
+  ffmpeg-data:
+    driver: local
+

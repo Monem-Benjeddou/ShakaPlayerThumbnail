@@ -6,42 +6,34 @@ namespace ShakaPlayerThumbnail.Tools
 {
     public static class FfmpegTool
     {
-public static void GenerateSpritePreview(string videoPath, string outputImagePath)
-{
-    int intervalSeconds = 12;
-            // Ensure the directory exists
+        public static void GenerateSpritePreview(string videoPath, string outputImagePath)
+        {
+            int intervalSeconds = 12;
             string directoryPath = Path.GetDirectoryName(outputImagePath);
             if (!Directory.Exists(directoryPath))
             {
                 Directory.CreateDirectory(directoryPath);
             }
 
-            // Get total video duration in seconds
             double videoDuration = GetVideoDuration(videoPath);
-            // Calculate the total number of frames
             int totalFrames = (int)Math.Ceiling(videoDuration / intervalSeconds);
-
-            // Calculate the number of rows for the tile (since we want a single column)
             int columns = totalFrames;
 
-            
-            // FFmpeg command to capture frames every `intervalSeconds` and tile them in a single column
             string arguments = $"-i \"{videoPath}\" -vf " +
-                               $"\"select=not(mod(t\\,{intervalSeconds}))," +  // Capture frames every `intervalSeconds`
-                               "scale=320:-1," +                         // Scale the frames
-                               $"tile={columns}x1\" " +                     // Arrange them in a single column
-                               $"-vsync vfr -y \"{outputImagePath}\"";   // Output to the specified path
+                               $"\"select=not(mod(t\\,{intervalSeconds}))," +
+                               "scale=320:-1," +
+                               $"tile={columns}x1\" " +
+                               $"-vsync vfr -y \"{outputImagePath}\"";
 
-            // Running the FFmpeg command
             RunFFmpeg(arguments);
-            string previewsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "previews");
+
+            string previewsFolder = "/data/previews";  // Updated to Docker volume path
             string outputVttPath = Path.Combine(previewsFolder, "thumbnails.vtt");
             GenerateVTT(outputVttPath, videoDuration, 160, 90, columns, 1);
         }
 
         private static double GetVideoDuration(string videoPath)
         {
-            // Get the duration of the video in seconds using ffprobe
             string ffprobeArguments = $"-v error -select_streams v:0 -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{videoPath}\"";
             using (Process ffprobeProcess = new Process
                    {
@@ -70,6 +62,7 @@ public static void GenerateSpritePreview(string videoPath, string outputImagePat
                 }
             }
         }
+
         private static void RunFFmpeg(string arguments)
         {
             using (Process ffmpegProcess = new Process

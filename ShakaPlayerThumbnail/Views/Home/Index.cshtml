@@ -1,5 +1,5 @@
-﻿@model string
-  <title>Shaka Player in .NET MVC</title>
+﻿@model Tuple<string, string>
+<title>Shaka Player in .NET MVC</title>
   <style>
     #video {
       width: 100%;
@@ -69,17 +69,19 @@
     });
 
     try {
-      const videoUrl = "@Html.Raw(Model)";
+      const videoUrl = "@Html.Raw(Model.Item1)";
+      const vttUrl = "@Html.Raw(Model.Item2)";
       await player.load(videoUrl);
-      await setupThumbnails(player, thumbElement);
+      await setupThumbnails(player, thumbElement,vttUrl);
     } catch (error) {
       errorDisplay.textContent = `Error loading video: ${error.message}`;
     }
   });
 
-  async function setupThumbnails(player, thumbElement) {
+  async function setupThumbnails(player, thumbElement,vttUrl) {
     try {
-      const thumbnailTrack = await player.addThumbnailsTrack('/previews/thumbnails.vtt');
+    
+      const thumbnailTrack = await player.addThumbnailsTrack(vttUrl);
 
       seekBar.addEventListener('mousemove', debounce(async (event) => {
         const duration = player.seekRange().end;
