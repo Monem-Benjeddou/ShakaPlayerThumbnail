@@ -1,35 +1,69 @@
 ﻿@model string
-<h2>Shaka Player in .NET MVC</h2>
-<div>
-  <video id="video" controls autoplay aria-label="Video player"></video>
-  <div id="seekBar" style="position: relative;"></div>
+  <title>Shaka Player in .NET MVC</title>
+  <style>
+    #video {
+      width: 100%;
+      height: auto;
+      max-height: 500px;
+      border-radius: 10px;
+      box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    #thumb {
+      z-index: 100;
+      width: 160px;
+      height: 90px;
+      pointer-events: none;
+      border-radius: 5px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    #seekBar {
+      position: relative;
+      height: 10px;
+      background-color: rgba(0, 0, 0, 0.5);
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    #thumb {
+      z-index: 10;
+      pointer-events: none;
+      display: none;
+      position: absolute;
+      background-size: cover;
+      background-repeat: no-repeat;
+    }
+
+    #error {
+      color: red;
+      margin-top: 10px;
+    }
+  </style>
+<div class="container mt-5">
+  <h2 class="text-center mb-4">Shaka Player in .NET MVC</h2>
+
+  <div class="card shadow p-4">
+    <form asp-controller="Home" asp-action="GetVideo" method="post" class="mb-4">
+      <div class="mb-3">
+        <h5>Please enter the video name</h5>
+        <input type="text" class="form-control" name="videoName" aria-label="Video name" placeholder="Enter video name" required />
+      </div>
+      <div class="d-grid gap-2">
+        <button type="submit" class="btn btn-primary">Get Video</button>
+      </div>
+    </form>
+
+    <div class="video-container mb-4">
+      <video id="video" class="rounded mb-3" controls autoplay aria-label="Video player"></video>
+      <div id="seekBar" class="w-100 bg-light"></div>
+    </div>
+
+    <div id="thumb" role="tooltip" aria-hidden="true"></div>
+    <div id="error" class="text-danger" role="alert"></div>
+  </div>
 </div>
-<div id="thumb" role="tooltip" aria-hidden="true" style="position: absolute; display: none; background-size: cover; background-repeat: no-repeat; z-index: 10;"></div>
-<div id="error" role="alert" style="color: red;"></div>
-<style>
-  #video {
-    width: 100%;
-  }
-  #thumb {
-    z-index: 100; 
-    width: 160px; 
-    height: 90px; 
-    pointer-events: none; 
-    border-radius: 5px;
-  }
-  #seekBar {
-    position: absolute;
-    bottom: 20px; 
-    left: 0;
-    right: 0;
-    height: 5px;
-    background-color: rgba(0, 0, 0, 0.5);
-    cursor: pointer;
-    z-index: 10; 
 
-  }
-
-</style>
 
 <script>
   document.addEventListener('DOMContentLoaded', async () => {
@@ -43,10 +77,10 @@
     player.addEventListener('error', (event) => {
       errorDisplay.textContent = `Error: ${event.detail.message}`;
     });
-    
+
     try {
       const videoUrl = "@Html.Raw(Model)";
-      await player.load(videoUrl); 
+      await player.load(videoUrl);
       await setupThumbnails(player, thumbElement);
     } catch (error) {
       errorDisplay.textContent = `Error loading video: ${error.message}`;
@@ -66,7 +100,7 @@
           const thumbnail = await player.getThumbnails(thumbnailTrack.id, position);
 
           if (thumbnail && thumbnail.uris.length > 0) {
-            const imageUrl = thumbnail.uris[0].split('#')[0]; 
+            const imageUrl = thumbnail.uris[0].split('#')[0];
 
             const x = thumbnail.positionX;
             const y = thumbnail.positionY;
@@ -98,6 +132,7 @@
       errorDisplay.textContent = `Failed to set up thumbnails: ${error.message}`;
     }
   }
+
   function debounce(func, delay) {
     let timer;
     return function(...args) {

@@ -5,10 +5,6 @@
       "PackagePath": "staticwebassets/ShakaPlayerThumbnail.bundle.scp.css"
     },
     {
-      "Id": "/Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/IntoVideo.mp4",
-      "PackagePath": "staticwebassets/IntoVideo.mp4"
-    },
-    {
       "Id": "/Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/css/site.css",
       "PackagePath": "staticwebassets/css/site.css"
     },
@@ -251,14 +247,6 @@
     {
       "Id": "/Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/lib/jquery/dist/jquery.min.map",
       "PackagePath": "staticwebassets/lib/jquery/dist/jquery.min.map"
-    },
-    {
-      "Id": "/Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/previews/output.png",
-      "PackagePath": "staticwebassets/previews/output.png"
-    },
-    {
-      "Id": "/Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/previews/thumbnails.vtt",
-      "PackagePath": "staticwebassets/previews/thumbnails.vtt"
     },
     {
       "Id": "obj/Debug/net8.0/staticwebassets/msbuild.ShakaPlayerThumbnail.Microsoft.AspNetCore.StaticWebAssets.props",
