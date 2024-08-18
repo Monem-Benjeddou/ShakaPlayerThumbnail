@@ -21,7 +21,6 @@
     environment:
       - MINIO_ROOT_USER=root
       - MINIO_ROOT_PASSWORD=\AS60S;yD4cs4l`]3~|/8<xpY7VqJ4H
-      - MINIO_BROWSER_REDIRECT_URL=https://minio-console.john-group.org
     volumes:
       - /home/monem/minio/data:/data
     ports:
