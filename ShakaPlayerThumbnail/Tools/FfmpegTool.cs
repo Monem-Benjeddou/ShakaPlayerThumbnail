@@ -24,45 +24,49 @@ namespace ShakaPlayerThumbnail.Tools
                                "scale=320:-1," +
                                $"tile={columns}x1\" " +
                                $"-vsync vfr -y \"{outputImagePath}\"";
-
+            Console.WriteLine(arguments);
             RunFFmpeg(arguments);
 
-            string previewsFolder = "/data/previews";  // Updated to Docker volume path
+            string previewsFolder = "/data/previews"; 
             string outputVttPath = Path.Combine(previewsFolder, "thumbnails.vtt");
             GenerateVTT(outputVttPath, videoDuration, 160, 90, columns, 1);
         }
 
         private static double GetVideoDuration(string videoPath)
         {
-            string ffprobeArguments = $"-v error -select_streams v:0 -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{videoPath}\"";
-            using (Process ffprobeProcess = new Process
-                   {
-                       StartInfo = new ProcessStartInfo
-                       {
-                           FileName = "ffprobe",
-                           Arguments = ffprobeArguments,
-                           RedirectStandardOutput = true,
-                           RedirectStandardError = true,
-                           UseShellExecute = false,
-                           CreateNoWindow = true
-                       }
-                   })
+            Console.WriteLine("Fetching video duration for: " + videoPath);
+            string arguments = $"-i \"{videoPath}\" -show_entries format=duration -v quiet -of csv=\"p=0\"";
+            Console.WriteLine("Thumbnails: ffmpeg " + arguments);
+            using (var process = new Process())
             {
-                ffprobeProcess.Start();
-                string output = ffprobeProcess.StandardOutput.ReadToEnd();
-                ffprobeProcess.WaitForExit();
+                process.StartInfo.FileName = "ffmpeg";
+                process.StartInfo.Arguments = arguments;
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.RedirectStandardError = true;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.CreateNoWindow = true;
+                process.Start();
 
-                if (double.TryParse(output.Trim(), out double duration))
+                string result = process.StandardOutput.ReadToEnd();
+                string error = process.StandardError.ReadToEnd();
+                process.WaitForExit();
+
+                if (!string.IsNullOrEmpty(error))
+                {
+                    Console.WriteLine("Error fetching video duration: " + error);
+                    throw new InvalidOperationException($"Could not determine video duration. Error: {error}");
+                }
+
+                if (double.TryParse(result.Trim(), out double duration))
                 {
                     return duration;
                 }
                 else
                 {
-                    throw new InvalidOperationException("Could not determine video duration.");
+                    throw new InvalidOperationException("Could not parse video duration.");
                 }
             }
         }
-
         private static void RunFFmpeg(string arguments)
         {
             using (Process ffmpegProcess = new Process

@@ -43,23 +43,22 @@ namespace ShakaPlayerThumbnail.Controllers
             var parameters = new GetPreSignedUrlRequest
             {
                 BucketName = "videos",
-                Key = "IntoVideo.mp4",
-                Expires = DateTime.UtcNow.AddHours(1)
+                Key = "video.mp4",
+                Expires = DateTime.UtcNow.AddHours(2)
             };
 
-            var preSignUrl = _s3Client.GetPreSignedURL(parameters);
+            var preSignUrl =  _s3Client.GetPreSignedURL(parameters);
 
-            string previewsFolder = "/data/previews";  // Updated to Docker volume path
+            string previewsFolder = "/data/previews";  
             string outputImagePath = Path.Combine(previewsFolder, "output.png");
             string vttFilePath = Path.Combine(previewsFolder, "thumbnails.vtt");
-            string absoluteVideoPath = Path.Combine("/data/videos", "IntoVideo.mp4");
 
             if (!Directory.Exists(previewsFolder))
             {
                 Directory.CreateDirectory(previewsFolder);
             }
 
-            FfmpegTool.GenerateSpritePreview(absoluteVideoPath, outputImagePath);
+            FfmpegTool.GenerateSpritePreview(preSignUrl, outputImagePath);
 
             // Create URL for the VTT and PNG files in the Docker volume
             string vttUrl = "/previews/thumbnails.vtt";
