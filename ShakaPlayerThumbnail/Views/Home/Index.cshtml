@@ -1,7 +1,8 @@
 ﻿@model Tuple<string, string>
 <title>Shaka Player in .NET MVC</title>
-<style>.video-container {
-    position: relative; /* Container for relative positioning */
+<style>
+  .video-container {
+    position: relative;
   }
 
   #video {
@@ -13,7 +14,7 @@
   }
 
   #thumb {
-    z-index: 20; /* Ensure thumbnail is on top */
+    z-index: 20;
     width: 160px;
     height: 90px;
     pointer-events: none;
@@ -26,13 +27,12 @@
 
   #seekBar {
     position: absolute;
-    bottom: 20px; /* Position the seek bar a bit from the bottom of the video */
+    bottom: 30px;
     left: 0;
     right: 0;
-    height: 10px;
-    background-color: rgba(0, 0, 0, 0.5);
-    cursor: pointer;
+    height: 5px;
     border-radius: 5px;
+    cursor: pointer; 
   }
 
   #error {
@@ -46,7 +46,7 @@
   <div class="card shadow p-4">
     <div class="video-container mb-4">
       <video id="video" class="rounded mb-3" controls autoplay aria-label="Video player"></video>
-      <div id="seekBar" class="w-100 bg-light"></div>
+      <div id="seekBar" class="w-100"></div>
     </div>
 
     <div id="thumb" role="tooltip" aria-hidden="true"></div>
@@ -54,7 +54,8 @@
   </div>
 </div>
 
-<script>document.addEventListener('DOMContentLoaded', async () => {
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
     const video = document.getElementById('video');
     const errorDisplay = document.getElementById('error');
     const thumbElement = document.getElementById('thumb');
@@ -94,25 +95,23 @@
 
           if (thumbnail && thumbnail.uris.length > 0) {
             const imageUrl = thumbnail.uris[0].split('#')[0];
-
-            // Debug: Check values
-            console.log(`Thumbnail URL: ${imageUrl}`);
-            console.log(`Thumbnail Position: (${thumbnail.positionX}, ${thumbnail.positionY})`);
-            console.log(`Thumbnail Size: ${thumbnail.width}x${thumbnail.height}`);
-
             const x = thumbnail.positionX || 0;
             const y = thumbnail.positionY || 0;
             const width = thumbnail.width || 160;
             const height = thumbnail.height || 90;
 
+            // Set the thumbnail image and size
             thumbElement.style.backgroundImage = `url(${imageUrl})`;
             thumbElement.style.backgroundPosition = `-${x}px -${y}px`;
             thumbElement.style.width = `${width}px`;
             thumbElement.style.height = `${height}px`;
 
-            // Position thumbnail on top of seek bar
-            const thumbX = event.pageX - thumbElement.clientWidth / 2;
-            const thumbY = seekBar.getBoundingClientRect().top - thumbElement.clientHeight - 10;
+            // Calculate the position of the thumbnail above the seek bar
+            const seekBarRect = seekBar.getBoundingClientRect();
+            const thumbX = event.pageX - seekBarRect.left - (thumbElement.clientWidth /2)+30; // Center thumbnail relative to the mouse
+            const thumbY = seekBarRect.top - thumbElement.clientHeight - 190; // Place it 10px above the seek bar
+
+            // Apply the calculated positions
             thumbElement.style.left = `${thumbX}px`;
             thumbElement.style.top = `${thumbY}px`;
             thumbElement.style.display = 'block';
@@ -121,7 +120,11 @@
           console.error('Error getting thumbnail:', error);
           errorDisplay.textContent = `Error getting thumbnail: ${error.message}`;
         }
-      }, 10));
+      }, 5));
+
+      seekBar.addEventListener('mouseleave', () => {
+        thumbElement.style.display = 'none'; // Hide thumbnail when the mouse leaves the seek bar
+      });
 
       seekBar.addEventListener('mouseleave', () => {
         thumbElement.style.display = 'none';
