@@ -1,19 +1,52 @@
-﻿@model Tuple<string, string>
-<title>Shaka Player in .NET MVC</title>
+﻿<div id="video-container" class="video-container">
+  <video id="video"></video>
+  <div id="video-controls" class="controls">
+    <button id="play-pause" class="control-button">Play</button>
+    <input type="range" id="seek-bar" value="0">
+    <div id="thumb" class="thumbnail"></div> <!-- Thumbnail element -->
+    <button id="mute" class="control-button">Mute</button>
+    <input type="range" id="volume-bar" min="0" max="1" step="0.1" value="1">
+    <button id="full-screen" class="control-button">Full Screen</button>
+  </div>
+  <div id="error" class="error-message"></div> <!-- Error message element -->
+</div>
+
 <style>
   .video-container {
     position: relative;
-  }
-
-  #video {
     width: 100%;
-    height: auto;
-    max-height: 500px;
-    border-radius: 10px;
-    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1);
+    max-width: 800px;
   }
 
-  #thumb {
+  video {
+    width: 100%;
+  }
+
+  .controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    display: flex;
+    align-items: center;
+  }
+
+  .control-button {
+    background: none;
+    border: none;
+    color: white;
+    margin-right: 10px;
+    cursor: pointer;
+  }
+
+  #seek-bar, #volume-bar {
+    flex-grow: 1;
+    margin-right: 10px;
+  }
+
+  .thumbnail{
     z-index: 20;
     width: 160px;
     height: 90px;
@@ -25,56 +58,88 @@
     display: none;
   }
 
-  #seekBar {
-    position: absolute;
-    bottom: 30px;
-    left: 0;
-    right: 0;
-    height: 5px;
-    border-radius: 5px;
-    cursor: pointer; 
-  }
-
-  #error {
+  .error-message {
     color: red;
     margin-top: 10px;
   }
 </style>
-<div class="container mt-5">
-  <h2 class="text-center mb-4">Shaka Player in .NET MVC</h2>
-
-  <div class="card shadow p-4">
-    <div class="video-container mb-4">
-      <video id="video" class="rounded mb-3" controls autoplay aria-label="Video player"></video>
-      <div id="seekBar" class="w-100"></div>
-    </div>
-
-    <div id="thumb" role="tooltip" aria-hidden="true"></div>
-    <div id="error" class="text-danger" role="alert"></div>
-  </div>
-</div>
 
 <script>
   document.addEventListener('DOMContentLoaded', async () => {
     const video = document.getElementById('video');
-    const errorDisplay = document.getElementById('error');
+    const videoContainer = document.getElementById('video-container');
+    const playPauseButton = document.getElementById('play-pause');
+    const muteButton = document.getElementById('mute');
+    const fullScreenButton = document.getElementById('full-screen');
+    const seekBar = document.getElementById('seek-bar');
+    const volumeBar = document.getElementById('volume-bar');
     const thumbElement = document.getElementById('thumb');
-    const seekBar = document.getElementById('seekBar');
+    const errorDisplay = document.getElementById('error');
 
+    // Initialize Shaka Player
     const player = new shaka.Player(video);
-
-    player.addEventListener('error', (event) => {
-      errorDisplay.textContent = `Error: ${event.detail.message}`;
-    });
 
     try {
       const videoUrl = "@Html.Raw(Model.Item1)";
       const vttUrl = "@Html.Raw(Model.Item2)";
       await player.load(videoUrl);
-      await setupThumbnails(player, thumbElement, vttUrl);
+      console.log('The video has now been loaded!');
+      await setupThumbnails(player, thumbElement, vttUrl); // Set up thumbnails
     } catch (error) {
+      console.error('Error code', error.code, 'object', error);
       errorDisplay.textContent = `Error loading video: ${error.message}`;
     }
+
+    // Play/Pause functionality
+    playPauseButton.addEventListener('click', () => {
+      if (video.paused) {
+        video.play();
+        playPauseButton.textContent = 'Pause';
+      } else {
+        video.pause();
+        playPauseButton.textContent = 'Play';
+      }
+    });
+
+    muteButton.addEventListener('click', () => {
+      if (video.muted) {
+        video.muted = false;
+        muteButton.textContent = 'Mute';
+      } else {
+        video.muted = true;
+        muteButton.textContent = 'Unmute';
+      }
+    });
+
+    fullScreenButton.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        if (videoContainer.requestFullscreen) {
+          videoContainer.requestFullscreen();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    });
+
+    seekBar.addEventListener('change', () => {
+      const time = video.duration * (seekBar.value / 100);
+      video.currentTime = time;
+    });
+
+    video.addEventListener('timeupdate', () => {
+      const value = (100 / video.duration) * video.currentTime;
+      seekBar.value = value;
+    });
+
+    volumeBar.addEventListener('change', () => {
+      video.volume = volumeBar.value;
+    });
+
+    player.addEventListener('error', (event) => {
+      console.error('Error code', event.detail.code, 'object', event.detail);
+    });
   });
 
   async function setupThumbnails(player, thumbElement, vttUrl) {
@@ -85,10 +150,13 @@
         throw new Error('Thumbnail track could not be added.');
       }
 
+      const seekBar = document.getElementById('seek-bar');
+
       seekBar.addEventListener('mousemove', debounce(async (event) => {
         const duration = player.seekRange().end;
         const percent = event.offsetX / seekBar.clientWidth;
         const position = percent * duration;
+
 
         try {
           const thumbnail = await player.getThumbnails(thumbnailTrack.id, position);
@@ -100,18 +168,15 @@
             const width = thumbnail.width || 160;
             const height = thumbnail.height || 90;
 
-            // Set the thumbnail image and size
             thumbElement.style.backgroundImage = `url(${imageUrl})`;
             thumbElement.style.backgroundPosition = `-${x}px -${y}px`;
             thumbElement.style.width = `${width}px`;
             thumbElement.style.height = `${height}px`;
 
-            // Calculate the position of the thumbnail above the seek bar
             const seekBarRect = seekBar.getBoundingClientRect();
             const thumbX = event.pageX - seekBarRect.left - (thumbElement.clientWidth /2)+30; // Center thumbnail relative to the mouse
-            const thumbY = seekBarRect.top - thumbElement.clientHeight - 190; // Place it 10px above the seek bar
+            const thumbY = -thumbElement.clientHeight; // Place it 10px above the seek bar
 
-            // Apply the calculated positions
             thumbElement.style.left = `${thumbX}px`;
             thumbElement.style.top = `${thumbY}px`;
             thumbElement.style.display = 'block';
@@ -123,15 +188,11 @@
       }, 5));
 
       seekBar.addEventListener('mouseleave', () => {
-        thumbElement.style.display = 'none'; // Hide thumbnail when the mouse leaves the seek bar
-      });
-
-      seekBar.addEventListener('mouseleave', () => {
-        thumbElement.style.display = 'none';
+        thumbElement.style.display = 'none'; 
       });
     } catch (error) {
       console.error('Failed to set up thumbnails:', error);
-      errorDisplay.textContent = `Failed to set up thumbnails: ${error.message}`;
+      document.getElementById('error').textContent = `Failed to set up thumbnails: ${error.message}`;
     }
   }
 
