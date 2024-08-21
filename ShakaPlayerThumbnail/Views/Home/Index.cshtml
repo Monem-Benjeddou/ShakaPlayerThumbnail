@@ -112,6 +112,7 @@
           const percent = event.offsetX / seekBar.clientWidth;
           const position = percent * duration;
 
+
           try {
             const thumbnail = await player.getThumbnails(thumbnailTrack.id, position);
 
@@ -119,8 +120,8 @@
               const imageUrl = thumbnail.uris[0].split('#')[0];
               const x = thumbnail.positionX || 0;
               const y = thumbnail.positionY || 0;
-              const width = thumbnail.width || 120;
-              const height = thumbnail.height || 67.5;
+              const width = thumbnail.width || 160;
+              const height = thumbnail.height || 90;
 
               thumbElement.style.backgroundImage = `url(${imageUrl})`;
               thumbElement.style.backgroundPosition = `-${x}px -${y}px`;
@@ -128,13 +129,11 @@
               thumbElement.style.height = `${height}px`;
 
               const seekBarRect = seekBar.getBoundingClientRect();
-              let thumbX = event.pageX - seekBarRect.left - (thumbElement.clientWidth / 2);
-              let thumbY = seekBarRect.top - thumbElement.clientHeight - 10; // Offset above the seek bar
+              let thumbX = event.pageX - seekBarRect.left - (thumbElement.clientWidth /2)+30;
+              let thumbY;
 
-              if (document.fullscreenElement) {
-                thumbY = seekBarRect.top - thumbElement.clientHeight - 10; // Adjust to stay above the seek bar in fullscreen mode
-              }
-
+                 thumbY = -thumbElement.clientHeight; 
+              
               thumbElement.style.left = `${thumbX}px`;
               thumbElement.style.top = `${thumbY}px`;
               thumbElement.style.display = 'block';
@@ -152,6 +151,14 @@
         console.error('Failed to set up thumbnails:', error);
         document.getElementById('error').textContent = `Failed to set up thumbnails: ${error.message}`;
       }
+    }
+
+    function debounce(func, delay) {
+      let timer;
+      return function (...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => func.apply(this, args), delay);
+      };
     }
 
   function debounce(func, delay) {
