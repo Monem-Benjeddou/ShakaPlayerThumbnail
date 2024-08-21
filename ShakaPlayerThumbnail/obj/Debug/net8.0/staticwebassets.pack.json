@@ -9,6 +9,10 @@
       "PackagePath": "staticwebassets/css/site.css"
     },
     {
+      "Id": "/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/css/videoPlayerstyles.css",
+      "PackagePath": "staticwebassets/css/videoPlayerstyles.css"
+    },
+    {
       "Id": "/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/favicon.ico",
       "PackagePath": "staticwebassets/favicon.ico"
     },
@@ -247,6 +251,26 @@
     {
       "Id": "/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/lib/jquery/dist/jquery.min.map",
       "PackagePath": "staticwebassets/lib/jquery/dist/jquery.min.map"
+    },
+    {
+      "Id": "/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/media/fullscreen-icon.svg",
+      "PackagePath": "staticwebassets/media/fullscreen-icon.svg"
+    },
+    {
+      "Id": "/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/media/mute-icon.svg",
+      "PackagePath": "staticwebassets/media/mute-icon.svg"
+    },
+    {
+      "Id": "/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/media/pause-icon.svg",
+      "PackagePath": "staticwebassets/media/pause-icon.svg"
+    },
+    {
+      "Id": "/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/media/play-icon.svg",
+      "PackagePath": "staticwebassets/media/play-icon.svg"
+    },
+    {
+      "Id": "/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/media/unmute-icon.svg",
+      "PackagePath": "staticwebassets/media/unmute-icon.svg"
     },
     {
       "Id": "/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/previews/output.png",

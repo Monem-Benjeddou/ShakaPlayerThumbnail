@@ -1,81 +1,44 @@
-﻿<div id="video-container" class="video-container">
+﻿<div id="video-container" class="video-container" controller>
   <video id="video"></video>
   <div id="video-controls" class="controls">
-    <button id="play-pause" class="control-button">Play</button>
-    <input type="range" id="seek-bar" value="0">
-    <div id="thumb" class="thumbnail"></div> <!-- Thumbnail element -->
-    <button id="mute" class="control-button">Mute</button>
-    <input type="range" id="volume-bar" min="0" max="1" step="0.1" value="1">
-    <button id="full-screen" class="control-button">Full Screen</button>
+    <button id="play-pause" class="control-button">
+      <img src="/media/play-icon.svg" alt="Play" id="play-icon">
+      <img src="/media/pause-icon.svg" alt="Pause" id="pause-icon" style="display: none;">
+    </button>
+    <input type="range" id="seek-bar" min="0" max="100" value="0">
+    <div id="thumb" class="thumbnail"></div>
+    <button id="mute" class="control-button">
+      <img src="/media/unmute-icon.svg" alt="Mute" id="mute-icon">
+      <img src="/media/mute-icon.svg" alt="Unmute" id="unmute-icon" style="display: none;">
+    </button>
+    <div id="volume-container">
+      <input type="range" id="volume-bar" min="0" max="1" step="0.1" value="1">
+    </div>
+    <button id="full-screen" class="control-button">
+      <img src="/media/fullscreen-icon.svg" alt="Full Screen" id="fullscreen-icon">
+    </button>
   </div>
-  <div id="error" class="error-message"></div> <!-- Error message element -->
+  <div id="error" class="error-message"></div>
 </div>
 
-<style>
-  .video-container {
-    position: relative;
-    width: 100%;
-    max-width: 800px;
-  }
 
-  video {
-    width: 100%;
-  }
 
-  .controls {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    padding: 10px;
-    display: flex;
-    align-items: center;
-  }
-
-  .control-button {
-    background: none;
-    border: none;
-    color: white;
-    margin-right: 10px;
-    cursor: pointer;
-  }
-
-  #seek-bar, #volume-bar {
-    flex-grow: 1;
-    margin-right: 10px;
-  }
-
-  .thumbnail{
-    z-index: 20;
-    width: 160px;
-    height: 90px;
-    pointer-events: none;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-    position: absolute;
-    background-size: cover;
-    background-repeat: no-repeat;
-    display: none;
-  }
-
-  .error-message {
-    color: red;
-    margin-top: 10px;
-  }
-</style>
 
 <script>
-  document.addEventListener('DOMContentLoaded', async () => {
+    document.addEventListener('DOMContentLoaded', async () => {
     const video = document.getElementById('video');
-    const videoContainer = document.getElementById('video-container');
     const playPauseButton = document.getElementById('play-pause');
+    const playIcon = document.getElementById('play-icon');
+    const pauseIcon = document.getElementById('pause-icon');
     const muteButton = document.getElementById('mute');
+    const muteIcon = document.getElementById('mute-icon');
+    const unmuteIcon = document.getElementById('unmute-icon');
     const fullScreenButton = document.getElementById('full-screen');
     const seekBar = document.getElementById('seek-bar');
     const volumeBar = document.getElementById('volume-bar');
     const thumbElement = document.getElementById('thumb');
     const errorDisplay = document.getElementById('error');
-
+    const videoContainer = document.getElementById('video-container');
     // Initialize Shaka Player
     const player = new shaka.Player(video);
 
@@ -94,46 +57,38 @@
     playPauseButton.addEventListener('click', () => {
       if (video.paused) {
         video.play();
-        playPauseButton.textContent = 'Pause';
+        playIcon.style.display = 'none';
+        pauseIcon.style.display = 'block';
       } else {
         video.pause();
-        playPauseButton.textContent = 'Play';
+        playIcon.style.display = 'block';
+        pauseIcon.style.display = 'none';
       }
     });
 
     muteButton.addEventListener('click', () => {
-      if (video.muted) {
-        video.muted = false;
-        muteButton.textContent = 'Mute';
-      } else {
-        video.muted = true;
-        muteButton.textContent = 'Unmute';
-      }
+      video.muted = !video.muted;
+      muteIcon.style.display = video.muted ? 'none' : 'block';
+      unmuteIcon.style.display = video.muted ? 'block' : 'none';
     });
 
     fullScreenButton.addEventListener('click', () => {
       if (!document.fullscreenElement) {
-        if (videoContainer.requestFullscreen) {
-          videoContainer.requestFullscreen();
-        }
+        videoContainer.requestFullscreen();
       } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        }
+        document.exitFullscreen();
       }
     });
 
-    seekBar.addEventListener('change', () => {
-      const time = video.duration * (seekBar.value / 100);
-      video.currentTime = time;
+    seekBar.addEventListener('input', () => {
+      video.currentTime = video.duration * (seekBar.value / 100);
     });
 
     video.addEventListener('timeupdate', () => {
-      const value = (100 / video.duration) * video.currentTime;
-      seekBar.value = value;
+      seekBar.value = (100 / video.duration) * video.currentTime;
     });
 
-    volumeBar.addEventListener('change', () => {
+    volumeBar.addEventListener('input', () => {
       video.volume = volumeBar.value;
     });
 
@@ -142,59 +97,62 @@
     });
   });
 
-  async function setupThumbnails(player, thumbElement, vttUrl) {
-    try {
-      const thumbnailTrack = await player.addThumbnailsTrack(vttUrl);
+    async function setupThumbnails(player, thumbElement, vttUrl) {
+      try {
+        const thumbnailTrack = await player.addThumbnailsTrack(vttUrl);
 
-      if (!thumbnailTrack) {
-        throw new Error('Thumbnail track could not be added.');
-      }
-
-      const seekBar = document.getElementById('seek-bar');
-
-      seekBar.addEventListener('mousemove', debounce(async (event) => {
-        const duration = player.seekRange().end;
-        const percent = event.offsetX / seekBar.clientWidth;
-        const position = percent * duration;
-
-
-        try {
-          const thumbnail = await player.getThumbnails(thumbnailTrack.id, position);
-
-          if (thumbnail && thumbnail.uris.length > 0) {
-            const imageUrl = thumbnail.uris[0].split('#')[0];
-            const x = thumbnail.positionX || 0;
-            const y = thumbnail.positionY || 0;
-            const width = thumbnail.width || 160;
-            const height = thumbnail.height || 90;
-
-            thumbElement.style.backgroundImage = `url(${imageUrl})`;
-            thumbElement.style.backgroundPosition = `-${x}px -${y}px`;
-            thumbElement.style.width = `${width}px`;
-            thumbElement.style.height = `${height}px`;
-
-            const seekBarRect = seekBar.getBoundingClientRect();
-            const thumbX = event.pageX - seekBarRect.left - (thumbElement.clientWidth /2)+30; // Center thumbnail relative to the mouse
-            const thumbY = -thumbElement.clientHeight; // Place it 10px above the seek bar
-
-            thumbElement.style.left = `${thumbX}px`;
-            thumbElement.style.top = `${thumbY}px`;
-            thumbElement.style.display = 'block';
-          }
-        } catch (error) {
-          console.error('Error getting thumbnail:', error);
-          errorDisplay.textContent = `Error getting thumbnail: ${error.message}`;
+        if (!thumbnailTrack) {
+          throw new Error('Thumbnail track could not be added.');
         }
-      }, 5));
 
-      seekBar.addEventListener('mouseleave', () => {
-        thumbElement.style.display = 'none'; 
-      });
-    } catch (error) {
-      console.error('Failed to set up thumbnails:', error);
-      document.getElementById('error').textContent = `Failed to set up thumbnails: ${error.message}`;
+        const seekBar = document.getElementById('seek-bar');
+
+        seekBar.addEventListener('mousemove', debounce(async (event) => {
+          const duration = player.seekRange().end;
+          const percent = event.offsetX / seekBar.clientWidth;
+          const position = percent * duration;
+
+          try {
+            const thumbnail = await player.getThumbnails(thumbnailTrack.id, position);
+
+            if (thumbnail && thumbnail.uris.length > 0) {
+              const imageUrl = thumbnail.uris[0].split('#')[0];
+              const x = thumbnail.positionX || 0;
+              const y = thumbnail.positionY || 0;
+              const width = thumbnail.width || 120;
+              const height = thumbnail.height || 67.5;
+
+              thumbElement.style.backgroundImage = `url(${imageUrl})`;
+              thumbElement.style.backgroundPosition = `-${x}px -${y}px`;
+              thumbElement.style.width = `${width}px`;
+              thumbElement.style.height = `${height}px`;
+
+              const seekBarRect = seekBar.getBoundingClientRect();
+              let thumbX = event.pageX - seekBarRect.left - (thumbElement.clientWidth / 2);
+              let thumbY = seekBarRect.top - thumbElement.clientHeight - 10; // Offset above the seek bar
+
+              if (document.fullscreenElement) {
+                thumbY = seekBarRect.top - thumbElement.clientHeight - 10; // Adjust to stay above the seek bar in fullscreen mode
+              }
+
+              thumbElement.style.left = `${thumbX}px`;
+              thumbElement.style.top = `${thumbY}px`;
+              thumbElement.style.display = 'block';
+            }
+          } catch (error) {
+            console.error('Error getting thumbnail:', error);
+            errorDisplay.textContent = `Error getting thumbnail: ${error.message}`;
+          }
+        }, 5));
+
+        seekBar.addEventListener('mouseleave', () => {
+          thumbElement.style.display = 'none';
+        });
+      } catch (error) {
+        console.error('Failed to set up thumbnails:', error);
+        document.getElementById('error').textContent = `Failed to set up thumbnails: ${error.message}`;
+      }
     }
-  }
 
   function debounce(func, delay) {
     let timer;
@@ -203,4 +161,5 @@
       timer = setTimeout(() => func.apply(this, args), delay);
     };
   }
+
 </script>
