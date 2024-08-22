@@ -129,10 +129,10 @@
               thumbElement.style.height = `${height}px`;
 
               const seekBarRect = seekBar.getBoundingClientRect();
-              let thumbX = event.pageX - seekBarRect.left - (thumbElement.clientWidth /2)+30;
+              let thumbX = event.pageX - seekBarRect.left ;
               let thumbY;
 
-                 thumbY = -thumbElement.clientHeight; 
+              thumbY = -thumbElement.clientHeight; 
               
               thumbElement.style.left = `${thumbX}px`;
               thumbElement.style.top = `${thumbY}px`;
