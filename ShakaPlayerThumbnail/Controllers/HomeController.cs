@@ -39,26 +39,27 @@ namespace ShakaPlayerThumbnail.Controllers
             _s3Client = new AmazonS3Client(credentials, config);
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
             var date = DateTime.Now;
+            var videoName = "video";
             var parameters = new GetPreSignedUrlRequest()
             {
                 BucketName = "videos",
-                Key = "video.mp4",
+                Key = $"{videoName}.mp4",
                 Expires = DateTime.UtcNow.AddHours(1)
             };
 
-            var preSignUrl = _s3Client.GetPreSignedURL(parameters);
+            var preSignUrl = await _s3Client.GetPreSignedURLAsync(parameters);
 
             string previewsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "previews");
-            string outputImagePath = Path.Combine(previewsFolder, "output.png");
-            var model = new Tuple<string, string>(preSignUrl, "/previews/thumbnails.vtt");
+            string outputImagePath = Path.Combine(previewsFolder, $"{videoName}");
+            var model = new Tuple<string, string>(preSignUrl, $"/previews/{videoName}.vtt");
 
             if (Directory.Exists(previewsFolder)) 
                 return View((object)model);
             Directory.CreateDirectory(previewsFolder);
-            FfmpegTool.GenerateSpritePreview(preSignUrl, outputImagePath);
+            await FfmpegTool.GenerateSpritePreview(preSignUrl, outputImagePath,videoName);
 
 
 
