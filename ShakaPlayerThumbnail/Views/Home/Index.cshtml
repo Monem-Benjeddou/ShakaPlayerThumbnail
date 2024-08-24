@@ -47,7 +47,7 @@
       const vttUrl = "@Html.Raw(Model.Item2)";
       await player.load(videoUrl);
       console.log('The video has now been loaded!');
-      await setupThumbnails(player, thumbElement, vttUrl); // Set up thumbnails
+      await setupThumbnails(player, thumbElement, vttUrl);
     } catch (error) {
       console.error('Error code', error.code, 'object', error);
       errorDisplay.textContent = `Error loading video: ${error.message}`;
@@ -120,7 +120,7 @@
             const x = thumbnail.positionX || 0;
             const y = thumbnail.positionY || 0;
             const width = thumbnail.width || 160;
-            const height = thumbnail.height || 30;
+            const height = thumbnail.height || 90;
 
             thumbElement.style.backgroundImage = `url(${imageUrl})`;
             thumbElement.style.backgroundPosition = `-${x}px -${y}px`;
@@ -128,7 +128,7 @@
             thumbElement.style.height = `${height}px`;
 
             const seekBarRect = seekBar.getBoundingClientRect();
-            let thumbX = event.pageX || event.touches[0].pageX - seekBarRect.left;
+            let thumbX = event.pageX - seekBarRect.left ;
             let thumbY = -thumbElement.clientHeight;
 
             thumbElement.style.left = `${thumbX}px`;
