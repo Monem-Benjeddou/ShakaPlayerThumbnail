@@ -1,3 +1,4 @@
+
 .video-container {
     position: relative;
     width: 100%;
@@ -7,6 +8,7 @@
 
 video {
     width: 100%;
+    height: auto;
 }
 
 .controls {
@@ -66,7 +68,7 @@ video {
 @media (max-width: 600px) {
     .controls {
         padding: 5px;
-        flex-direction: row;
+        flex-direction: column;
     }
 
     #seek-bar, #volume-bar {
