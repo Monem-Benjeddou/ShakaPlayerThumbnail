@@ -273,6 +273,30 @@
       "PackagePath": "staticwebassets/media/unmute-icon.svg"
     },
     {
+      "Id": "/Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/previews/video.vtt",
+      "PackagePath": "staticwebassets/previews/video.vtt"
+    },
+    {
+      "Id": "/Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/previews/video1.png",
+      "PackagePath": "staticwebassets/previews/video1.png"
+    },
+    {
+      "Id": "/Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/previews/video2.png",
+      "PackagePath": "staticwebassets/previews/video2.png"
+    },
+    {
+      "Id": "/Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/previews/video3.png",
+      "PackagePath": "staticwebassets/previews/video3.png"
+    },
+    {
+      "Id": "/Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/previews/video4.png",
+      "PackagePath": "staticwebassets/previews/video4.png"
+    },
+    {
+      "Id": "/Users/macbook/RiderProjects/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/previews/video5.png",
+      "PackagePath": "staticwebassets/previews/video5.png"
+    },
+    {
       "Id": "obj/Debug/net8.0/staticwebassets/msbuild.ShakaPlayerThumbnail.Microsoft.AspNetCore.StaticWebAssets.props",
       "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
     },

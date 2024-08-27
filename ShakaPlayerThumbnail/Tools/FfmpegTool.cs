@@ -11,6 +11,11 @@ namespace ShakaPlayerThumbnail.Tools
         {
             var intervalSeconds = 12;
             var directoryPath = Path.GetDirectoryName(outputImagePath);
+            if (!File.Exists(videoPath))
+            {
+                throw new FileNotFoundException($"Video file not found: {videoPath}");
+            }
+
             if (!Directory.Exists(directoryPath))
             {
                 Directory.CreateDirectory(directoryPath);
@@ -18,8 +23,6 @@ namespace ShakaPlayerThumbnail.Tools
 
             var videoDuration = GetVideoDuration(videoPath);
             var totalFrames = (int)Math.Ceiling(videoDuration / intervalSeconds);
-            var columnsPerTile = totalFrames / numberOfTiles;
-
             var sectionDuration = videoDuration / numberOfTiles;
 
             // Track actual generated thumbnails
@@ -28,9 +31,12 @@ namespace ShakaPlayerThumbnail.Tools
             for (int i = 1; i <= numberOfTiles; i++)
             {
                 double startTime = (i - 1) * sectionDuration;
+                double endTime = Math.Min(i * sectionDuration, videoDuration);
+                int framesInThisSection = (int)Math.Ceiling((endTime - startTime) / intervalSeconds);
+                int columnsPerTile = framesInThisSection;  // Calculate based on actual frames
 
                 // Construct FFmpeg arguments with the tile filter
-                var arguments = $"-i \"{videoPath}\" -ss {startTime} -t {sectionDuration} " +
+                var arguments = $"-i \"{videoPath}\" -ss {startTime} -t {endTime - startTime} " +
                                 $"-vf \"select=not(mod(t\\,{intervalSeconds})),scale=160:-1,tile={columnsPerTile}x1\" " +
                                 $"-threads 0 -preset ultrafast -y \"{outputImagePath}{i}.png\"";
 
@@ -44,9 +50,8 @@ namespace ShakaPlayerThumbnail.Tools
             var previewsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "previews");
             var outputVttPath = Path.Combine(previewsFolder, $"{videoName}.vtt");
 
-            GenerateVTT(outputVttPath, videoDuration, 160, 90, columnsPerTile, videoName, numberOfTiles, totalThumbnails);
+            GenerateVTT(outputVttPath, videoDuration, 160, 90, videoName, numberOfTiles, intervalSeconds, totalThumbnails);
         }
-
         private static double GetVideoDuration(string videoPath)
         {
             string ffprobeArguments =
@@ -102,21 +107,22 @@ namespace ShakaPlayerThumbnail.Tools
         }
 
         private static void GenerateVTT(string outputVttPath, double totalDuration, int thumbnailWidth,
-            int thumbnailHeight, int columns, string videoName, int numberOfTiles, int totalThumbnails)
+            int thumbnailHeight, string videoName, int numberOfTiles, int intervalSeconds, int totalThumbnails)
         {
             using StreamWriter writer = new StreamWriter(outputVttPath);
-            double durationPerThumbnail = totalDuration / totalThumbnails;
             writer.WriteLine("WEBVTT");
 
             for (int j = 1; j <= numberOfTiles; j++)
             {
-                for (int i = 0; i < columns; i++)
-                {
-                    int thumbnailIndex = (j - 1) * columns + i;
-                    double startTime = thumbnailIndex * durationPerThumbnail;
-                    double endTime = startTime + durationPerThumbnail;
+                int framesInThisSection = totalThumbnails / numberOfTiles;
+                double sectionStartTime = (j - 1) * framesInThisSection * intervalSeconds;
 
-                    int xOffset = (i % columns) * thumbnailWidth;
+                for (int i = 0; i < framesInThisSection; i++)
+                {
+                    double startTime = sectionStartTime + i * intervalSeconds;
+                    double endTime = startTime + intervalSeconds;
+
+                    int xOffset = i * thumbnailWidth;
                     int yOffset = 0; // Since it's a 1-row sprite, yOffset is 0.
 
                     writer.WriteLine(
@@ -127,5 +133,6 @@ namespace ShakaPlayerThumbnail.Tools
                 }
             }
         }
+
     }
 }
