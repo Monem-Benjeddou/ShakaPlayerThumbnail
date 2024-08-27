@@ -46,7 +46,7 @@ namespace ShakaPlayerThumbnail.Controllers
             {
                 BucketName = "videos",
                 Key = $"{videoName}.mp4",
-                Expires = DateTime.UtcNow.AddHours(1)
+                Expires = DateTime.UtcNow.AddMinutes(20)
             };
 
             var preSignUrl = await _s3Client.GetPreSignedURLAsync(parameters);
