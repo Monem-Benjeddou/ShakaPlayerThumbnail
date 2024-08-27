@@ -4,8 +4,8 @@
       context: .
       dockerfile: ShakaPlayerThumbnail/Dockerfile
     environment:
-      - access_key=OyNWsqRLkvWYokHckqm0
-      - secret_key=Ia08qOvDO5guqma1dCp3p8vAXu3S8Jz0MnDbMzHU
+      - access_key=b8uGptYNhcPKikLNq7k1
+      - secret_key=SrisPrHVFVbnaYK8xb3BJcSBGL14mB8IyvdiBwbU
       - service_url=https://minio.john-group.org
     networks:
       - thumbnail-network
