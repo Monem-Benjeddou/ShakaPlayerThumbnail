@@ -59,8 +59,6 @@ namespace ShakaPlayerThumbnail.Controllers
             Directory.CreateDirectory(previewsFolder);
             await FfmpegTool.GenerateSpritePreview(preSignUrl, outputImagePath,videoName, 5);
 
-
-
             return View((object)model);
         }
 

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ShakaPlayerThumbnail")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e2a3cd92579fc34538ead9b9b908c1d2ae9c7c69")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ebd02c8583a4280a6b751d30486b0545f11a87bf")]
 [assembly: System.Reflection.AssemblyProductAttribute("ShakaPlayerThumbnail")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ShakaPlayerThumbnail")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
