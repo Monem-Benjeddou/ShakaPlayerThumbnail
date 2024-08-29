@@ -50,7 +50,6 @@ namespace ShakaPlayerThumbnail.Controllers
             };
 
             var preSignUrl = await _s3Client.GetPreSignedURLAsync(parameters);
-
             string previewsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "previews");
             string outputImagePath = Path.Combine(previewsFolder, $"{videoName}");
             var model = new Tuple<string, string>(preSignUrl, $"/previews/{videoName}.vtt");

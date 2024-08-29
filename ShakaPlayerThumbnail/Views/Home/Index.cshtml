@@ -1,13 +1,57 @@
 ﻿<div id="video-container" class="video-container">
   <video id="video" controls></video>
   <div id="seekbar-container" class="seekbar-container">
-    <input type="range" id="seek-bar" min="0" max="100" value="0">
+    <div id="seek-bar"></div>
     <div id="thumb" class="thumbnail"></div>
   </div>
   <div id="error" class="error-message"></div>
 </div>
 
-<script>document.addEventListener('DOMContentLoaded', async () => {
+<style>
+  .video-container {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    margin: auto;
+  }
+
+  #seekbar-container {
+    position: absolute;
+    width: 95%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    bottom: 26px;
+    left: 15px;
+  }
+
+  #seek-bar {
+    height: 5px;
+    cursor: pointer;
+    width: 100%;
+    margin: 0 auto;
+    border-radius: 2px;
+    position: relative;
+  }
+
+  .thumbnail {
+    position: absolute;
+    display: none;
+    background-color: rgba(0, 0, 0, 0.7);
+    background-size: 800px 450px; /* 5x160px = 800px, 5x90px = 450px */
+    width: 160px;
+    height: 90px;
+    pointer-events: none;
+    z-index: 1000;
+    border: 2px solid #fff;
+    border-radius: 4px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    transform: translateX(-50%);
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
     const video = document.getElementById('video');
     const seekBar = document.getElementById('seek-bar');
     const thumbElement = document.getElementById('thumb');
@@ -25,16 +69,17 @@
       errorDisplay.textContent = `Error loading video: ${error.message}`;
     }
 
-    seekBar.addEventListener('input', () => {
-      video.currentTime = video.duration * (seekBar.value / 100);
-    });
-
-    video.addEventListener('timeupdate', () => {
-      seekBar.value = (100 / video.duration) * video.currentTime;
-    });
-
     player.addEventListener('error', (event) => {
       console.error('Error code', event.detail.code, 'object', event.detail);
+    });
+
+    seekBar.addEventListener('click', (event) => {
+      const duration = player.seekRange().end;
+      const percent = (event.offsetX || event.touches[0].clientX - seekBar.getBoundingClientRect().left) / seekBar.clientWidth;
+      const position = percent * duration;
+
+      console.log('Seeking to:', position);
+      video.currentTime = position;
     });
   });
 
@@ -69,9 +114,10 @@
             thumbElement.style.height = `${height}px`;
 
             const seekBarRect = seekBar.getBoundingClientRect();
-            let thumbX = event.pageX - seekBarRect.left - thumbElement.clientWidth / 2;
-            let thumbY = -thumbElement.clientHeight;
+            let thumbX = event.pageX - seekBarRect.left;
+            let thumbY = -thumbElement.clientHeight - 10; // Added spacing from the seek bar
 
+            thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(seekBarRect.width - thumbElement.clientWidth / 2, thumbX));
             thumbElement.style.left = `${thumbX}px`;
             thumbElement.style.top = `${thumbY}px`;
             thumbElement.style.display = 'block';
@@ -100,7 +146,7 @@
 
   function debounce(func, delay) {
     let timer;
-    return function(...args) {
+    return function (...args) {
       clearTimeout(timer);
       timer = setTimeout(() => func.apply(this, args), delay);
     };
