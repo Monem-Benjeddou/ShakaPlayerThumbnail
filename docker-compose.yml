@@ -1,4 +1,6 @@
-﻿services:
+﻿version: '3.8'
+
+services:
   shakaplayerthumbnail:
     build:
       context: .
@@ -34,6 +36,7 @@
       dockerfile: NginxDockerfile
     depends_on:
       - shakaplayerthumbnail
+      - minio
     ports:
       - "80:80"
     networks:
