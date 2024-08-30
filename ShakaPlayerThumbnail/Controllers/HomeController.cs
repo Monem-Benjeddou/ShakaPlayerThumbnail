@@ -42,22 +42,22 @@ namespace ShakaPlayerThumbnail.Controllers
         {
             var date = DateTime.Now;
             var videoName = "video";
-            var parameters = new GetPreSignedUrlRequest()
+            /*var parameters = new GetPreSignedUrlRequest()
             {
                 BucketName = "videos",
                 Key = $"{videoName}.mp4",
                 Expires = DateTime.UtcNow.AddMinutes(20)
             };
 
-            var preSignUrl = await _s3Client.GetPreSignedURLAsync(parameters);
+            var preSignUrl = await _s3Client.GetPreSignedURLAsync(parameters);*/
             string previewsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "previews");
             string outputImagePath = Path.Combine(previewsFolder, $"{videoName}");
-            var model = new Tuple<string, string>(preSignUrl, $"/previews/{videoName}.vtt");
+            var model = new Tuple<string, string>("/video.mp4", $"/previews/{videoName}.vtt");
 
             if (Directory.Exists(previewsFolder)) 
                 return View((object)model);
             Directory.CreateDirectory(previewsFolder);
-            await FfmpegTool.GenerateSpritePreview(preSignUrl, outputImagePath,videoName, 5);
+            await FfmpegTool.GenerateSpritePreview("/video.mp4", outputImagePath,videoName, 5);
 
             return View((object)model);
         }

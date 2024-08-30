@@ -361,6 +361,10 @@
       "PackagePath": "staticwebassets/previews/video9.png"
     },
     {
+      "Id": "/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/video.mp4",
+      "PackagePath": "staticwebassets/video.mp4"
+    },
+    {
       "Id": "obj/Debug/net8.0/staticwebassets/msbuild.ShakaPlayerThumbnail.Microsoft.AspNetCore.StaticWebAssets.props",
       "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
     },
