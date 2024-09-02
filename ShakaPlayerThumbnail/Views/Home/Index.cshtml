@@ -82,6 +82,7 @@
           let offsetX;
           if (event.type.includes('touch')) {
             offsetX = event.touches[0].clientX - seekBarRect.left;
+            video.pause(); // Pause the video on touch devices when previewing starts
           } else {
             offsetX = event.pageX - seekBarRect.left;
           }
@@ -123,6 +124,9 @@
 
         const hideThumbnail = () => {
           thumbElement.style.display = 'none';
+          if (document.fullscreenElement) {
+            video.play(); // Resume the video when thumbnail preview ends on touch devices
+          }
         };
 
         seekBar.addEventListener('mousemove', debounce(showThumbnail, 5));
