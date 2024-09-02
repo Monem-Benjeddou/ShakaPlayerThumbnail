@@ -361,6 +361,10 @@
       "PackagePath": "staticwebassets/previews/video9.png"
     },
     {
+      "Id": "/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/video-player.html",
+      "PackagePath": "staticwebassets/video-player.html"
+    },
+    {
       "Id": "/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/video.mp4",
       "PackagePath": "staticwebassets/video.mp4"
     },

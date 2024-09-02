@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Player</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/3.0.4/shaka-player.ui.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/3.0.4/controls.css">
+</head>
+<body>
+<video id="video" controls></video>
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const video = document.getElementById('video');
+        const player = new shaka.Player(video);
+        let thumbnailTrack;
+
+        // Handle messages from the parent
+        window.addEventListener('message', async (event) => {
+            if (event.data.type === 'showThumbnail') {
+                const { event: mouseEvent } = event.data;
+                await showThumbnail(mouseEvent);
+            }
+        });
+
+        try {
+            const videoUrl = "/video.mp4";
+            const vttUrl = "/preview/video.vtt";
+            await player.load(videoUrl);
+            console.log('The video has now been loaded!');
+            thumbnailTrack = await player.addThumbnailsTrack(vttUrl);
+        } catch (error) {
+            console.error('Error loading video:', error);
+        }
+
+        async function showThumbnail(event) {
+            if (!thumbnailTrack) return;
+
+            const seekBarRect = video.getBoundingClientRect();
+            const duration = player.seekRange().end;
+            const offsetX = event.clientX - seekBarRect.left;
+            const percent = offsetX / seekBarRect.width;
+            const position = percent * duration;
+
+            try {
+                const thumbnail = await player.getThumbnails(thumbnailTrack.id, position);
+
+                if (thumbnail && thumbnail.uris.length > 0) {
+                    const imageUrl = thumbnail.uris[0].split('#')[0];
+                    const x = thumbnail.positionX || 0;
+                    const y = thumbnail.positionY || 0;
+                    const width = thumbnail.width || 160;
+                    const height = thumbnail.height || 90;
+
+                    window.parent.postMessage({
+                        type: 'showThumbnail',
+                        imageUrl,
+                        x,
+                        y,
+                        width,
+                        height,
+                        left: offsetX,
+                        top: -height - 10 // Adjust based on your needs
+                    }, '*');
+                }
+            } catch (error) {
+                console.error('Error getting thumbnail:', error);
+            }
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "Zmsh4SHHeUPZ9y1bdWPUbdRonCN/2WKF4BGwOwm4c3w=",
+  "Hash": "73xhKuO2wJDVqgNfJFg/rgULG6HfvnwIKKXyUTFjMWw=",
   "Source": "ShakaPlayerThumbnail",
   "BasePath": "_content/ShakaPlayerThumbnail",
   "Mode": "Default",
@@ -1744,6 +1744,25 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot/previews/video9.png"
+    },
+    {
+      "Identity": "/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/video-player.html",
+      "SourceId": "ShakaPlayerThumbnail",
+      "SourceType": "Discovered",
+      "ContentRoot": "/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/",
+      "BasePath": "_content/ShakaPlayerThumbnail",
+      "RelativePath": "video-player.html",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot/video-player.html"
     },
     {
       "Identity": "/Users/macbook/RiderProjects/untitled folder/ShakaPlayerThumbnail/ShakaPlayerThumbnail/wwwroot/video.mp4",

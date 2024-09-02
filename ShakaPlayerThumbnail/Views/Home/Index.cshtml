@@ -7,48 +7,6 @@
   <div id="error" class="error-message"></div>
 </div>
 
-<style>
-  .video-container {
-    position: relative;
-    width: 100%;
-    max-width: 800px;
-    margin: auto;
-  }
-
-  #seekbar-container {
-    position: absolute;
-    width: 95%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    bottom: 26px;
-    left: 15px;
-  }
-
-  #seek-bar {
-    height: 5px;
-    cursor: pointer;
-    width: 100%;
-    margin: 0 auto;
-    border-radius: 2px;
-    position: relative;
-  }
-
-  .thumbnail {
-    position: absolute;
-    display: none;
-    background-color: rgba(0, 0, 0, 0.7);
-    background-size: 800px 450px; /* 5x160px = 800px, 5x90px = 450px */
-    width: 160px;
-    height: 90px;
-    pointer-events: none;
-    z-index: 1000;
-    border: 2px solid #fff;
-    border-radius: 4px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-    transform: translateX(-50%);
-  }
-</style>
 
 <script>
   document.addEventListener('DOMContentLoaded', async () => {
@@ -56,14 +14,16 @@
     const seekBar = document.getElementById('seek-bar');
     const thumbElement = document.getElementById('thumb');
     const errorDisplay = document.getElementById('error');
+    const videoContainer = document.getElementById('video-container');
     const player = new shaka.Player(video);
+    let thumbnailTrack;
 
     try {
       const videoUrl = "@Html.Raw(Model.Item1)";
       const vttUrl = "@Html.Raw(Model.Item2)";
       await player.load(videoUrl);
       console.log('The video has now been loaded!');
-      await setupThumbnails(player, thumbElement, vttUrl);
+      thumbnailTrack = await setupThumbnails(player, thumbElement, vttUrl);
     } catch (error) {
       console.error('Error code', error.code, 'object', error);
       errorDisplay.textContent = `Error loading video: ${error.message}`;
@@ -71,6 +31,7 @@
 
     player.addEventListener('error', (event) => {
       console.error('Error code', event.detail.code, 'object', event.detail);
+      errorDisplay.textContent = `Player Error: ${event.detail.message}`;
     });
 
     seekBar.addEventListener('click', (event) => {
@@ -81,74 +42,113 @@
       console.log('Seeking to:', position);
       video.currentTime = position;
     });
-  });
 
-  async function setupThumbnails(player, thumbElement, vttUrl) {
-    try {
-      const thumbnailTrack = await player.addThumbnailsTrack(vttUrl);
+    document.addEventListener('fullscreenchange', () => {
+      adjustSeekbarPosition();
+      reattachEventListeners();
 
-      if (!thumbnailTrack) {
-        throw new Error('Thumbnail track could not be added.');
+      if (document.fullscreenElement) {
+        videoContainer.classList.add('fullscreen');
+      } else {
+        videoContainer.classList.remove('fullscreen');
       }
+    });
 
-      const seekBar = document.getElementById('seek-bar');
+    function adjustSeekbarPosition() {
+      const seekbarContainer = document.getElementById('seekbar-container');
 
-      const showThumbnail = async (event) => {
-        const duration = player.seekRange().end;
-        const percent = (event.offsetX || event.touches[0].clientX - seekBar.getBoundingClientRect().left) / seekBar.clientWidth;
-        const position = percent * duration;
+      if (document.fullscreenElement) {
+        seekbarContainer.style.width = 'calc(100% - 0px)';
+        seekbarContainer.style.left = '0';
+        seekbarContainer.style.bottom = '0';
+      } else {
+        seekbarContainer.style.width = 'calc(100% - 30px)';
+        seekbarContainer.style.left = '15px';
+        seekbarContainer.style.bottom = '10px';
+      }
+    }
 
-        try {
-          const thumbnail = await player.getThumbnails(thumbnailTrack.id, position);
+    async function setupThumbnails(player, thumbElement, vttUrl) {
+      try {
+        const thumbnailTrack = await player.addThumbnailsTrack(vttUrl);
 
-          if (thumbnail && thumbnail.uris.length > 0) {
-            const imageUrl = thumbnail.uris[0].split('#')[0];
-            const x = thumbnail.positionX || 0;
-            const y = thumbnail.positionY || 0;
-            const width = thumbnail.width || 160;
-            const height = thumbnail.height || 90;
-
-            thumbElement.style.backgroundImage = `url(${imageUrl})`;
-            thumbElement.style.backgroundPosition = `-${x}px -${y}px`;
-            thumbElement.style.width = `${width}px`;
-            thumbElement.style.height = `${height}px`;
-
-            const seekBarRect = seekBar.getBoundingClientRect();
-            let thumbX = event.pageX - seekBarRect.left;
-            let thumbY = -thumbElement.clientHeight - 10; // Added spacing from the seek bar
-
-            thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(seekBarRect.width - thumbElement.clientWidth / 2, thumbX));
-            thumbElement.style.left = `${thumbX}px`;
-            thumbElement.style.top = `${thumbY}px`;
-            thumbElement.style.display = 'block';
-          }
-        } catch (error) {
-          console.error('Error getting thumbnail:', error);
-          errorDisplay.textContent = `Error getting thumbnail: ${error.message}`;
+        if (!thumbnailTrack) {
+          throw new Error('Thumbnail track could not be added.');
         }
-      };
 
-      seekBar.addEventListener('mousemove', debounce(showThumbnail, 5));
+        window.showThumbnail = async (event) => {
+          const seekBarRect = seekBar.getBoundingClientRect();
+          const duration = player.seekRange().end;
+
+          const offsetX = event.pageX - seekBarRect.left;
+          const percent = offsetX / seekBarRect.width;
+          const position = percent * duration;
+
+          try {
+            const thumbnail = await player.getThumbnails(thumbnailTrack.id, position);
+            console.log('Thumbnail:', thumbnail);
+
+            if (thumbnail && thumbnail.uris.length > 0) {
+              const imageUrl = thumbnail.uris[0].split('#')[0];
+              const x = thumbnail.positionX || 0;
+              const y = thumbnail.positionY || 0;
+              const width = thumbnail.width || 120;
+              const height = thumbnail.height || 68;
+
+              thumbElement.style.backgroundImage = `url(${imageUrl})`;
+              thumbElement.style.backgroundPosition = `-${x}px -${y}px`;
+              thumbElement.style.width = `${width}px`;
+              thumbElement.style.height = `${height}px`;
+
+              let thumbX = offsetX;
+              let thumbY = -thumbElement.clientHeight - 10;
+
+              thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(seekBarRect.width - thumbElement.clientWidth / 2, thumbX));
+              thumbElement.style.left = `${thumbX}px`;
+              thumbElement.style.top = `${thumbY}px`;
+              thumbElement.style.display = 'block';
+            } else {
+              console.log('No thumbnail found for the position.');
+            }
+          } catch (error) {
+            console.error('Error getting thumbnail:', error);
+            errorDisplay.textContent = `Error getting thumbnail: ${error.message}`;
+          }
+        };
+
+        seekBar.addEventListener('mousemove', debounce(window.showThumbnail, 50));
+        seekBar.addEventListener('mouseleave', () => {
+          thumbElement.style.display = 'none';
+        });
+
+        seekBar.addEventListener('touchstart', window.showThumbnail);
+        seekBar.addEventListener('touchmove', debounce(window.showThumbnail, 50));
+        seekBar.addEventListener('click', window.showThumbnail);
+
+        return thumbnailTrack;
+
+      } catch (error) {
+        console.error('Failed to set up thumbnails:', error);
+        errorDisplay.textContent = `Failed to set up thumbnails: ${error.message}`;
+      }
+    }
+
+    function debounce(func, delay) {
+      let timer;
+      return function (...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => func.apply(this, args), delay);
+      };
+    }
+
+    function reattachEventListeners() {
+      seekBar.addEventListener('mousemove', debounce(window.showThumbnail, 50));
       seekBar.addEventListener('mouseleave', () => {
         thumbElement.style.display = 'none';
       });
-
-      // Handle touch and click events for mobile
-      seekBar.addEventListener('touchstart', showThumbnail);
-      seekBar.addEventListener('touchmove', debounce(showThumbnail, 5));
-      seekBar.addEventListener('click', showThumbnail);
-
-    } catch (error) {
-      console.error('Failed to set up thumbnails:', error);
-      document.getElementById('error').textContent = `Failed to set up thumbnails: ${error.message}`;
+      seekBar.addEventListener('touchstart', window.showThumbnail);
+      seekBar.addEventListener('touchmove', debounce(window.showThumbnail, 50));
+      seekBar.addEventListener('click', window.showThumbnail);
     }
-  }
-
-  function debounce(func, delay) {
-    let timer;
-    return function (...args) {
-      clearTimeout(timer);
-      timer = setTimeout(() => func.apply(this, args), delay);
-    };
-  }
+  });
 </script>
