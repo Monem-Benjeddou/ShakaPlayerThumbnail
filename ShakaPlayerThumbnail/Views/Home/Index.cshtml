@@ -7,8 +7,8 @@
   <div id="error" class="error-message"></div>
 </div>
 
-
-<script>document.addEventListener('DOMContentLoaded', async () => {
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
     const video = document.getElementById('video');
     const seekBar = document.getElementById('seek-bar');
     const thumbElement = document.getElementById('thumb');
@@ -21,15 +21,15 @@
       const videoUrl = "@Html.Raw(Model.Item1)";
       const vttUrl = "@Html.Raw(Model.Item2)";
       await player.load(videoUrl);
-      console.log('The video has now been loaded!');
+      console.log('Video loaded successfully!');
       thumbnailTrack = await setupThumbnails(player, thumbElement, vttUrl);
     } catch (error) {
-      console.error('Error code', error.code, 'object', error);
+      console.error('Error loading video:', error);
       errorDisplay.textContent = `Error loading video: ${error.message}`;
     }
 
     player.addEventListener('error', (event) => {
-      console.error('Error code', event.detail.code, 'object', event.detail);
+      console.error('Player error:', event.detail);
       errorDisplay.textContent = `Player Error: ${event.detail.message}`;
     });
 
@@ -38,7 +38,6 @@
       const percent = (event.offsetX || event.touches[0].clientX - seekBar.getBoundingClientRect().left) / seekBar.clientWidth;
       const position = percent * duration;
 
-      console.log('Seeking to:', position);
       video.currentTime = position;
     });
 
@@ -57,7 +56,7 @@
       const seekbarContainer = document.getElementById('seekbar-container');
 
       if (document.fullscreenElement) {
-        seekbarContainer.style.width = 'calc(100% - 0px)';
+        seekbarContainer.style.width = '100%';
         seekbarContainer.style.left = '0';
         seekbarContainer.style.bottom = '0';
       } else {
@@ -75,8 +74,7 @@
           throw new Error('Thumbnail track could not be added.');
         }
 
-        let lastPreviewPosition; // Variable to store the last position where the thumbnail preview occurred
-        const isMobile = /Mobi|Android/i.test(navigator.userAgent); // Detect mobile devices
+        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
         const showThumbnail = async (event) => {
           const seekBarRect = seekBar.getBoundingClientRect();
@@ -85,8 +83,6 @@
           let offsetX;
           if (event.type.includes('touch')) {
             offsetX = event.touches[0].clientX - seekBarRect.left;
-            lastPreviewPosition = video.currentTime; // Store the position where the thumbnail preview started
-            video.pause(); // Pause the video on touch devices when previewing starts
           } else {
             offsetX = event.pageX - seekBarRect.left;
           }
@@ -96,7 +92,6 @@
 
           try {
             const thumbnail = await player.getThumbnails(thumbnailTrack.id, position);
-            console.log('Thumbnail:', thumbnail);
 
             if (thumbnail && thumbnail.uris.length > 0) {
               const imageUrl = thumbnail.uris[0].split('#')[0];
@@ -111,14 +106,12 @@
               thumbElement.style.height = `${height}px`;
 
               let thumbX = offsetX;
-              let thumbY = -thumbElement.clientHeight - 10;
-
               thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(seekBarRect.width - thumbElement.clientWidth / 2, thumbX));
               thumbElement.style.left = `${thumbX}px`;
               thumbElement.style.top = `-96px`;
               thumbElement.style.display = 'block';
             } else {
-              console.log('No thumbnail found for the position.');
+              console.log('No thumbnail found for this position.');
             }
           } catch (error) {
             console.error('Error getting thumbnail:', error);
@@ -126,20 +119,14 @@
           }
         };
 
-        const handleClick = (event) => {
-          if (isMobile) {
-            if (lastPreviewPosition !== undefined) {
-              video.currentTime = lastPreviewPosition; // Seek to the last preview position
-              video.play(); // Play the video again
-            }
-          }
-        };
-
         const hideThumbnail = () => {
           thumbElement.style.display = 'none';
-          if (!isMobile && lastPreviewPosition !== undefined) {
-            video.currentTime = lastPreviewPosition; // Seek to the last preview position
-            video.play(); // Play the video again
+        };
+
+        const handleClick = () => {
+          if (isMobile && lastPreviewPosition !== undefined) {
+            video.currentTime = lastPreviewPosition;
+            video.play();
           }
         };
 
@@ -167,16 +154,16 @@
     }
 
     function reattachEventListeners() {
-      seekBar.addEventListener('mousemove', debounce(window.showThumbnail, 5));
+      seekBar.addEventListener('mousemove', debounce(showThumbnail, 5));
       seekBar.addEventListener('mouseleave', () => {
         thumbElement.style.display = 'none';
       });
-      seekBar.addEventListener('touchstart', window.showThumbnail);
-      seekBar.addEventListener('touchmove', debounce(window.showThumbnail, 5));
+      seekBar.addEventListener('touchstart', showThumbnail);
+      seekBar.addEventListener('touchmove', debounce(showThumbnail, 5));
       seekBar.addEventListener('touchend', () => {
         thumbElement.style.display = 'none';
       });
-      seekBar.addEventListener('click', window.showThumbnail);
+      seekBar.addEventListener('click', handleClick);
     }
   });
 </script>

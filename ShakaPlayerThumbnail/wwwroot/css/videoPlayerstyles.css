@@ -36,6 +36,7 @@
     width: 99%;
     border-radius: 2px;
     position: relative;
+    z-index: 1000;
 }
 
 .thumbnail {
