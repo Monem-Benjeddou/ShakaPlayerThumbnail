@@ -116,7 +116,7 @@
           }
         };
 
-        seekBar.addEventListener('mousemove', debounce(window.showThumbnail, 50));
+        seekBar.addEventListener('mousemove', debounce(window.showThumbnail, 5));
         seekBar.addEventListener('mouseleave', () => {
           thumbElement.style.display = 'none';
         });
