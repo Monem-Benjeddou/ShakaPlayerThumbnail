@@ -75,6 +75,9 @@
           throw new Error('Thumbnail track could not be added.');
         }
 
+        let lastPreviewPosition; // Variable to store the last position where the thumbnail preview occurred
+        const isMobile = /Mobi|Android/i.test(navigator.userAgent); // Detect mobile devices
+
         const showThumbnail = async (event) => {
           const seekBarRect = seekBar.getBoundingClientRect();
           const duration = player.seekRange().end;
@@ -82,6 +85,7 @@
           let offsetX;
           if (event.type.includes('touch')) {
             offsetX = event.touches[0].clientX - seekBarRect.left;
+            lastPreviewPosition = video.currentTime; // Store the position where the thumbnail preview started
             video.pause(); // Pause the video on touch devices when previewing starts
           } else {
             offsetX = event.pageX - seekBarRect.left;
@@ -122,10 +126,20 @@
           }
         };
 
+        const handleClick = (event) => {
+          if (isMobile) {
+            if (lastPreviewPosition !== undefined) {
+              video.currentTime = lastPreviewPosition; // Seek to the last preview position
+              video.play(); // Play the video again
+            }
+          }
+        };
+
         const hideThumbnail = () => {
           thumbElement.style.display = 'none';
-          if (document.fullscreenElement) {
-            video.play(); // Resume the video when thumbnail preview ends on touch devices
+          if (!isMobile && lastPreviewPosition !== undefined) {
+            video.currentTime = lastPreviewPosition; // Seek to the last preview position
+            video.play(); // Play the video again
           }
         };
 
@@ -134,7 +148,7 @@
         seekBar.addEventListener('touchstart', showThumbnail);
         seekBar.addEventListener('touchmove', debounce(showThumbnail, 5));
         seekBar.addEventListener('touchend', hideThumbnail);
-        seekBar.addEventListener('click', showThumbnail);
+        seekBar.addEventListener('click', handleClick);
 
         return thumbnailTrack;
 
