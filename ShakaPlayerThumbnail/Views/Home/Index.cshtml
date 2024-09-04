@@ -12,9 +12,9 @@
 
 
 
-<script>
-  document.addEventListener('DOMContentLoaded', async () => {
+<script>document.addEventListener('DOMContentLoaded', async () => {
     const fullscreenToggleBtn = document.getElementById('fullscreen-toggle-btn');
+    let lastPreviewPosition;
 
     if (fullscreenToggleBtn) {
       fullscreenToggleBtn.addEventListener('click', () => {
@@ -38,6 +38,7 @@
     } else {
       console.error('Fullscreen toggle button not found.');
     }
+
     const video = document.getElementById('video');
     const seekBar = document.getElementById('seek-bar');
     const thumbElement = document.getElementById('thumb');
@@ -72,7 +73,6 @@
 
     document.addEventListener('fullscreenchange', () => {
       adjustSeekbarPosition();
-      reattachEventListeners();
 
       if (document.fullscreenElement) {
         videoContainer.classList.add('fullscreen');
@@ -80,35 +80,6 @@
         videoContainer.classList.remove('fullscreen');
       }
     });
-
-    // Fullscreen toggle button logic
-    document.getElementById('fullscreen-toggle-btn').addEventListener('click', () => {
-      if (!document.fullscreenElement) {
-        if (videoContainer.requestFullscreen) {
-          videoContainer.requestFullscreen();
-        } else if (videoContainer.mozRequestFullScreen) { /* Firefox */
-          videoContainer.mozRequestFullScreen();
-        } else if (videoContainer.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
-          videoContainer.webkitRequestFullscreen();
-        } else if (videoContainer.msRequestFullscreen) { /* IE/Edge */
-          videoContainer.msRequestFullscreen();
-        }
-      } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        }
-      }
-    });
-
-    function adjustSeekbarPosition() {
-      const seekbarContainer = document.getElementById('seekbar-container');
-
-      if (document.fullscreenElement) {
-        seekbarContainer.classList.add('fullscreen');
-      } else {
-        seekbarContainer.classList.remove('fullscreen');
-      }
-    }
 
     async function setupThumbnails(player, thumbElement, vttUrl) {
       try {
@@ -133,6 +104,7 @@
 
           const percent = offsetX / seekBarRect.width;
           const position = percent * duration;
+          lastPreviewPosition = position; // Save last preview position
 
           try {
             const thumbnail = await player.getThumbnails(thumbnailTrack.id, position);
@@ -182,12 +154,12 @@
         seekBar.addEventListener('click', handleClick);
 
         return thumbnailTrack;
-
       } catch (error) {
         console.error('Failed to set up thumbnails:', error);
         errorDisplay.textContent = `Failed to set up thumbnails: ${error.message}`;
       }
     }
+
     function debounce(func, delay) {
       let timer;
       return function (...args) {
@@ -196,59 +168,15 @@
       };
     }
 
-    function reattachEventListeners() {
-      const showThumbnail = async (event) => {
-        const seekBarRect = seekBar.getBoundingClientRect();
-        const duration = player.seekRange().end;
+    function adjustSeekbarPosition() {
+      const seekbarContainer = document.getElementById('seekbar-container');
 
-        let offsetX;
-        if (event.type.includes('touch')) {
-          offsetX = event.touches[0].clientX - seekBarRect.left;
-        } else {
-          offsetX = event.pageX - seekBarRect.left;
-        }
-
-        const percent = offsetX / seekBarRect.width;
-        const position = percent * duration;
-
-        try {
-          const thumbnail = await player.getThumbnails(thumbnailTrack.id, position);
-
-          if (thumbnail && thumbnail.uris.length > 0) {
-            const imageUrl = thumbnail.uris[0].split('#')[0];
-            const x = thumbnail.positionX || 0;
-            const y = thumbnail.positionY || 0;
-            const width = thumbnail.width || 120;
-            const height = thumbnail.height || 68;
-
-            thumbElement.style.backgroundImage = `url(${imageUrl})`;
-            thumbElement.style.backgroundPosition = `-${x}px -${y}px`;
-            thumbElement.style.width = `${width}px`;
-            thumbElement.style.height = `${height}px`;
-
-            let thumbX = offsetX;
-            thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(seekBarRect.width - thumbElement.clientWidth / 2, thumbX));
-            thumbElement.style.left = `${thumbX}px`;
-            thumbElement.style.top = `-96px`;
-            thumbElement.style.display = 'block';
-          } else {
-            console.log('No thumbnail found for this position.');
-          }
-        } catch (error) {
-          console.error('Error getting thumbnail:', error);
-          errorDisplay.textContent = `Error getting thumbnail: ${error.message}`;
-        }
-      };
-      seekBar.addEventListener('mousemove', debounce(showThumbnail, 5));
-      seekBar.addEventListener('mouseleave', () => {
-        thumbElement.style.display = 'none';
-      });
-      seekBar.addEventListener('touchstart', showThumbnail);
-      seekBar.addEventListener('touchmove', debounce(showThumbnail, 5));
-      seekBar.addEventListener('touchend', () => {
-        thumbElement.style.display = 'none';
-      });
+      if (document.fullscreenElement) {
+        seekbarContainer.classList.add('fullscreen');
+      } else {
+        seekbarContainer.classList.remove('fullscreen');
+      }
     }
+    
   });
-
 </script>
