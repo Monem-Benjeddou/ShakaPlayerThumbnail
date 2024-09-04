@@ -12,7 +12,8 @@
 
 
 
-<script>document.addEventListener('DOMContentLoaded', async () => {
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
     const fullscreenToggleBtn = document.getElementById('fullscreen-toggle-btn');
     let lastPreviewPosition;
 
@@ -150,7 +151,13 @@
         seekBar.addEventListener('mouseleave', hideThumbnail);
         seekBar.addEventListener('touchstart', showThumbnail);
         seekBar.addEventListener('touchmove', debounce(showThumbnail, 5));
-        seekBar.addEventListener('touchend', hideThumbnail);
+        seekBar.addEventListener('touchend', () => {
+          hideThumbnail(); // Clear thumbnail on touch end
+          if (lastPreviewPosition !== undefined) {
+            video.currentTime = lastPreviewPosition;
+            video.play();
+          }
+        });
         seekBar.addEventListener('click', handleClick);
 
         return thumbnailTrack;
@@ -177,6 +184,6 @@
         seekbarContainer.classList.remove('fullscreen');
       }
     }
-    
+
   });
 </script>
