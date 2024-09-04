@@ -27,7 +27,7 @@
 .video-container.fullscreen #seekbar-container {
     width: calc(100% - 0px);
     left: 0;
-    bottom:20px;
+    bottom: 20px;
 }
 
 #seek-bar {
@@ -103,7 +103,7 @@
     width: 40px;
     height: 40px;
     bottom: 28px;
-    left: calc(100% - 92px); 
+    left: calc(100% - 92px);
     background-color: red;
     color: white;
     border-radius: 50%;
@@ -118,30 +118,34 @@
     transition: background-color 0.3s;
 }
 
-/* Mobile responsiveness */
-@media (max-width: 600px) {
-    #fullscreen-toggle-btn {
-        width: 30px;
-        height: 30px;
-        bottom: 20px;
-        left: calc(100% - 92px); 
-        font-size: 14px;
-    }
-
-    .video-container.fullscreen .thumbnail {
-        width: 100px;
-        height: 56px;
+/* Adjustments for high-resolution screens */
+@media (min-width: 2408px) {
+    .video-container.fullscreen #fullscreen-toggle-btn {
+        bottom: 40px;
+        left: calc(100% - 140px); /* Adjust as needed */
     }
 }
 
-@media (max-width: 853px) {
-    #fullscreen-toggle-btn {
-        left: calc(100% - 88px);
-        bottom: 33px;
+/* General adjustment for high-resolution screens */
+@media (min-width: 1200px) and (max-width: 2407px) {
+    .video-container.fullscreen #fullscreen-toggle-btn {
+        bottom: 36px;
+        left: calc(100% - 125px);
     }
-
 }
-.video-container.fullscreen #fullscreen-toggle-btn {
-    bottom: 36px;
-    left: calc(100% - 131px);
+
+/* General adjustment for smaller screens */
+@media (max-width: 1199px) {
+    .video-container.fullscreen #fullscreen-toggle-btn {
+        bottom: 30px;
+        left: calc(100% - 100px);
+    }
+}
+
+/* Override for your specific 2408px phone screen */
+@media (min-width: 2408px) and (max-width: 2408px) {
+    .video-container.fullscreen #fullscreen-toggle-btn {
+        bottom: 38px;
+        left: calc(100% - 130px);
+    }
 }
