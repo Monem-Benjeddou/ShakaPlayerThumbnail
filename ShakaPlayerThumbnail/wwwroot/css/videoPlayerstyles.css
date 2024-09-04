@@ -104,7 +104,8 @@
     height: 40px;
     bottom: 28px;
     left: calc(100% - 92px);
-    color: white;
+    color: transparent;
+    background-color: transparent;
     border-radius: 50%;
     border: none;
     display: flex;

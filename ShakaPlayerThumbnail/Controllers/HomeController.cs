@@ -51,13 +51,15 @@ namespace ShakaPlayerThumbnail.Controllers
 
             var preSignUrl = await _s3Client.GetPreSignedURLAsync(parameters);*/
             string previewsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "previews");
+            string videoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot","video.mp4");
+
             string outputImagePath = Path.Combine(previewsFolder, $"{videoName}");
             var model = new Tuple<string, string>("/video.mp4", $"/previews/{videoName}.vtt");
 
             if (Directory.Exists(previewsFolder)) 
                 return View((object)model);
             Directory.CreateDirectory(previewsFolder);
-            await FfmpegTool.GenerateSpritePreview("/video.mp4", outputImagePath,videoName, 5);
+            await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath,videoName, 5);
 
             return View((object)model);
         }
