@@ -21,13 +21,13 @@
     align-items: center;
     justify-content: center;
     transition: bottom 0.3s, width 0.3s;
-    z-index: 1000;
+    z-index: 2147483648;
 }
 
 .video-container.fullscreen #seekbar-container {
     width: calc(100% - 0px);
     left: 0;
-    bottom: 0;
+    bottom:20px;
 }
 
 #seek-bar {
@@ -53,6 +53,12 @@
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     transform: translateX(-50%);
 }
+
+.video-container.fullscreen .thumbnail {
+    width: 200px;
+    height: 112px;
+}
+
 /* Mobile responsiveness */
 @media (max-width: 600px) {
     #seekbar-container {
@@ -73,4 +79,76 @@
     font-size: 14px;
     text-align: center;
     margin-top: 10px;
+}
+
+/* Fullscreen transitions */
+.video-container.fullscreen #seekbar-container {
+    bottom: 10px;
+    width: calc(100% - 0px);
+    left: 0;
+}
+
+.video-container.fullscreen #video {
+    height: 100vh;
+    width: 100vw;
+}
+
+.video-container.fullscreen #top-overlay {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 10;
+}
+
+.video-container.fullscreen #thumb {
+    position: absolute;
+    bottom: 60px; /* Adjust as needed */
+}
+
+/* Fullscreen Toggle Button */
+#fullscreen-toggle-btn {
+    width: 40px;
+    height: 40px;
+    bottom: 28px;
+    left: calc(100% - 92px); 
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    position: absolute;
+    z-index: 10000;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+    #fullscreen-toggle-btn {
+        width: 30px;
+        height: 30px;
+        bottom: 20px;
+        left: calc(100% - 92px); 
+        font-size: 14px;
+    }
+
+    .video-container.fullscreen .thumbnail {
+        width: 100px;
+        height: 56px;
+    }
+}
+
+@media (max-width: 853px) {
+    #fullscreen-toggle-btn {
+        left: calc(100% - 88px);
+        bottom: 33px;
+    }
+
+}
+.video-container.fullscreen #fullscreen-toggle-btn {
+    bottom: 36px;
+    left: calc(100% - 131px);
 }
