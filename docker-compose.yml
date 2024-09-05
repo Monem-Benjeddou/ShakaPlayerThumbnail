@@ -42,7 +42,8 @@ services:
       - "80:80"
     networks:
       - thumbnail-network
-
+    volumes:
+      - thumbnail-data:/etc/data
 networks:
   thumbnail-network:
     driver: bridge
