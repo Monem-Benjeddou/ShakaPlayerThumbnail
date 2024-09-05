@@ -34,7 +34,6 @@ namespace ShakaPlayerThumbnail.Controllers
             }
 
 
-            // Return the video URL and VTT file path to the view
             return View((object)model);
         }
 
