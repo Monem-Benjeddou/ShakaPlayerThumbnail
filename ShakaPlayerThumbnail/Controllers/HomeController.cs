@@ -24,7 +24,8 @@ namespace ShakaPlayerThumbnail.Controllers
             string outputImagePath = Path.Combine(previewsFolder, videoName);
 
             string vttFilePath = $"/etc/data/previews/{videoName}.vtt";
-            var model = new Tuple<string, string>(videoUrl, vttFilePath);
+            string returnedVttFilePath = $"/previews/{videoName}.vtt";
+            var model = new Tuple<string, string>(videoUrl, returnedVttFilePath);
 
             if (!Directory.Exists(previewsFolder)) 
             {
