@@ -23,18 +23,15 @@ namespace ShakaPlayerThumbnail.Controllers
             string videoName = "video";
             string outputImagePath = Path.Combine(previewsFolder, videoName);
 
-            // Path to VTT file in the mounted volume
             string vttFilePath = $"/etc/data/previews/{videoName}.vtt";
             var model = new Tuple<string, string>(videoUrl, vttFilePath);
 
-            // Check if the previews folder exists, if not, create it
             if (!Directory.Exists(previewsFolder)) 
             {
                 Directory.CreateDirectory(previewsFolder);
+                await FfmpegTool.GenerateSpritePreview(videoUrl, outputImagePath, videoName, 5);
             }
 
-            // Generate sprite preview and VTT file
-            await FfmpegTool.GenerateSpritePreview(videoUrl, outputImagePath, videoName, 5);
 
             // Return the video URL and VTT file path to the view
             return View((object)model);
