@@ -12,26 +12,22 @@
 
 
 
-<script>document.addEventListener('DOMContentLoaded', async () => {
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
     const fullscreenToggleBtn = document.getElementById('fullscreen-toggle-btn');
-    const video = document.getElementById('video');
-    const seekBar = document.getElementById('seek-bar');
-    const thumbElement = document.getElementById('thumb');
-    const errorDisplay = document.getElementById('error');
-    const videoContainer = document.getElementById('video-container');
     let lastPreviewPosition;
 
-    // Fullscreen toggle
     if (fullscreenToggleBtn) {
       fullscreenToggleBtn.addEventListener('click', () => {
+        const videoContainer = document.getElementById('video-container');
         if (!document.fullscreenElement) {
           if (videoContainer.requestFullscreen) {
             videoContainer.requestFullscreen();
-          } else if (videoContainer.mozRequestFullScreen) { // Firefox
+          } else if (videoContainer.mozRequestFullScreen) { /* Firefox */
             videoContainer.mozRequestFullScreen();
-          } else if (videoContainer.webkitRequestFullscreen) { // Chrome, Safari, and Opera
+          } else if (videoContainer.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
             videoContainer.webkitRequestFullscreen();
-          } else if (videoContainer.msRequestFullscreen) { // IE/Edge
+          } else if (videoContainer.msRequestFullscreen) { /* IE/Edge */
             videoContainer.msRequestFullscreen();
           }
         } else {
@@ -44,7 +40,11 @@
       console.error('Fullscreen toggle button not found.');
     }
 
-    // Shaka Player setup
+    const video = document.getElementById('video');
+    const seekBar = document.getElementById('seek-bar');
+    const thumbElement = document.getElementById('thumb');
+    const errorDisplay = document.getElementById('error');
+    const videoContainer = document.getElementById('video-container');
     const player = new shaka.Player(video);
     let thumbnailTrack;
 
@@ -64,33 +64,17 @@
       errorDisplay.textContent = `Player Error: ${event.detail.message}`;
     });
 
-    // Seek bar click handler for desktop
     seekBar.addEventListener('click', (event) => {
       const duration = player.seekRange().end;
-      const percent = event.offsetX / seekBar.clientWidth;
+      const percent = (event.offsetX || event.touches[0].clientX - seekBar.getBoundingClientRect().left) / seekBar.clientWidth;
       const position = percent * duration;
+
       video.currentTime = position;
     });
 
-    // Touch support for mobile
-    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-
-    seekBar.addEventListener(isMobile ? 'touchstart' : 'mousemove', debounce(showThumbnail, 5));
-    seekBar.addEventListener(isMobile ? 'touchmove' : 'mousemove', debounce(showThumbnail, 5));
-    seekBar.addEventListener(isMobile ? 'touchend' : 'mouseleave', hideThumbnail);
-
-    // Handle mobile touch end click
-    seekBar.addEventListener('touchend', () => {
-      if (lastPreviewPosition !== undefined) {
-        video.currentTime = lastPreviewPosition;
-        video.play();
-      }
-      hideThumbnail();
-    });
-
-    // Fullscreen change event
     document.addEventListener('fullscreenchange', () => {
       adjustSeekbarPosition();
+
       if (document.fullscreenElement) {
         videoContainer.classList.add('fullscreen');
       } else {
@@ -98,27 +82,34 @@
       }
     });
 
-    // Setup thumbnails
     async function setupThumbnails(player, thumbElement, vttUrl) {
       try {
         const thumbnailTrack = await player.addThumbnailsTrack(vttUrl);
-        if (!thumbnailTrack) throw new Error('Thumbnail track could not be added.');
+
+        if (!thumbnailTrack) {
+          throw new Error('Thumbnail track could not be added.');
+        }
+
+        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
         const showThumbnail = async (event) => {
           const seekBarRect = seekBar.getBoundingClientRect();
           const duration = player.seekRange().end;
 
-          let offsetX = event.pageX - seekBarRect.left;
+          let offsetX;
           if (event.type.includes('touch')) {
             offsetX = event.touches[0].clientX - seekBarRect.left;
+          } else {
+            offsetX = event.pageX - seekBarRect.left;
           }
 
           const percent = offsetX / seekBarRect.width;
           const position = percent * duration;
-          lastPreviewPosition = position;
+          lastPreviewPosition = position; // Save last preview position
 
           try {
             const thumbnail = await player.getThumbnails(thumbnailTrack.id, position);
+
             if (thumbnail && thumbnail.uris.length > 0) {
               const imageUrl = thumbnail.uris[0].split('#')[0];
               const x = thumbnail.positionX || 0;
@@ -136,6 +127,8 @@
               thumbElement.style.left = `${thumbX}px`;
               thumbElement.style.top = `-96px`;
               thumbElement.style.display = 'block';
+            } else {
+              console.log('No thumbnail found for this position.');
             }
           } catch (error) {
             console.error('Error getting thumbnail:', error);
@@ -147,6 +140,26 @@
           thumbElement.style.display = 'none';
         };
 
+        const handleClick = () => {
+          if (isMobile && lastPreviewPosition !== undefined) {
+            video.currentTime = lastPreviewPosition;
+            video.play();
+          }
+        };
+
+        seekBar.addEventListener('mousemove', debounce(showThumbnail, 5));
+        seekBar.addEventListener('mouseleave', hideThumbnail);
+        seekBar.addEventListener('touchstart', showThumbnail);
+        seekBar.addEventListener('touchmove', debounce(showThumbnail, 5));
+        seekBar.addEventListener('touchend', () => {
+          hideThumbnail(); // Clear thumbnail on touch end
+          if (lastPreviewPosition !== undefined) {
+            video.currentTime = lastPreviewPosition;
+            video.play();
+          }
+        });
+        seekBar.addEventListener('click', handleClick);
+
         return thumbnailTrack;
       } catch (error) {
         console.error('Failed to set up thumbnails:', error);
@@ -154,7 +167,6 @@
       }
     }
 
-    // Debounce function to improve performance
     function debounce(func, delay) {
       let timer;
       return function (...args) {
@@ -163,14 +175,15 @@
       };
     }
 
-    // Adjust seek bar position on fullscreen
     function adjustSeekbarPosition() {
       const seekbarContainer = document.getElementById('seekbar-container');
+
       if (document.fullscreenElement) {
         seekbarContainer.classList.add('fullscreen');
       } else {
         seekbarContainer.classList.remove('fullscreen');
       }
     }
+
   });
 </script>
