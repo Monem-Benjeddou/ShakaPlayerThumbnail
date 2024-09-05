@@ -10,6 +10,28 @@
     <ItemGroup>
       <_ContentIncludedByDefault Remove="wwwroot\previews\output.png" />
       <_ContentIncludedByDefault Remove="wwwroot\previews\thumbnails.vtt" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video.vtt" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video1.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video10.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video11.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video12.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video13.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video14.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video15.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video16.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video17.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video18.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video19.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video2.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video20.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video21.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video3.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video4.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video5.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video6.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video7.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video8.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video9.png" />
     </ItemGroup>
 
     <ItemGroup>

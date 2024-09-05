@@ -4,12 +4,12 @@ namespace ShakaPlayerThumbnail.Tools
 {
     public static class FfmpegTool
     {
-public static async Task GenerateSpritePreview(string videoPath, string outputImagePath, string videoName, int intervalSeconds = 12)
+  public static async Task GenerateSpritePreview(string videoUrl, string outputImagePath, string videoName, int intervalSeconds = 12)
 {
     var directoryPath = Path.GetDirectoryName(outputImagePath);
-    if (!File.Exists(videoPath))
+    if (!Uri.IsWellFormedUriString(videoUrl, UriKind.Absolute))
     {
-        throw new FileNotFoundException($"Video file not found: {videoPath}");
+        throw new FileNotFoundException($"Invalid URL or file not found: {videoUrl}");
     }
 
     if (!Directory.Exists(directoryPath))
@@ -17,7 +17,7 @@ public static async Task GenerateSpritePreview(string videoPath, string outputIm
         Directory.CreateDirectory(directoryPath);
     }
 
-    var videoDuration = GetVideoDuration(videoPath);
+    var videoDuration = GetVideoDuration(videoUrl);
     var totalFrames = (int)Math.Ceiling(videoDuration / intervalSeconds);
     int tileWidth = 5; // Number of tiles in width
     int tileHeight = 5; // Number of tiles in height
@@ -32,8 +32,8 @@ public static async Task GenerateSpritePreview(string videoPath, string outputIm
         double endTime = Math.Min(startTime + framesPerTile * intervalSeconds, videoDuration);
         int framesInThisSection = Math.Min(totalFrames - (i - 1) * framesPerTile, framesPerTile);
 
-        // Construct FFmpeg arguments with the tile filter
-        var arguments = $"-i \"{videoPath}\" -ss {startTime} -t {endTime - startTime} " +
+        // Construct FFmpeg arguments with the tile filter, using the URL
+        var arguments = $"-i \"{videoUrl}\" -ss {startTime} -t {endTime - startTime} " +
                         $"-vf \"select=not(mod(t\\,{intervalSeconds})),scale=160:-1,tile={tileWidth}x{tileHeight}\" " +
                         $"-threads 0 -preset ultrafast -y \"{outputImagePath}{i}.png\"";
 
@@ -56,37 +56,38 @@ public static async Task GenerateSpritePreview(string videoPath, string outputIm
 }
 
 
-        private static double GetVideoDuration(string videoPath)
-        {
-            string ffprobeArguments =
-                $"-v error -select_streams v:0 -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{videoPath}\"";
-            using (Process ffprobeProcess = new Process
-                   {
-                       StartInfo = new ProcessStartInfo
-                       {
-                           FileName = "ffprobe",
-                           Arguments = ffprobeArguments,
-                           RedirectStandardOutput = true,
-                           RedirectStandardError = true,
-                           UseShellExecute = false,
-                           CreateNoWindow = true
-                       }
-                   })
-            {
-                ffprobeProcess.Start();
-                string output = ffprobeProcess.StandardOutput.ReadToEnd();
-                ffprobeProcess.WaitForExit();
 
-                if (double.TryParse(output.Trim(), out double duration))
-                {
-                    return duration;
-                }
-                else
-                {
-                    throw new InvalidOperationException("Could not determine video duration.");
-                }
-            }
+private static double GetVideoDuration(string videoUrl)
+{
+    string ffprobeArguments =
+        $"-v error -select_streams v:0 -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{videoUrl}\"";
+    using (Process ffprobeProcess = new Process
+           {
+               StartInfo = new ProcessStartInfo
+               {
+                   FileName = "ffprobe",
+                   Arguments = ffprobeArguments,
+                   RedirectStandardOutput = true,
+                   RedirectStandardError = true,
+                   UseShellExecute = false,
+                   CreateNoWindow = true
+               }
+           })
+    {
+        ffprobeProcess.Start();
+        string output = ffprobeProcess.StandardOutput.ReadToEnd();
+        ffprobeProcess.WaitForExit();
+
+        if (double.TryParse(output.Trim(), out double duration))
+        {
+            return duration;
         }
+        else
+        {
+            throw new InvalidOperationException("Could not determine video duration.");
+        }
+    }
+}
 
         private static async Task RunFFmpeg(string arguments)
         {
@@ -112,7 +113,8 @@ public static async Task GenerateSpritePreview(string videoPath, string outputIm
 
 
         private static void GenerateVTT(string outputVttPath, double totalDuration, int thumbnailWidth,
-            int thumbnailHeight, string videoName, int intervalSeconds, int tileWidth, int tileHeight, List<ThumbnailInfo> thumbnailInfo)
+            int thumbnailHeight, string videoName, int intervalSeconds, int tileWidth, int tileHeight,
+            List<ThumbnailInfo> thumbnailInfo)
         {
             using StreamWriter writer = new StreamWriter(outputVttPath);
             writer.WriteLine("WEBVTT");
@@ -127,13 +129,14 @@ public static async Task GenerateSpritePreview(string videoPath, string outputIm
                     int xOffset = (i % tileWidth) * thumbnailWidth;
                     int yOffset = (i / tileWidth) * thumbnailHeight;
 
-                    writer.WriteLine($"{TimeSpan.FromSeconds(startTime):hh\\:mm\\:ss\\.fff} --> {TimeSpan.FromSeconds(endTime):hh\\:mm\\:ss\\.fff}");
-                    writer.WriteLine($"/previews/{videoName}{tileInfo.TileIndex}.png#xywh={xOffset},{yOffset},{thumbnailWidth},{thumbnailHeight}");
+                    writer.WriteLine(
+                        $"{TimeSpan.FromSeconds(startTime):hh\\:mm\\:ss\\.fff} --> {TimeSpan.FromSeconds(endTime):hh\\:mm\\:ss\\.fff}");
+                    writer.WriteLine(
+                        $"/previews/{videoName}{tileInfo.TileIndex}.png#xywh={xOffset},{yOffset},{thumbnailWidth},{thumbnailHeight}");
                     writer.WriteLine();
                 }
             }
         }
-
 
 
         public class ThumbnailInfo

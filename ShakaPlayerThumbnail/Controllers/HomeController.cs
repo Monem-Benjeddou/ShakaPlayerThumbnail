@@ -1,7 +1,4 @@
 using System.Diagnostics;
-using Amazon.Runtime;
-using Amazon.S3;
-using Amazon.S3.Model;
 using Microsoft.AspNetCore.Mvc;
 using ShakaPlayerThumbnail.Models;
 using ShakaPlayerThumbnail.Tools;
@@ -10,60 +7,29 @@ namespace ShakaPlayerThumbnail.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly string _serviceUrl;
-        private readonly string _accessKey;
-        private readonly string _secretKey;
-        private readonly AmazonS3Client _s3Client;
         private readonly ILogger<HomeController> _logger;
 
         public HomeController(ILogger<HomeController> logger)
         {
-            _logger = logger;
-            
-            _secretKey = Environment.GetEnvironmentVariable("secret_key") ??
-                         throw new Exception("Secret key not found");
-            _accessKey = Environment.GetEnvironmentVariable("access_key") ??
-                         throw new Exception("Access key not found");
-            _serviceUrl = Environment.GetEnvironmentVariable("service_url") ??
-                          throw new Exception("Service url not found");
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
-            var config = new AmazonS3Config
-            {
-                ServiceURL = _serviceUrl ,
-                ForcePathStyle = true
-            };
-
-            var credentials = new BasicAWSCredentials(_accessKey, _secretKey);
-            _s3Client = new AmazonS3Client(credentials, config);
         }
 
         public async Task<IActionResult> Index()
         {
-            var date = DateTime.Now;
-            var videoName = "video";
-            /*var parameters = new GetPreSignedUrlRequest()
-            {
-                BucketName = "videos",
-                Key = $"{videoName}.mp4",
-                Expires = DateTime.UtcNow.AddMinutes(20)
-            };
-
-            var preSignUrl = await _s3Client.GetPreSignedURLAsync(parameters);*/
-            string previewsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "previews");
-            string videoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot","video.mp4");
-
-            string outputImagePath = Path.Combine(previewsFolder, $"{videoName}");
-            var model = new Tuple<string, string>("/video.mp4", $"/previews/{videoName}.vtt");
+            var videoUrl = "https://www.dropbox.com/scl/fi/h5k5t9604k20zx3r7ymyv/video.mp4?rlkey=iukuryf8hlmf87wqe2lt5l1eb&st=ozuqjqm6&dl=1";
+            string previewsFolder = Path.Combine("/etc/data", "previews");
+            string videoName = "video";
+            string outputImagePath = Path.Combine(previewsFolder, videoName);
+            var model = new Tuple<string, string>(videoUrl, $"/previews/{videoName}.vtt");
 
             if (Directory.Exists(previewsFolder)) 
                 return View((object)model);
             Directory.CreateDirectory(previewsFolder);
-            await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath,videoName, 5);
+
+            await FfmpegTool.GenerateSpritePreview(videoUrl, outputImagePath, videoName, 5);
 
             return View((object)model);
         }
-
 
         public IActionResult Privacy()
         {
