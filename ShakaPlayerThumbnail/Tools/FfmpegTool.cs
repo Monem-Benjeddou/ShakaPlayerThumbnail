@@ -112,11 +112,14 @@ private static double GetVideoDuration(string videoUrl)
         }
 
 
-        private static void GenerateVTT(string outputVttPath, double totalDuration, int thumbnailWidth,
+        public static void GenerateVTT(string outputVttPath, double totalDuration, int thumbnailWidth,
             int thumbnailHeight, string videoName, int intervalSeconds, int tileWidth, int tileHeight,
             List<ThumbnailInfo> thumbnailInfo)
         {
-            using StreamWriter writer = new StreamWriter(outputVttPath);
+            // Save VTT to the volume-mounted folder `/etc/data/previews`
+            string volumeVttPath = Path.Combine("/etc/data/previews", $"{videoName}.vtt");
+
+            using StreamWriter writer = new StreamWriter(volumeVttPath);
             writer.WriteLine("WEBVTT");
 
             foreach (var tileInfo in thumbnailInfo)
@@ -129,10 +132,8 @@ private static double GetVideoDuration(string videoUrl)
                     int xOffset = (i % tileWidth) * thumbnailWidth;
                     int yOffset = (i / tileWidth) * thumbnailHeight;
 
-                    writer.WriteLine(
-                        $"{TimeSpan.FromSeconds(startTime):hh\\:mm\\:ss\\.fff} --> {TimeSpan.FromSeconds(endTime):hh\\:mm\\:ss\\.fff}");
-                    writer.WriteLine(
-                        $"/previews/{videoName}{tileInfo.TileIndex}.png#xywh={xOffset},{yOffset},{thumbnailWidth},{thumbnailHeight}");
+                    writer.WriteLine($"{TimeSpan.FromSeconds(startTime):hh\\:mm\\:ss\\.fff} --> {TimeSpan.FromSeconds(endTime):hh\\:mm\\:ss\\.fff}");
+                    writer.WriteLine($"/previews/{videoName}{tileInfo.TileIndex}.png#xywh={xOffset},{yOffset},{thumbnailWidth},{thumbnailHeight}");
                     writer.WriteLine();
                 }
             }
