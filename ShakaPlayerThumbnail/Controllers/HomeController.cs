@@ -21,7 +21,7 @@ namespace ShakaPlayerThumbnail.Controllers
             // Define the previews folder in the volume
             string previewsFolder = Path.Combine("/etc/data", "previews");
             string videoName = "video";
-            string outputImagePath = Path.Combine(previewsFolder, videoName);e
+            string outputImagePath = Path.Combine(previewsFolder, videoName);
 
             string vttFilePath = $"/etc/data/previews/{videoName}.vtt";
             string returnedVttFilePath = $"/previews/{videoName}.vtt";
