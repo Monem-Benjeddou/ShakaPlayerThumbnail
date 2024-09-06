@@ -20,7 +20,7 @@ namespace ShakaPlayerThumbnail.Controllers
             var videoUrl = "https://drive.google.com/uc?export=download&id=1K2GTQqlpdwdsoJwPwc5qj9jFkrfIhiW1";
             string previewsFolder = Path.Combine("/etc/data", "previews");
             string videoName = "video";
-            string videoPath = Path.Combine("etc","data", $"{videoName}.mp4");
+            string videoPath = Path.Combine("/etc","data", $"{videoName}.mp4");
             string outputImagePath = Path.Combine(previewsFolder, videoName);
             string returnedVttFilePath = $"/previews/{videoName}.vtt";
             var model = new Tuple<string, string>("/data/video.mp4", returnedVttFilePath);
