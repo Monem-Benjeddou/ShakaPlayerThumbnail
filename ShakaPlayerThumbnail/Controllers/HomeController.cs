@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Net.Http.Headers;
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using ShakaPlayerThumbnail.Models;
 using ShakaPlayerThumbnail.Tools;
@@ -18,7 +17,7 @@ namespace ShakaPlayerThumbnail.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var videoUrl = "https://drive.google.com/uc?export=download&id=1K2GTQqlpdwdsoJwPwc5qj9jFkrfIhiW1";
+            var videoUrl = "https://www.dropbox.com/scl/fi/h5k5t9604k20zx3r7ymyv/video.mp4?rlkey=iukuryf8hlmf87wqe2lt5l1eb&st=5sj1cqmf&dl=0";
             string previewsFolder = Path.Combine("/etc/data", "previews");
             string videoName = "video";
             string videoPath = Path.Combine("/etc","data", $"{videoName}.mp4");
