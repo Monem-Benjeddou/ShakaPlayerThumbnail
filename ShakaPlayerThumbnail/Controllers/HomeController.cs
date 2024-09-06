@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net.Http.Headers;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using ShakaPlayerThumbnail.Models;
 using ShakaPlayerThumbnail.Tools;
@@ -53,37 +54,60 @@ namespace ShakaPlayerThumbnail.Controllers
             return await DownloadVideo(videoUrl, videoPath);
         }
 
-        private async Task<bool> DownloadVideo(string videoUrl, string videoPath)
+private async Task<bool> DownloadVideo(string videoUrl, string videoPath)
+{
+    using var client = new HttpClient();
+    try
+    {
+        // Initial request to get the confirmation page
+        var response = await client.GetAsync(videoUrl);
+        var contentType = response.Content.Headers.ContentType.MediaType;
+
+        // Check if the content is an HTML page (indicating the need for confirmation)
+        if (contentType.StartsWith("text/html"))
         {
-            using var client = new HttpClient();
-            try
+            // Extract confirmation token from the response body
+            var responseBody = await response.Content.ReadAsStringAsync();
+            var tokenMatch = Regex.Match(responseBody, @"confirm=([0-9A-Za-z_]+)");
+            if (tokenMatch.Success)
             {
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("video/mp4"));
-        
-                var response = await client.GetAsync(videoUrl);
+                var confirmToken = tokenMatch.Groups[1].Value;
+                var downloadUrl = $"{videoUrl}&confirm={confirmToken}";
+
+                // Retry the request with the confirmation token
+                response = await client.GetAsync(downloadUrl);
                 response.EnsureSuccessStatusCode();
-
-                var contentType = response.Content.Headers.ContentType.MediaType;
-                if (!contentType.StartsWith("video"))
-                {
-                    _logger.LogError("Invalid content type: {contentType}", contentType);
-                    return false;
-                }
-
-                await using (var fileStream = new FileStream(videoPath, FileMode.Create, FileAccess.Write, FileShare.None))
-                {
-                    await response.Content.CopyToAsync(fileStream);
-                }
-
-                _logger.LogInformation("Video downloaded successfully to {videoPath}", videoPath);
-                return true;
             }
-            catch (Exception ex)
+            else
             {
-                _logger.LogError("Error downloading video: {ex}", ex.Message);
+                _logger.LogError("Failed to extract confirmation token from Google Drive response.");
                 return false;
             }
         }
+
+        // Ensure the content is the correct type
+        contentType = response.Content.Headers.ContentType.MediaType;
+        if (!contentType.StartsWith("video"))
+        {
+            _logger.LogError("Invalid content type after confirmation: {contentType}", contentType);
+            return false;
+        }
+
+        // Download the video
+        await using (var fileStream = new FileStream(videoPath, FileMode.Create, FileAccess.Write, FileShare.None))
+        {
+            await response.Content.CopyToAsync(fileStream);
+        }
+
+        _logger.LogInformation("Video downloaded successfully to {videoPath}", videoPath);
+        return true;
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError("Error downloading video: {ex}", ex.Message);
+        return false;
+    }
+}
 
         private bool IsFileSizeValid(string filePath)
         {
