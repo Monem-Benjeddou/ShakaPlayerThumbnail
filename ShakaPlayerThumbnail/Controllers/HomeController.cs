@@ -17,22 +17,22 @@ namespace ShakaPlayerThumbnail.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var videoUrl = "https://file.io/WGSItstZnoz9";
+            var videoUrl = "https://file.io/Yhb8NOuc6G3v";
             string previewsFolder = Path.Combine("/etc/data", "previews");
             string videoName = "video";
             string videoPath = Path.Combine("/etc","data", $"{videoName}.mp4");
             string outputImagePath = Path.Combine(previewsFolder, videoName);
             string returnedVttFilePath = $"/previews/{videoName}.vtt";
             var model = new Tuple<string, string>("/data/video.mp4", returnedVttFilePath);
-            if (!Directory.Exists(previewsFolder)) 
-            {
-                await GenerateSpritePreviewIfNecessary(videoUrl, outputImagePath, videoName);
-            }
+
             if (await TryDownloadVideoIfNecessary(videoUrl, videoPath))
             {
                 await EnsurePreviewsFolderExists(previewsFolder);
             }
-
+            if (!Directory.Exists(previewsFolder)) 
+            {
+                await GenerateSpritePreviewIfNecessary(videoUrl, outputImagePath, videoName);
+            }
             return View((object)model);
         }
 
