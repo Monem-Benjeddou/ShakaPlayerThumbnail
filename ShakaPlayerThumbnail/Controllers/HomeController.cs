@@ -61,19 +61,11 @@ string previewsFolder = Path.Combine("/etc/data", "previews");
             using var client = new HttpClient();
             try
             {
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("video/mp4"));
-
+                // No content type check
                 var response = await client.GetAsync(videoUrl);
                 if (!response.IsSuccessStatusCode)
                 {
                     _logger.LogError("Failed to download video. Status Code: {StatusCode}", response.StatusCode);
-                    return false;
-                }
-
-                var contentType = response.Content.Headers.ContentType?.MediaType;
-                if (contentType != "video/mp4")
-                {
-                    _logger.LogError("Expected video content type but got {contentType}", contentType);
                     return false;
                 }
 
