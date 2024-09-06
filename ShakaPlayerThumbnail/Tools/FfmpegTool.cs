@@ -4,90 +4,91 @@ namespace ShakaPlayerThumbnail.Tools
 {
     public static class FfmpegTool
     {
-  public static async Task GenerateSpritePreview(string videoUrl, string outputImagePath, string videoName, int intervalSeconds = 12)
-{
-    var directoryPath = Path.GetDirectoryName(outputImagePath);
-    if (!Uri.IsWellFormedUriString(videoUrl, UriKind.Absolute))
-    {
-        throw new FileNotFoundException($"Invalid URL or file not found: {videoUrl}");
-    }
-
-    if (!Directory.Exists(directoryPath))
-    {
-        Directory.CreateDirectory(directoryPath);
-    }
-
-    var videoDuration = GetVideoDuration(videoUrl);
-    var totalFrames = (int)Math.Ceiling(videoDuration / intervalSeconds);
-    int tileWidth = 5; // Number of tiles in width
-    int tileHeight = 5; // Number of tiles in height
-    int framesPerTile = tileWidth * tileHeight;
-    int numberOfTiles = (int)Math.Ceiling((double)totalFrames / framesPerTile);
-
-    var thumbnailInfo = new List<ThumbnailInfo>();
-
-    for (int i = 1; i <= numberOfTiles; i++)
-    {
-        double startTime = (i - 1) * framesPerTile * intervalSeconds;
-        double endTime = Math.Min(startTime + framesPerTile * intervalSeconds, videoDuration);
-        int framesInThisSection = Math.Min(totalFrames - (i - 1) * framesPerTile, framesPerTile);
-
-        // Construct FFmpeg arguments with the tile filter, using the URL
-        var arguments = $"-i \"{videoUrl}\" -ss {startTime} -t {endTime - startTime} " +
-                        $"-vf \"select=not(mod(t\\,{intervalSeconds})),scale=160:-1,tile={tileWidth}x{tileHeight}\" " +
-                        $"-threads 0 -preset ultrafast -y \"{outputImagePath}{i}.png\"";
-
-        await RunFFmpeg(arguments);
-
-        thumbnailInfo.Add(new ThumbnailInfo
+        public static async Task GenerateSpritePreview(string videoUrl, string outputImagePath, string videoName,
+            int intervalSeconds = 12)
         {
-            TileIndex = i,
-            StartTime = startTime,
-            EndTime = endTime,
-            FrameCount = framesInThisSection
-        });
-    }
+            var directoryPath = Path.GetDirectoryName(outputImagePath);
+            if (!Uri.IsWellFormedUriString(videoUrl, UriKind.Absolute))
+            {
+                throw new FileNotFoundException($"Invalid URL or file not found: {videoUrl}");
+            }
 
-    // Generate the VTT file
-    var previewsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "previews");
-    var outputVttPath = Path.Combine(previewsFolder, $"{videoName}.vtt");
+            if (!Directory.Exists(directoryPath))
+            {
+                Directory.CreateDirectory(directoryPath);
+            }
 
-    GenerateVTT(outputVttPath, videoDuration, 160, 90, videoName, intervalSeconds, tileWidth, tileHeight, thumbnailInfo);
-}
+            var videoDuration = GetVideoDuration(videoUrl);
+            var totalFrames = (int)Math.Ceiling(videoDuration / intervalSeconds);
+            int tileWidth = 5; // Number of tiles in width
+            int tileHeight = 5; // Number of tiles in height
+            int framesPerTile = tileWidth * tileHeight;
+            int numberOfTiles = (int)Math.Ceiling((double)totalFrames / framesPerTile);
 
+            var thumbnailInfo = new List<ThumbnailInfo>();
 
+            for (int i = 1; i <= numberOfTiles; i++)
+            {
+                double startTime = (i - 1) * framesPerTile * intervalSeconds;
+                double endTime = Math.Min(startTime + framesPerTile * intervalSeconds, videoDuration);
+                int framesInThisSection = Math.Min(totalFrames - (i - 1) * framesPerTile, framesPerTile);
 
-private static double GetVideoDuration(string videoUrl)
-{
-    string ffprobeArguments =
-        $"-v error -select_streams v:0 -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{videoUrl}\"";
-    using (Process ffprobeProcess = new Process
-           {
-               StartInfo = new ProcessStartInfo
-               {
-                   FileName = "ffprobe",
-                   Arguments = ffprobeArguments,
-                   RedirectStandardOutput = true,
-                   RedirectStandardError = true,
-                   UseShellExecute = false,
-                   CreateNoWindow = true
-               }
-           })
-    {
-        ffprobeProcess.Start();
-        string output = ffprobeProcess.StandardOutput.ReadToEnd();
-        ffprobeProcess.WaitForExit();
+                // Construct FFmpeg arguments with the tile filter, using the URL
+                var arguments = $"-i \"{videoUrl}\" -ss {startTime} -t {endTime - startTime} " +
+                                $"-vf \"select=not(mod(t\\,{intervalSeconds})),scale=160:-1,tile={tileWidth}x{tileHeight}\" " +
+                                $"-threads 0 -preset ultrafast -y \"{outputImagePath}{i}.png\"";
 
-        if (double.TryParse(output.Trim(), out double duration))
-        {
-            return duration;
+                await RunFFmpeg(arguments);
+
+                thumbnailInfo.Add(new ThumbnailInfo
+                {
+                    TileIndex = i,
+                    StartTime = startTime,
+                    EndTime = endTime,
+                    FrameCount = framesInThisSection
+                });
+            }
+
+            // Generate the VTT file
+            var previewsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "previews");
+            var outputVttPath = Path.Combine(previewsFolder, $"{videoName}.vtt");
+
+            GenerateVTT(outputVttPath, videoDuration, 160, 90, videoName, intervalSeconds, tileWidth, tileHeight,
+                thumbnailInfo);
         }
-        else
+
+
+        private static double GetVideoDuration(string videoUrl)
         {
-            throw new InvalidOperationException("Could not determine video duration.");
+            string ffprobeArguments =
+                $"-v error -select_streams v:0 -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{videoUrl}\"";
+            using (Process ffprobeProcess = new Process
+                   {
+                       StartInfo = new ProcessStartInfo
+                       {
+                           FileName = "ffprobe",
+                           Arguments = ffprobeArguments,
+                           RedirectStandardOutput = true,
+                           RedirectStandardError = true,
+                           UseShellExecute = false,
+                           CreateNoWindow = true
+                       }
+                   })
+            {
+                ffprobeProcess.Start();
+                string output = ffprobeProcess.StandardOutput.ReadToEnd();
+                ffprobeProcess.WaitForExit();
+
+                if (double.TryParse(output.Trim(), out double duration))
+                {
+                    return duration;
+                }
+                else
+                {
+                    throw new InvalidOperationException("Could not determine video duration.");
+                }
+            }
         }
-    }
-}
 
         private static async Task RunFFmpeg(string arguments)
         {
@@ -132,8 +133,10 @@ private static double GetVideoDuration(string videoUrl)
                     int xOffset = (i % tileWidth) * thumbnailWidth;
                     int yOffset = (i / tileWidth) * thumbnailHeight;
 
-                    writer.WriteLine($"{TimeSpan.FromSeconds(startTime):hh\\:mm\\:ss\\.fff} --> {TimeSpan.FromSeconds(endTime):hh\\:mm\\:ss\\.fff}");
-                    writer.WriteLine($"/previews/{videoName}{tileInfo.TileIndex}.png#xywh={xOffset},{yOffset},{thumbnailWidth},{thumbnailHeight}");
+                    writer.WriteLine(
+                        $"{TimeSpan.FromSeconds(startTime):hh\\:mm\\:ss\\.fff} --> {TimeSpan.FromSeconds(endTime):hh\\:mm\\:ss\\.fff}");
+                    writer.WriteLine(
+                        $"/previews/{videoName}{tileInfo.TileIndex}.png#xywh={xOffset},{yOffset},{thumbnailWidth},{thumbnailHeight}");
                     writer.WriteLine();
                 }
             }

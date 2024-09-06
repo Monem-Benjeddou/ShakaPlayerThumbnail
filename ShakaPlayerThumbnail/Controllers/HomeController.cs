@@ -27,7 +27,6 @@ namespace ShakaPlayerThumbnail.Controllers
             {
                 EnsurePreviewsFolderExists(previewsFolder);
 
-                // Confirm that the video file exists before trying to generate previews
                 if (System.IO.File.Exists(videoPath))
                 {
                     _logger.LogInformation("Video exists at {videoPath}, starting sprite preview generation.", videoPath);
@@ -65,6 +64,10 @@ namespace ShakaPlayerThumbnail.Controllers
             using var client = new HttpClient();
             try
             {
+                if(Directory.Exists("etc/data/video"))
+                {
+                    Directory.CreateDirectory("/etc/data/video");
+                }
                 var response = await client.GetAsync(videoUrl);
                 if (!response.IsSuccessStatusCode)
                 {
@@ -139,7 +142,6 @@ namespace ShakaPlayerThumbnail.Controllers
                     return;
                 }
 
-                // Pass the correct local file path to the FfmpegTool
                 await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, videoName, 5);
 
                 _logger.LogInformation("Sprite preview generated successfully.");
