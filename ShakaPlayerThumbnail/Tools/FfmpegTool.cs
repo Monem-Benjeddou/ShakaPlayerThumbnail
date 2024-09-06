@@ -1,27 +1,24 @@
 using System.Diagnostics;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace ShakaPlayerThumbnail.Tools
 {
     public static class FfmpegTool
     {
-        public static async Task GenerateSpritePreview(string videoUrl, string outputImagePath, string videoName,
+        public static async Task GenerateSpritePreview(string videoPath, string outputImagePath, string videoName,
             int intervalSeconds = 12)
         {
             var directoryPath = Path.GetDirectoryName(outputImagePath);
-            if (!Uri.IsWellFormedUriString(videoUrl, UriKind.Absolute))
-            {
-                throw new FileNotFoundException($"Invalid URL or file not found: {videoUrl}");
-            }
-
             if (!Directory.Exists(directoryPath))
             {
                 Directory.CreateDirectory(directoryPath);
             }
 
-            var videoDuration = GetVideoDuration(videoUrl);
+            var videoDuration = GetVideoDuration(videoPath);
             var totalFrames = (int)Math.Ceiling(videoDuration / intervalSeconds);
-            int tileWidth = 5; // Number of tiles in width
-            int tileHeight = 5; // Number of tiles in height
+            int tileWidth = 5; 
+            int tileHeight = 5; 
             int framesPerTile = tileWidth * tileHeight;
             int numberOfTiles = (int)Math.Ceiling((double)totalFrames / framesPerTile);
 
@@ -33,8 +30,8 @@ namespace ShakaPlayerThumbnail.Tools
                 double endTime = Math.Min(startTime + framesPerTile * intervalSeconds, videoDuration);
                 int framesInThisSection = Math.Min(totalFrames - (i - 1) * framesPerTile, framesPerTile);
 
-                // Construct FFmpeg arguments with the tile filter, using the URL
-                var arguments = $"-i \"{videoUrl}\" -ss {startTime} -t {endTime - startTime} " +
+                // Construct FFmpeg arguments with the tile filter
+                var arguments = $"-i \"{videoPath}\" -ss {startTime} -t {endTime - startTime} " +
                                 $"-vf \"select=not(mod(t\\,{intervalSeconds})),scale=160:-1,tile={tileWidth}x{tileHeight}\" " +
                                 $"-threads 0 -preset ultrafast -y \"{outputImagePath}{i}.png\"";
 
@@ -50,18 +47,17 @@ namespace ShakaPlayerThumbnail.Tools
             }
 
             // Generate the VTT file
-            var previewsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "previews");
+            var previewsFolder = Path.Combine("/etc/data", "previews");
             var outputVttPath = Path.Combine(previewsFolder, $"{videoName}.vtt");
 
             GenerateVTT(outputVttPath, videoDuration, 160, 90, videoName, intervalSeconds, tileWidth, tileHeight,
                 thumbnailInfo);
         }
 
-
-        private static double GetVideoDuration(string videoUrl)
+        private static double GetVideoDuration(string videoPath)
         {
             string ffprobeArguments =
-                $"-v error -select_streams v:0 -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{videoUrl}\"";
+                $"-v error -select_streams v:0 -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{videoPath}\"";
             using (Process ffprobeProcess = new Process
                    {
                        StartInfo = new ProcessStartInfo
@@ -112,15 +108,11 @@ namespace ShakaPlayerThumbnail.Tools
             await ffmpegProcess.WaitForExitAsync();
         }
 
-
         public static void GenerateVTT(string outputVttPath, double totalDuration, int thumbnailWidth,
             int thumbnailHeight, string videoName, int intervalSeconds, int tileWidth, int tileHeight,
             List<ThumbnailInfo> thumbnailInfo)
         {
-            // Save VTT to the volume-mounted folder `/etc/data/previews`
-            string volumeVttPath = Path.Combine("/etc/data/previews", $"{videoName}.vtt");
-
-            using StreamWriter writer = new StreamWriter(volumeVttPath);
+            using StreamWriter writer = new StreamWriter(outputVttPath);
             writer.WriteLine("WEBVTT");
 
             foreach (var tileInfo in thumbnailInfo)
@@ -141,7 +133,6 @@ namespace ShakaPlayerThumbnail.Tools
                 }
             }
         }
-
 
         public class ThumbnailInfo
         {
