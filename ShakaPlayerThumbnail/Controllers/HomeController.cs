@@ -148,7 +148,7 @@ namespace ShakaPlayerThumbnail.Controllers
                     return;
                 }
 
-                if (System.IO.File.Exists(videoPath))
+                if (System.IO.File.Exists("/etc/data/previews/video.vtt"))
                 {
                     return;
                 }
