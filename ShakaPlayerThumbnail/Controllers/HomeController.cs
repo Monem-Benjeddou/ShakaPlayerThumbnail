@@ -144,6 +144,9 @@ namespace ShakaPlayerThumbnail.Controllers
                     return;
                 }
 
+                var currentDirectory = Directory.GetCurrentDirectory();
+                _logger.LogInformation("Current folder:{0}", currentDirectory);
+
                 _logger.LogInformation("Generating sprite preview for video at {videoPath}", videoPath);
                 await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, videoName, 5);
             }
