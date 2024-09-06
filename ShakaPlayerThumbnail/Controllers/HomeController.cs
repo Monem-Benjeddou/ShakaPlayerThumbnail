@@ -145,16 +145,7 @@ namespace ShakaPlayerThumbnail.Controllers
                 }
 
                 _logger.LogInformation("Generating sprite preview for video at {videoPath}", videoPath);
-                bool success = await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, videoName, 5);
-
-                if (success)
-                {
-                    _logger.LogInformation("Sprite preview generated successfully at {outputImagePath}.", outputImagePath);
-                }
-                else
-                {
-                    _logger.LogError("Failed to generate sprite preview at {outputImagePath}.", outputImagePath);
-                }
+                await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, videoName, 5);
             }
             catch (Exception ex)
             {
