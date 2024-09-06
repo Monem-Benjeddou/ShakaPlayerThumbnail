@@ -17,7 +17,7 @@ namespace ShakaPlayerThumbnail.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var videoUrl = "https://filebin.net/s6708bhjw5dro382/video.mp4";
+            var videoUrl = "https://download.wetransfer.com/eugv/349ffb24a5be2cd7ea8693a30337b12e20240906112717/c44ddb17902bda6cc51814eb509fd6b51bed5ceb/video.mp4?cf=y&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImRlZmF1bHQifQ.eyJleHAiOjE3MjU2MzY1NTEsImlhdCI6MTcyNTYyMjE1MSwiZG93bmxvYWRfaWQiOiIyN2JhY2QxYi1iYzM1LTRmNzItOTQ5OS02MGYwNjdjOGUxN2UiLCJzdG9yYWdlX3NlcnZpY2UiOiJzdG9ybSJ9.4UgS9xVVoGZMBjYQE60fgmCpfmbK0Yt39s42awDa2ow\n";
 string previewsFolder = Path.Combine("/etc/data", "previews");
             string videoName = "video";
             string videoPath = Path.Combine("/etc", "data", $"{videoName}.mp4");
