@@ -17,22 +17,24 @@ namespace ShakaPlayerThumbnail.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var videoUrl = "https://s3.filebin.net/filebin/a09f6cfbdcaacfe192aec094f25a82a543ff933e7c83e2afef0e2dade0093dc7/5a44db20c2ccb60c7c30cd1ce2af84831718584d26a22a09ae3b479c19bea5d5?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=7pMj6hGeoKewqmMQILjm%2F20240906%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240906T105802Z&X-Amz-Expires=60&X-Amz-SignedHeaders=host&response-cache-control=max-age%3D60&response-content-disposition=filename%3D%22video.mp4%22&response-content-type=video%2Fmp4&X-Amz-Signature=89e8fadb9eb009908e70edd0df1a2a242d1bad6f6430d39143c3f3e78a2c18e6";
-            string previewsFolder = Path.Combine("/etc/data", "previews");
+            var videoUrl = "https://filebin.net/s6708bhjw5dro382/video.mp4";
+string previewsFolder = Path.Combine("/etc/data", "previews");
             string videoName = "video";
-            string videoPath = Path.Combine("/etc","data", $"{videoName}.mp4");
+            string videoPath = Path.Combine("/etc", "data", $"{videoName}.mp4");
             string outputImagePath = Path.Combine(previewsFolder, videoName);
             string returnedVttFilePath = $"/previews/{videoName}.vtt";
             var model = new Tuple<string, string>("/data/video.mp4", returnedVttFilePath);
 
             if (await TryDownloadVideoIfNecessary(videoUrl, videoPath))
             {
-                await EnsurePreviewsFolderExists(previewsFolder);
+                EnsurePreviewsFolderExists(previewsFolder);
             }
-            if (!Directory.Exists(previewsFolder)) 
+            
+            if (System.IO.File.Exists(videoPath) && !Directory.Exists(previewsFolder)) 
             {
                 await GenerateSpritePreviewIfNecessary(videoUrl, outputImagePath, videoName);
             }
+            
             return View((object)model);
         }
 
@@ -43,6 +45,7 @@ namespace ShakaPlayerThumbnail.Controllers
                 if (IsFileSizeValid(videoPath))
                 {
                     _logger.LogInformation("File already exists and is 10 MB or larger.");
+                    return true;
                 }
 
                 _logger.LogInformation("File at {videoPath} is less than 10 MB and has been deleted.", videoPath);
@@ -59,14 +62,18 @@ namespace ShakaPlayerThumbnail.Controllers
             try
             {
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("video/mp4"));
-        
-                var response = await client.GetAsync(videoUrl);
-                response.EnsureSuccessStatusCode();
 
-                var contentType = response.Content.Headers.ContentType.MediaType;
-                if (!contentType.StartsWith("video"))
+                var response = await client.GetAsync(videoUrl);
+                if (!response.IsSuccessStatusCode)
                 {
-                    _logger.LogError("Invalid content type: {contentType}", contentType);
+                    _logger.LogError("Failed to download video. Status Code: {StatusCode}", response.StatusCode);
+                    return false;
+                }
+
+                var contentType = response.Content.Headers.ContentType?.MediaType;
+                if (contentType != "video/mp4")
+                {
+                    _logger.LogError("Expected video content type but got {contentType}", contentType);
                     return false;
                 }
 
@@ -92,7 +99,7 @@ namespace ShakaPlayerThumbnail.Controllers
             return fileSizeInBytes >= tenMB;
         }
 
-        private async Task EnsurePreviewsFolderExists(string previewsFolder)
+        private void EnsurePreviewsFolderExists(string previewsFolder)
         {
             if (!Directory.Exists(previewsFolder))
             {
@@ -102,7 +109,14 @@ namespace ShakaPlayerThumbnail.Controllers
 
         private async Task GenerateSpritePreviewIfNecessary(string videoUrl, string outputImagePath, string videoName)
         {
-            await FfmpegTool.GenerateSpritePreview(videoUrl, outputImagePath, videoName, 5);
+            try
+            {
+                await FfmpegTool.GenerateSpritePreview(videoUrl, outputImagePath, videoName, 5);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error generating sprite preview: {ex}", ex.Message);
+            }
         }
 
         public IActionResult Privacy()
