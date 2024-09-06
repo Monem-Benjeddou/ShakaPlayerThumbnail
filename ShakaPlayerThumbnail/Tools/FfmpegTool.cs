@@ -128,7 +128,7 @@ namespace ShakaPlayerThumbnail.Tools
                     writer.WriteLine(
                         $"{TimeSpan.FromSeconds(startTime):hh\\:mm\\:ss\\.fff} --> {TimeSpan.FromSeconds(endTime):hh\\:mm\\:ss\\.fff}");
                     writer.WriteLine(
-                        $"/previews/{videoName}{tileInfo.TileIndex}.png#xywh={xOffset},{yOffset},{thumbnailWidth},{thumbnailHeight}");
+                        $"/data/previews/{videoName}{tileInfo.TileIndex}.png#xywh={xOffset},{yOffset},{thumbnailWidth},{thumbnailHeight}");
                     writer.WriteLine();
                 }
             }
