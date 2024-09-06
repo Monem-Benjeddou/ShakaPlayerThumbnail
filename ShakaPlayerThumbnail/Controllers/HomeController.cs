@@ -27,7 +27,7 @@ namespace ShakaPlayerThumbnail.Controllers
             string videoPath = $"/etc/data/{videoName}.mp4";
 
             string returnedVttFilePath = $"/previews/{videoName}.vtt";
-            var model = new Tuple<string, string>(videoPath, returnedVttFilePath);
+            var model = new Tuple<string, string>("/data/video.mp4", returnedVttFilePath);
             if (!System.IO.File.Exists(videoPath))
             {
                 using (var client = new HttpClient())
