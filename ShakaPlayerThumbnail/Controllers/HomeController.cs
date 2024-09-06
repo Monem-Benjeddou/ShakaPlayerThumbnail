@@ -16,7 +16,7 @@ namespace ShakaPlayerThumbnail.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var videoUrl = "https://drive.google.com/file/d/1K2GTQqlpdwdsoJwPwc5qj9jFkrfIhiW1/view?usp=sharing";
+            var videoUrl = "https://drive.google.com/uc?export=download&id=1K2GTQqlpdwdsoJwPwc5qj9jFkrfIhiW1";
     
             // Define the previews folder in the volume
             string previewsFolder = Path.Combine("/etc/data", "previews");
