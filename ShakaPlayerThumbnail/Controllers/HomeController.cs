@@ -72,6 +72,10 @@ namespace ShakaPlayerThumbnail.Controllers
                     Directory.CreateDirectory("/etc/data/video");
                 }
 
+                if (System.IO.File.Exists(videoPath))
+                {
+                    return true;
+                }
                 var response = await client.GetAsync(videoUrl);
                 if (!response.IsSuccessStatusCode)
                 {
