@@ -16,12 +16,12 @@ namespace ShakaPlayerThumbnail.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var videoUrl = "https://www.dropbox.com/scl/fi/h5k5t9604k20zx3r7ymyv/video.mp4?rlkey=iukuryf8hlmf87wqe2lt5l1eb&st=ozuqjqm6&dl=1";
+            var videoUrl = "https://drive.google.com/file/d/1AFeTsjconp1HutdCOmwX0UnBqoCyp5zh/view?usp=drive_link";
     
             // Define the previews folder in the volume
             string previewsFolder = Path.Combine("/etc/data", "previews");
             string videoName = "video";
-            string outputImagePath = Path.Combine(previewsFolder, videoName);
+            string outputImagePath = Path.Combine(previewsFolder, videoName);e
 
             string vttFilePath = $"/etc/data/previews/{videoName}.vtt";
             string returnedVttFilePath = $"/previews/{videoName}.vtt";
