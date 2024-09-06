@@ -144,6 +144,10 @@ namespace ShakaPlayerThumbnail.Controllers
                     return;
                 }
 
+                if (System.IO.File.Exists(videoPath))
+                {
+                    return;
+                }
                 var currentDirectory = Directory.GetCurrentDirectory();
                 _logger.LogInformation("Current folder:{0}", currentDirectory);
 
