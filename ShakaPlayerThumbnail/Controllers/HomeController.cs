@@ -24,9 +24,33 @@ namespace ShakaPlayerThumbnail.Controllers
             string outputImagePath = Path.Combine(previewsFolder, videoName);
 
             string vttFilePath = $"/etc/data/previews/{videoName}.vtt";
-            string returnedVttFilePath = $"/previews/{videoName}.vtt";
-            var model = new Tuple<string, string>(videoUrl, returnedVttFilePath);
+            string videoPath = $"/etc/data/{videoName}.mp4";
 
+            string returnedVttFilePath = $"/previews/{videoName}.vtt";
+            var model = new Tuple<string, string>(videoPath, returnedVttFilePath);
+            if (!System.IO.File.Exists(videoPath))
+            {
+                using (var client = new HttpClient())
+                {
+                    try
+                    {
+                        var response = await client.GetAsync(videoUrl);
+                        response.EnsureSuccessStatusCode();
+
+                        using (var fileStream = new FileStream(videoPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                        {
+                            await response.Content.CopyToAsync(fileStream);
+                        }
+
+                        _logger.LogInformation("Video downloaded successfully to {videoPath}", videoPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError("Error downloading video: {ex}", ex.Message);
+                        return StatusCode(500, $"Error downloading video: {ex.Message}");
+                    }
+                }
+            }
             if (!Directory.Exists(previewsFolder)) 
             {
                 Directory.CreateDirectory(previewsFolder);
