@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Mvc;
 using ShakaPlayerThumbnail.Models;
 using ShakaPlayerThumbnail.Tools;
@@ -28,35 +29,52 @@ namespace ShakaPlayerThumbnail.Controllers
 
             string returnedVttFilePath = $"/previews/{videoName}.vtt";
             var model = new Tuple<string, string>("/data/video.mp4", returnedVttFilePath);
+
+            // Log the video URL
+            _logger.LogInformation("Video URL: {videoUrl}", videoUrl);
+
             if (!System.IO.File.Exists(videoPath))
             {
-                using (var client = new HttpClient())
+                using var client = new HttpClient();
+                try
                 {
-                    try
-                    {
-                        var response = await client.GetAsync(videoUrl);
-                        response.EnsureSuccessStatusCode();
+                    // Log the attempt to download the video
+                    _logger.LogInformation("Downloading video from {videoUrl}", videoUrl);
 
-                        using (var fileStream = new FileStream(videoPath, FileMode.Create, FileAccess.Write, FileShare.None))
-                        {
-                            await response.Content.CopyToAsync(fileStream);
-                        }
+                    var response = await client.GetAsync(videoUrl);
+                    response.EnsureSuccessStatusCode();
 
-                        _logger.LogInformation("Video downloaded successfully to {videoPath}", videoPath);
-                    }
-                    catch (Exception ex)
+                    // Log the file content type and size
+                    _logger.LogInformation("Content type: {contentType}", response.Content.Headers.ContentType);
+                    _logger.LogInformation("Content length: {contentLength} bytes", response.Content.Headers.ContentLength);
+
+                    await using (var fileStream = new FileStream(videoPath, FileMode.Create, FileAccess.Write, FileShare.None))
                     {
-                        _logger.LogError("Error downloading video: {ex}", ex.Message);
-                        return StatusCode(500, $"Error downloading video: {ex.Message}");
+                        await response.Content.CopyToAsync(fileStream);
                     }
+
+                    _logger.LogInformation("Video downloaded successfully to {videoPath}", videoPath);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError("Error downloading video: {ex}", ex.Message);
+                    return StatusCode(500, $"Error downloading video: {ex.Message}");
                 }
             }
+            else
+            {
+                _logger.LogInformation("File already exists at {videoPath}", videoPath);
+
+                // Log file size of the already existing video
+                var fileInfo = new FileInfo(videoPath);
+                _logger.LogInformation("Video file size: {size} bytes", fileInfo.Length);
+            }
+
             if (!Directory.Exists(previewsFolder)) 
             {
                 Directory.CreateDirectory(previewsFolder);
                 await FfmpegTool.GenerateSpritePreview(videoUrl, outputImagePath, videoName, 5);
             }
-
 
             return View((object)model);
         }
