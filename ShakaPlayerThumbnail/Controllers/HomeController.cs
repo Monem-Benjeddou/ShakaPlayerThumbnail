@@ -58,11 +58,19 @@ namespace ShakaPlayerThumbnail.Controllers
             using var client = new HttpClient();
             try
             {
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("video/mp4"));
+        
                 var response = await client.GetAsync(videoUrl);
                 response.EnsureSuccessStatusCode();
 
-                await using (var fileStream =
-                             new FileStream(videoPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                var contentType = response.Content.Headers.ContentType.MediaType;
+                if (!contentType.StartsWith("video"))
+                {
+                    _logger.LogError("Invalid content type: {contentType}", contentType);
+                    return false;
+                }
+
+                await using (var fileStream = new FileStream(videoPath, FileMode.Create, FileAccess.Write, FileShare.None))
                 {
                     await response.Content.CopyToAsync(fileStream);
                 }
