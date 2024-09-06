@@ -58,6 +58,7 @@ namespace ShakaPlayerThumbnail.Controllers
                 catch (Exception ex)
                 {
                     _logger.LogError("Error downloading video: {ex}", ex.Message);
+                    
                     return StatusCode(500, $"Error downloading video: {ex.Message}");
                 }
             }
@@ -68,6 +69,10 @@ namespace ShakaPlayerThumbnail.Controllers
                 // Log file size of the already existing video
                 var fileInfo = new FileInfo(videoPath);
                 _logger.LogInformation("Video file size: {size} bytes", fileInfo.Length);
+                if (fileInfo.Length < 100000)
+                {
+                    System.IO.File.Delete($"{videoPath}");
+                }
             }
 
             if (!Directory.Exists(previewsFolder)) 
