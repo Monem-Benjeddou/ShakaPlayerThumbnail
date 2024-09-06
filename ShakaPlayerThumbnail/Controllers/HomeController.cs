@@ -18,7 +18,7 @@ namespace ShakaPlayerThumbnail.Controllers
         public async Task<IActionResult> Index()
         {
             var videoUrl = "https://download.wetransfer.com/eugv/349ffb24a5be2cd7ea8693a30337b12e20240906112717/c44ddb17902bda6cc51814eb509fd6b51bed5ceb/video.mp4?cf=y&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImRlZmF1bHQifQ.eyJleHAiOjE3MjU2MzY1NTEsImlhdCI6MTcyNTYyMjE1MSwiZG93bmxvYWRfaWQiOiIyN2JhY2QxYi1iYzM1LTRmNzItOTQ5OS02MGYwNjdjOGUxN2UiLCJzdG9yYWdlX3NlcnZpY2UiOiJzdG9ybSJ9.4UgS9xVVoGZMBjYQE60fgmCpfmbK0Yt39s42awDa2ow\n";
-string previewsFolder = Path.Combine("/etc/data", "previews");
+            string previewsFolder = Path.Combine("/etc/data", "previews");
             string videoName = "video";
             string videoPath = Path.Combine("/etc", "data", $"{videoName}.mp4");
             string outputImagePath = Path.Combine(previewsFolder, videoName);
@@ -28,11 +28,11 @@ string previewsFolder = Path.Combine("/etc/data", "previews");
             if (await TryDownloadVideoIfNecessary(videoUrl, videoPath))
             {
                 EnsurePreviewsFolderExists(previewsFolder);
-            }
-            
-            if (System.IO.File.Exists(videoPath) && !Directory.Exists(previewsFolder)) 
-            {
-                await GenerateSpritePreviewIfNecessary(videoUrl, outputImagePath, videoName);
+
+                if (System.IO.File.Exists(videoPath))
+                {
+                    await GenerateSpritePreviewIfNecessary(videoPath, outputImagePath, videoName);
+                }
             }
             
             return View((object)model);
@@ -42,13 +42,13 @@ string previewsFolder = Path.Combine("/etc/data", "previews");
         {
             if (System.IO.File.Exists(videoPath))
             {
-                if (IsFileSizeValid(videoPath))
+                if (IsFileSizeValid(videoPath) && IsVideoFile(videoPath))
                 {
-                    _logger.LogInformation("File already exists and is 10 MB or larger.");
+                    _logger.LogInformation("File already exists, is 10 MB or larger, and is a valid video.");
                     return true;
                 }
 
-                _logger.LogInformation("File at {videoPath} is less than 10 MB and has been deleted.", videoPath);
+                _logger.LogInformation("File at {videoPath} is less than 10 MB or not a valid video and has been deleted.", videoPath);
                 System.IO.File.Delete(videoPath);
             }
 
@@ -61,7 +61,6 @@ string previewsFolder = Path.Combine("/etc/data", "previews");
             using var client = new HttpClient();
             try
             {
-                // No content type check
                 var response = await client.GetAsync(videoUrl);
                 if (!response.IsSuccessStatusCode)
                 {
@@ -72,6 +71,13 @@ string previewsFolder = Path.Combine("/etc/data", "previews");
                 await using (var fileStream = new FileStream(videoPath, FileMode.Create, FileAccess.Write, FileShare.None))
                 {
                     await response.Content.CopyToAsync(fileStream);
+                }
+
+                if (!IsVideoFile(videoPath))
+                {
+                    _logger.LogError("Downloaded file is not a valid video.");
+                    System.IO.File.Delete(videoPath);
+                    return false;
                 }
 
                 _logger.LogInformation("Video downloaded successfully to {videoPath}", videoPath);
@@ -91,6 +97,24 @@ string previewsFolder = Path.Combine("/etc/data", "previews");
             return fileSizeInBytes >= tenMB;
         }
 
+        private bool IsVideoFile(string filePath)
+        {
+            try
+            {
+                var fileInfo = new FileInfo(filePath);
+                var fileExtension = fileInfo.Extension.ToLowerInvariant();
+
+                // Check if file extension is common video format
+                var validExtensions = new[] { ".mp4", ".avi", ".mov", ".mkv", ".webm" };
+                return validExtensions.Contains(fileExtension);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error checking video file type: {ex}", ex.Message);
+                return false;
+            }
+        }
+
         private void EnsurePreviewsFolderExists(string previewsFolder)
         {
             if (!Directory.Exists(previewsFolder))
@@ -99,11 +123,11 @@ string previewsFolder = Path.Combine("/etc/data", "previews");
             }
         }
 
-        private async Task GenerateSpritePreviewIfNecessary(string videoUrl, string outputImagePath, string videoName)
+        private async Task GenerateSpritePreviewIfNecessary(string videoPath, string outputImagePath, string videoName)
         {
             try
             {
-                await FfmpegTool.GenerateSpritePreview(videoUrl, outputImagePath, videoName, 5);
+                await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, videoName, 5);
             }
             catch (Exception ex)
             {
