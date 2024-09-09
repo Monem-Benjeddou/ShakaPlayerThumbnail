@@ -31,8 +31,9 @@ namespace ShakaPlayerThumbnail.Tools
                 int framesInThisSection = Math.Min(totalFrames - (i - 1) * framesPerTile, framesPerTile);
 
                 var arguments = $"-i \"{videoPath}\" -ss {startTime} -t {endTime - startTime} " +
-                                $"-vf \"select=not(mod(t\\,{intervalSeconds})),scale=120:-1,tile={tileWidth}x{tileHeight}\" " + // Lower resolution scale to 120
-                                $"-threads 0 -preset ultrafast -y \"{outputImagePath}{i}.png\"";
+                                $"-vf \"select=not(mod(t\\,{intervalSeconds})),scale=120:-1,tile={tileWidth}x{tileHeight}\" " + 
+                                $"-threads 0 -preset ultrafast -y \"{outputImagePath}{i}.png\""; 
+
 
                 await RunFFmpeg(arguments);
 
