@@ -32,7 +32,8 @@ namespace ShakaPlayerThumbnail.Tools
 
                 var arguments = $"-i \"{videoPath}\" -ss {startTime} -t {endTime - startTime} " +
                                 $"-vf \"select=not(mod(t\\,{intervalSeconds})),scale=120:-1,tile={tileWidth}x{tileHeight}\" " +
-                                $"-threads 0 -preset ultrafast -y \"{outputImagePath}{i}.png\"";
+                                $"-threads 0 -preset ultrafast -y \"{outputImagePath}%03d.png\"";
+
 
 
 
@@ -111,31 +112,40 @@ namespace ShakaPlayerThumbnail.Tools
             await ffmpegProcess.WaitForExitAsync();
         }
 
-        private static void GenerateVTT(string outputVttPath, double totalDuration, int thumbnailWidth,
-            int thumbnailHeight, string videoName, int intervalSeconds, int tileWidth, int tileHeight,
+        private static void GenerateVTT(string outputVttPath, double totalDuration, int thumbnailWidth, int thumbnailHeight,
+            string videoName, int intervalSeconds, int tileWidth, int tileHeight, 
             List<ThumbnailInfo> thumbnailInfo)
         {
-            using StreamWriter writer = new StreamWriter(outputVttPath);
-            writer.WriteLine("WEBVTT");
-            var location = "data/previews";
-            foreach (var tileInfo in thumbnailInfo)
+            using (StreamWriter writer = new StreamWriter(outputVttPath))
             {
-                for (int i = 0; i < tileInfo.FrameCount; i++)
+                writer.WriteLine("WEBVTT");
+                writer.WriteLine();
+
+                foreach (var info in thumbnailInfo)
                 {
-                    double startTime = tileInfo.StartTime + i * intervalSeconds;
-                    double endTime = Math.Min(startTime + intervalSeconds, tileInfo.EndTime);
+                    // Loop through the individual frames in the tile
+                    for (int frame = 0; frame < info.FrameCount; frame++)
+                    {
+                        // Calculate the start time for the frame
+                        double startTime = info.StartTime + frame * intervalSeconds;
 
-                    int xOffset = (i % tileWidth) * thumbnailWidth;
-                    int yOffset = (i / tileWidth) * thumbnailHeight;
+                        // Calculate the end time (add the interval to the start time)
+                        double endTime = Math.Min(startTime + intervalSeconds, totalDuration);
 
-                    writer.WriteLine(
-                        $"{TimeSpan.FromSeconds(startTime):hh\\:mm\\:ss\\.fff} --> {TimeSpan.FromSeconds(endTime):hh\\:mm\\:ss\\.fff}");
-                    writer.WriteLine(
-                        $"{location}/{videoName}{tileInfo.TileIndex}.png#xywh={xOffset},{yOffset},{thumbnailWidth},{thumbnailHeight}");
-                    writer.WriteLine();
+                        // Write the timestamp in VTT format (hh:mm:ss.ms)
+                        writer.WriteLine($"{TimeSpan.FromSeconds(startTime):hh\\:mm\\:ss\\.fff} --> {TimeSpan.FromSeconds(endTime):hh\\:mm\\:ss\\.fff}");
+
+                        // Write the file name and coordinates within the sprite sheet
+                        string fileName = $"{videoName}{info.TileIndex}.png";
+                        int x = (frame % tileWidth) * thumbnailWidth;
+                        int y = (frame / tileWidth) * thumbnailHeight;
+                        writer.WriteLine($"{fileName}#xywh={x},{y},{thumbnailWidth},{thumbnailHeight}");
+                        writer.WriteLine();
+                    }
                 }
             }
         }
+
 
         public class ThumbnailInfo
         {
