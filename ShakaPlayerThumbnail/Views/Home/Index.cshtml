@@ -22,11 +22,11 @@
         if (!document.fullscreenElement) {
           if (videoContainer.requestFullscreen) {
             videoContainer.requestFullscreen();
-          } else if (videoContainer.mozRequestFullScreen) { /* Firefox */
+          } else if (videoContainer.mozRequestFullScreen) { 
             videoContainer.mozRequestFullScreen();
-          } else if (videoContainer.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+          } else if (videoContainer.webkitRequestFullscreen) {
             videoContainer.webkitRequestFullscreen();
-          } else if (videoContainer.msRequestFullscreen) { /* IE/Edge */
+          } else if (videoContainer.msRequestFullscreen) { 
             videoContainer.msRequestFullscreen();
           }
         } else {
@@ -104,7 +104,7 @@
 
           const percent = offsetX / seekBarRect.width;
           const position = percent * duration;
-          lastPreviewPosition = position; // Save last preview position
+          lastPreviewPosition = position; 
 
           try {
             const thumbnail = await player.getThumbnails(thumbnailTrack.id, position);
@@ -124,7 +124,7 @@
               let thumbX = offsetX;
               thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(seekBarRect.width - thumbElement.clientWidth / 2, thumbX));
               thumbElement.style.left = `${thumbX}px`;
-              thumbElement.style.top = `-96px`;
+              thumbElement.style.top = `-80px`;
               thumbElement.style.display = 'block';
             } else {
               console.log('No thumbnail found for this position.');
@@ -152,11 +152,17 @@
         seekBar.addEventListener('touchstart', showThumbnail);
         seekBar.addEventListener('touchmove', debounce(showThumbnail, 5));
         seekBar.addEventListener('touchend', () => {
-          hideThumbnail(); // Ensure thumbnail hides on touch end
+          hideThumbnail(); // Ensure thumbnail hides immediately on touch end
+
           if (lastPreviewPosition !== undefined) {
             video.currentTime = lastPreviewPosition;
             video.play();
           }
+
+          // Set a timeout to hide the thumbnail after a delay
+          setTimeout(() => {
+            thumbElement.style.display = 'none';
+          }, 500); // 500ms delay before hiding thumbnail
         });
         seekBar.addEventListener('click', handleClick);
 

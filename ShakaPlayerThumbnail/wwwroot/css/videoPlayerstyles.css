@@ -43,7 +43,7 @@
     position: absolute;
     display: none;
     background-color: rgba(0, 0, 0, 0.7);
-    background-size: 800px 450px; /* Adjust based on your thumbnail size */
+    background-size: 1200px 680px; 
     width: 160px;
     height: 90px;
     pointer-events: none;
