@@ -52,7 +52,7 @@ namespace ShakaPlayerThumbnail.Tools
 
             var outputVttPath = Path.Combine(previewsFolder, $"{videoName}.vtt");
 
-            GenerateVTT(outputVttPath, videoDuration, 120, 68, videoName, intervalSeconds, tileWidth, tileHeight,
+            GenerateVTT(outputVttPath, 120, 68, videoName, intervalSeconds, tileWidth, tileHeight,
                 thumbnailInfo);
         }
 
@@ -110,7 +110,7 @@ namespace ShakaPlayerThumbnail.Tools
             await ffmpegProcess.WaitForExitAsync();
         }
 
-        private static void GenerateVTT(string outputVttPath, double totalDuration, int thumbnailWidth,
+        private static void GenerateVTT(string outputVttPath, int thumbnailWidth,
             int thumbnailHeight, string videoName, int intervalSeconds, int tileWidth, int tileHeight,
             List<ThumbnailInfo> thumbnailInfo)
         {
