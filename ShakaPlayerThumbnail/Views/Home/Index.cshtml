@@ -12,8 +12,7 @@
 
 
 
-<script>
-  document.addEventListener('DOMContentLoaded', async () => {
+<script>document.addEventListener('DOMContentLoaded', async () => {
     const fullscreenToggleBtn = document.getElementById('fullscreen-toggle-btn');
     let lastPreviewPosition;
 
@@ -147,12 +146,13 @@
           }
         };
 
+        // Mouse and touch events for showing/hiding thumbnails
         seekBar.addEventListener('mousemove', debounce(showThumbnail, 5));
         seekBar.addEventListener('mouseleave', hideThumbnail);
         seekBar.addEventListener('touchstart', showThumbnail);
         seekBar.addEventListener('touchmove', debounce(showThumbnail, 5));
         seekBar.addEventListener('touchend', () => {
-          hideThumbnail(); // Clear thumbnail on touch end
+          hideThumbnail(); // Ensure thumbnail hides on touch end
           if (lastPreviewPosition !== undefined) {
             video.currentTime = lastPreviewPosition;
             video.play();
