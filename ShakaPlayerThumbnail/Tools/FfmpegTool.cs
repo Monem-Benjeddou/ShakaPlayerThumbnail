@@ -52,7 +52,7 @@ namespace ShakaPlayerThumbnail.Tools
 
             var outputVttPath = Path.Combine(previewsFolder, $"{videoName}.vtt");
 
-            GenerateVTT(outputVttPath, 120, 68, videoName, intervalSeconds, tileWidth, tileHeight,
+             GenerateVTT(outputVttPath, 120, 68, videoName, intervalSeconds, tileWidth, tileHeight,
                 thumbnailInfo);
         }
 
@@ -116,7 +116,6 @@ namespace ShakaPlayerThumbnail.Tools
         {
             using StreamWriter writer = new StreamWriter(outputVttPath);
             writer.WriteLine("WEBVTT");
-            var location = "data/previews";
             foreach (var tileInfo in thumbnailInfo)
             {
                 for (int i = 0; i < tileInfo.FrameCount; i++)
@@ -130,7 +129,7 @@ namespace ShakaPlayerThumbnail.Tools
                     writer.WriteLine(
                         $"{TimeSpan.FromSeconds(startTime):hh\\:mm\\:ss\\.fff} --> {TimeSpan.FromSeconds(endTime):hh\\:mm\\:ss\\.fff}");
                     writer.WriteLine(
-                        $"{location}/{videoName}{tileInfo.TileIndex}.png#xywh={xOffset},{yOffset},{thumbnailWidth},{thumbnailHeight}");
+                        $"/data/previews/{videoName}{tileInfo.TileIndex}.png#xywh={xOffset},{yOffset},{thumbnailWidth},{thumbnailHeight}");
                     writer.WriteLine();
                 }
             }
