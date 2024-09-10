@@ -142,8 +142,14 @@
           hideThumbnailTimer = setTimeout(() => {
             thumbElement.style.display = 'none';
             isPlayingPreview = false;
+
+            // Resume the video if it was paused during thumbnail preview
+            if (video.paused && !isHovering) {
+              video.play();
+            }
           }, 5); // Hide after 5 milliseconds if not hovering
-        }, 100);
+        }, 5);
+
 
         // Mouse and touch events for showing/hiding thumbnails
         seekBar.addEventListener('mousemove', showThumbnail);
