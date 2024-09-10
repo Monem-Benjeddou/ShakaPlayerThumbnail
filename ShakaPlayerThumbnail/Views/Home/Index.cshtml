@@ -1,4 +1,13 @@
-﻿<script>
+﻿<div id="video-container" class="video-container">
+  <video id="video" controls></video>
+  <div id="seekbar-container">
+    <div id="seek-bar"></div>
+    <div id="thumb" class="thumbnail"></div>
+  </div>
+  <button id="fullscreen-toggle-btn"></button>
+  <div id="error" class="error-message"></div>
+</div>
+<script>
   document.addEventListener('DOMContentLoaded', async () => {
     const fullscreenToggleBtn = document.getElementById('fullscreen-toggle-btn');
     let lastPreviewPosition;
