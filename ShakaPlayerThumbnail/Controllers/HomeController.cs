@@ -8,14 +8,14 @@ namespace ShakaPlayerThumbnail.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-        private string PreviewsFolderPath = string.Empty;
-        private string VideoFolderPath = string.Empty;
+        private string PreviewsFolderPath = "etc/data/previews";
+        private string VideoFolderPath = "/etc/data/video";
 
         public HomeController(ILogger<HomeController> logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            PreviewsFolderPath = Path.Combine(Directory.GetCurrentDirectory(),"wwwroot","previews");
-            VideoFolderPath = Path.Combine(Directory.GetCurrentDirectory(),"wwwroot","video.mp4");
+            //PreviewsFolderPath = Path.Combine(Directory.GetCurrentDirectory(),"wwwroot","previews");
+            //VideoFolderPath = Path.Combine(Directory.GetCurrentDirectory(),"wwwroot","video.mp4");
         }
 
         public async Task<IActionResult> Index()
