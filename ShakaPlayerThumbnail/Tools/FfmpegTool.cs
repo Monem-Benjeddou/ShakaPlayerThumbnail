@@ -14,7 +14,10 @@ namespace ShakaPlayerThumbnail.Tools
             const int tileHeight = 10;
             int framesPerTile = tileWidth * tileHeight;
             int numberOfTiles = (int)Math.Ceiling((double)totalFrames / framesPerTile);
-
+            if (!Directory.Exists(outputImagePath))
+            {
+                Directory.CreateDirectory(outputImagePath);
+            }
             var thumbnailInfo = new List<ThumbnailInfo>();
 
             for (int i = 1; i <= numberOfTiles; i++)
