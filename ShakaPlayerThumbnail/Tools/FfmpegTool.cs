@@ -34,7 +34,9 @@ namespace ShakaPlayerThumbnail.Tools
         private static string BuildFfmpegArguments(string videoPath, double startTime, double endTime, string outputImagePath, int tileIndex, int intervalSeconds) =>
             $"-i \"{videoPath}\" -ss {startTime} -t {endTime - startTime} " +
             $"-vf \"select=not(mod(t\\,{intervalSeconds})),scale=120:-1,tile=10x10\" " +
-            $"-threads 0 -preset ultrafast -y \"{outputImagePath}{tileIndex}.png\"";
+            $"-quality 50 -compression_level 6 -threads 0 -y \"{outputImagePath}{tileIndex}.webp\"";
+
+
 
         private static double GetVideoDuration(string videoPath)
         {
@@ -56,14 +58,21 @@ namespace ShakaPlayerThumbnail.Tools
                     FileName = fileName,
                     Arguments = arguments,
                     RedirectStandardOutput = true,
+                    RedirectStandardError = true, // Redirecting the error output
                     UseShellExecute = false,
                     CreateNoWindow = true
                 }
             };
 
             process.Start();
+
+            // Read standard output and error output
             string output = process.StandardOutput.ReadToEnd();
+            string errorOutput = process.StandardError.ReadToEnd();
             process.WaitForExit();
+
+            Console.WriteLine("Output: " + output);
+            Console.WriteLine("Error: " + errorOutput);
 
             return double.TryParse(output.Trim(), out double result) ? result : throw new InvalidOperationException("Could not determine video duration.");
         }
@@ -77,11 +86,14 @@ namespace ShakaPlayerThumbnail.Tools
                     FileName = fileName,
                     Arguments = arguments,
                     RedirectStandardOutput = true,
-                    RedirectStandardError = true,
+                    RedirectStandardError = true, 
                     UseShellExecute = false,
                     CreateNoWindow = true
                 }
             };
+
+            process.OutputDataReceived += (sender, args) => Console.WriteLine("Output: " + args.Data);
+            process.ErrorDataReceived += (sender, args) => Console.WriteLine("Error: " + args.Data);
 
             process.Start();
             process.BeginOutputReadLine();
@@ -89,6 +101,7 @@ namespace ShakaPlayerThumbnail.Tools
 
             await process.WaitForExitAsync();
         }
+
 
         private static void GenerateVttFile(string videoName, List<ThumbnailInfo> thumbnailInfo, int intervalSeconds, int tileWidth, int tileHeight)
         {
@@ -104,7 +117,7 @@ namespace ShakaPlayerThumbnail.Tools
                     var (startTime, endTime, xOffset, yOffset) = CalculateOffsets(info, i, intervalSeconds, tileWidth, tileHeight);
 
                     writer.WriteLine($"{TimeSpan.FromSeconds(startTime):hh\\:mm\\:ss\\.fff} --> {TimeSpan.FromSeconds(endTime):hh\\:mm\\:ss\\.fff}");
-                    writer.WriteLine($"/data/previews/{videoName}{info.TileIndex}.png#xywh={xOffset},{yOffset},120,68");
+                    writer.WriteLine($"/etc/data/previews/{videoName}{info.TileIndex}.webp#xywh={xOffset},{yOffset},120,68");
                     //writer.WriteLine($"/previews/{videoName}{info.TileIndex}.png#xywh={xOffset},{yOffset},120,68");
 
                     writer.WriteLine();
