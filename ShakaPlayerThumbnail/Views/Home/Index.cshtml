@@ -138,7 +138,7 @@
             console.error('Error getting thumbnail:', error);
             errorDisplay.textContent = `Error getting thumbnail: ${error.message}`;
           }
-        }, 200); // Increased debounce time for better performance
+        }, 10); // Increased debounce time for better performance
 
         const hideThumbnail = debounce(() => {
           hideThumbnailTimer = setTimeout(() => {
@@ -149,8 +149,8 @@
             if (video.paused && !isHovering) {
               video.play();
             }
-          }, 200); // Slightly longer delay for better UX
-        }, 200);
+          }, 10); // Slightly longer delay for better UX
+        }, 10);
 
         // Unified mouse and touch events for showing/hiding thumbnails
         seekBar.addEventListener('mousemove', showThumbnail);
