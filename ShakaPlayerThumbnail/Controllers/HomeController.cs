@@ -21,10 +21,10 @@ namespace ShakaPlayerThumbnail.Controllers
             const string videoName = "video";
             var videoUrl = GetVideoUrl();
 
-            EnsureFolderExists(VideoFolderPath); // Ensure video folder exists
+            EnsureFolderExists(VideoFolderPath); 
             var videoPath = Path.Combine(VideoFolderPath, $"{videoName}.mp4");
 
-            EnsureFolderExists(PreviewsFolderPath); // Ensure previews folder exists
+            EnsureFolderExists(PreviewsFolderPath); 
             var outputImagePath = Path.Combine(PreviewsFolderPath, videoName);
             var returnedVttFilePath = $"/data/previews/{videoName}.vtt";
             var returnedVideoPath = $"/data/video/{videoName}.mp4";
