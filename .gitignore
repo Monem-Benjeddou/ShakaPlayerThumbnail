@@ -62,3 +62,4 @@ msbuild.wrn
 **/.idea/**/contentModel.xml
 **/.idea/**/modules.xml
 .DS_Store
+ShakaPlayerThumbnail/wwwroot/video.mp4
