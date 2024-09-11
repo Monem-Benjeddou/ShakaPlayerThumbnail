@@ -17,7 +17,7 @@
     const errorDisplay = document.getElementById('error');
     const videoContainer = document.getElementById('video-container');
     const player = new shaka.Player(video);
-    let lastPreviewPosition, isPlayingPreview = false, hideThumbnailTimer, thumbnailTrack, isHovering = false; 
+    let lastPreviewPosition, thumbnailTrack, isHovering = false;
 
     // Fullscreen toggle logic
     fullscreenToggleBtn?.addEventListener('click', toggleFullscreen);
@@ -59,22 +59,37 @@
         const thumbnailTrack = await player.addThumbnailsTrack(vttUrl);
         if (!thumbnailTrack) throw new Error('Thumbnail track could not be added.');
 
-        const showThumbnail = debounce(handleThumbnailPreview, 10);
-        const hideThumbnail = debounce(hideThumbnailPreview, 20);
+        const showThumbnail = debounce(handleThumbnailPreview, 5); 
+        let hideTimeout;
 
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
             video.removeAttribute('controls');
             video.setAttribute('controls', 'controls');
-            isHovering = true; 
+            isHovering = true;
+            clearTimeout(hideTimeout);
             showThumbnail(e);
+            videoContainer.classList.add('hover');
           });
         });
         ['mouseleave', 'touchend'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
-            isHovering = false; // Update isHovering when interaction ends
-            hideThumbnail(e);
+            isHovering = false;
+            hideTimeout = setTimeout(() => {
+              thumbElement.style.display = 'none';
+              videoContainer.classList.remove('hover');
+            }, 5); 
           });
+        });
+
+        // Add hover effect for the entire video container
+        videoContainer.addEventListener('mouseenter', () => {
+          videoContainer.classList.add('hover');
+        });
+        videoContainer.addEventListener('mouseleave', () => {
+          if (!isHovering) {
+            videoContainer.classList.remove('hover');
+          }
         });
 
         return thumbnailTrack;
@@ -84,8 +99,7 @@
     }
 
     function handleThumbnailPreview(event) {
-      clearTimeout(hideThumbnailTimer);
-      const { offsetX, touchX, position, percent } = getSeekBarInfo(event);
+      const { offsetX, position, percent } = getSeekBarInfo(event);
       lastPreviewPosition = position;
 
       player.getThumbnails(thumbnailTrack.id, position).then((thumbnail) => {
@@ -96,21 +110,14 @@
       }).catch((error) => handleError('Error getting thumbnail', error));
     }
 
-    function hideThumbnailPreview() {
-      hideThumbnailTimer = setTimeout(() => {
-        thumbElement.style.display = 'none';
-        if (!isHovering && video.paused) video.play();
-      }, 10);
-    }
-
     function seekToPosition(event) {
       const { position } = getSeekBarInfo(event);
       video.currentTime = position;
-      video.pause();
     }
 
     function adjustSeekbarPosition() {
-      document.getElementById('seekbar-container').classList.toggle('fullscreen', !!document.fullscreenElement);
+      const seekbarContainer = document.getElementById('seekbar-container');
+      seekbarContainer.classList.toggle('fullscreen', !!document.fullscreenElement);
     }
 
     function debounce(func, delay) {
@@ -124,51 +131,32 @@
     function getSeekBarInfo(event) {
       const seekBarRect = seekBar.getBoundingClientRect();
       const duration = player.seekRange().end;
-
-      let offsetX;
-      if (event.type.includes('touch')) {
-        offsetX = event.touches[0].clientX - seekBarRect.left;
-      } else {
-        offsetX = event.pageX - seekBarRect.left;
-      }
+      const offsetX = event.touches ? event.touches[0].clientX - seekBarRect.left : event.pageX - seekBarRect.left;
       const percent = offsetX / seekBarRect.width;
       const position = percent * duration;
       return { offsetX, percent, position };
     }
 
     function parseThumbnailData(thumbnail) {
-      const parts = thumbnail.uris[0].split('#xywh=');
-      const imageUrl = parts[0];  // URL to the .webp image
-      const [x = 0, y = 0, width = 120, height = 68] = parts[1].split(',').map(Number);  // Extract coordinates and dimensions
+      const imageUrl = thumbnail.uris[0].split('#')[0];
+      const { x = 0, y = 0, width = 120, height = 68 } = thumbnail;
       return [imageUrl, { x, y, width, height }];
     }
 
     function displayThumbnail(thumbElement, imageUrl, x, y, width, height, offsetX, percent) {
-      // Set the sprite image and coordinates
       thumbElement.style.backgroundImage = `url(${imageUrl})`;
       thumbElement.style.backgroundPosition = `-${x}px -${y}px`;
       thumbElement.style.width = `${width}px`;
       thumbElement.style.height = `${height}px`;
-
-      // Center the thumbnail on the seek bar
-      const seekBarRect = seekBar.getBoundingClientRect();
-      let thumbX = offsetX - (width / 2);
-
-      // Prevent thumbnail from overflowing on the left and right edges of the seek bar
-      if (thumbX < 0) {
-        thumbX = 0;
-      } else if (thumbX + width > seekBarRect.width) {
-        thumbX = seekBarRect.width - width;
-      }
-
+      const thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(seekBar.clientWidth - thumbElement.clientWidth / 2, offsetX));
       thumbElement.style.left = `${thumbX}px`;
-      thumbElement.style.top = `-96px`;  // Adjust to position it above the seek bar
+      thumbElement.style.top = `-80px`;
       thumbElement.style.display = 'block';
     }
+
     function handleError(message, error) {
       console.error(message, error);
       errorDisplay.textContent = `${message}: ${error.message}`;
     }
   });
-
 </script>
