@@ -143,13 +143,24 @@
     }
 
     function displayThumbnail(thumbElement, imageUrl, x, y, width, height, offsetX, percent) {
-
+      // Set background image and position
       thumbElement.style.backgroundImage = `url(${imageUrl})`;
       thumbElement.style.backgroundPosition = `-${x}px -${y}px`;
       thumbElement.style.width = `${width}px`;
       thumbElement.style.height = `${height}px`;
-      let thumbX = offsetX;
-      thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(width - thumbElement.clientWidth / 2, thumbX));
+
+      // Ensure thumbnail is centered and doesn't overflow from the edges of the seek bar
+      const seekBarRect = seekBar.getBoundingClientRect();
+      let thumbX = offsetX - (width / 2); // Center the thumbnail
+
+      // Prevent thumbnail from overflowing on the left and right edges of the seek bar
+      if (thumbX < 0) {
+        thumbX = 0;
+      } else if (thumbX + width > seekBarRect.width) {
+        thumbX = seekBarRect.width - width;
+      }
+
+      // Position the thumbnail and display it above the seek bar
       thumbElement.style.left = `${thumbX}px`;
       thumbElement.style.top = `-96px`;
       thumbElement.style.display = 'block';
