@@ -66,6 +66,7 @@
             isHovering = true;
             clearTimeout(hideTimeout);
             showThumbnail(e);
+            videoContainer.classList.add('hover'); // Add hover class to container
           });
         });
         ['mouseleave', 'touchend'].forEach((event) => {
@@ -73,8 +74,19 @@
             isHovering = false;
             hideTimeout = setTimeout(() => {
               thumbElement.style.display = 'none';
-            }, 1000); // Hide thumbnail after 1 second
+              videoContainer.classList.remove('hover'); // Remove hover class from container
+            }, 1000); // Hide thumbnail and remove hover class after 1 second
           });
+        });
+
+        // Add hover effect for the entire video container
+        videoContainer.addEventListener('mouseenter', () => {
+          videoContainer.classList.add('hover');
+        });
+        videoContainer.addEventListener('mouseleave', () => {
+          if (!isHovering) {
+            videoContainer.classList.remove('hover');
+          }
         });
 
         return thumbnailTrack;
@@ -98,7 +110,6 @@
     function seekToPosition(event) {
       const { position } = getSeekBarInfo(event);
       video.currentTime = position;
-      // Removed video.pause() to keep the video playing when seeking
     }
 
     function adjustSeekbarPosition() {
