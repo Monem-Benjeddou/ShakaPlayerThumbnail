@@ -16,7 +16,7 @@
     const errorDisplay = document.getElementById('error');
     const videoContainer = document.getElementById('video-container');
     const player = new shaka.Player(video);
-    let lastPreviewPosition, isPlayingPreview = false, hideThumbnailTimer, thumbnailTrack, isHovering = false; // Initialize isHovering here
+    let lastPreviewPosition, thumbnailTrack, isHovering = false;
 
     // Fullscreen toggle logic
     fullscreenToggleBtn?.addEventListener('click', toggleFullscreen);
@@ -59,18 +59,21 @@
         if (!thumbnailTrack) throw new Error('Thumbnail track could not be added.');
 
         const showThumbnail = debounce(handleThumbnailPreview, 10);
-        const hideThumbnail = debounce(hideThumbnailPreview, 20);
+        let hideTimeout;
 
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
-            isHovering = true; // Update isHovering when the user is interacting
+            isHovering = true;
+            clearTimeout(hideTimeout);
             showThumbnail(e);
           });
         });
         ['mouseleave', 'touchend'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
-            isHovering = false; // Update isHovering when interaction ends
-            hideThumbnail(e);
+            isHovering = false;
+            hideTimeout = setTimeout(() => {
+              thumbElement.style.display = 'none';
+            }, 1000); // Hide thumbnail after 1 second
           });
         });
 
@@ -81,8 +84,7 @@
     }
 
     function handleThumbnailPreview(event) {
-      clearTimeout(hideThumbnailTimer);
-      const { offsetX, touchX, position, percent } = getSeekBarInfo(event);
+      const { offsetX, position, percent } = getSeekBarInfo(event);
       lastPreviewPosition = position;
 
       player.getThumbnails(thumbnailTrack.id, position).then((thumbnail) => {
@@ -93,17 +95,10 @@
       }).catch((error) => handleError('Error getting thumbnail', error));
     }
 
-    function hideThumbnailPreview() {
-      hideThumbnailTimer = setTimeout(() => {
-        thumbElement.style.display = 'none';
-        if (!isHovering && video.paused) video.play();
-      }, 10);
-    }
-
     function seekToPosition(event) {
       const { position } = getSeekBarInfo(event);
       video.currentTime = position;
-      video.pause();
+      // Removed video.pause() to keep the video playing when seeking
     }
 
     function adjustSeekbarPosition() {
@@ -148,5 +143,4 @@
       console.error(message, error);
       errorDisplay.textContent = `${message}: ${error.message}`;
     }
-  });
-</script>
+  });</script>
