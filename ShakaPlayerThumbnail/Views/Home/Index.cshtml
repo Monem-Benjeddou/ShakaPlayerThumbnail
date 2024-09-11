@@ -137,21 +137,22 @@
     }
 
     function parseThumbnailData(thumbnail) {
-      const imageUrl = thumbnail.uris[0].split('#')[0];
-      const { x = 0, y = 0, width = 120, height = 68 } = thumbnail;
+      const parts = thumbnail.uris[0].split('#xywh=');
+      const imageUrl = parts[0];  // URL to the .webp image
+      const [x = 0, y = 0, width = 120, height = 68] = parts[1].split(',').map(Number);  // Extract coordinates and dimensions
       return [imageUrl, { x, y, width, height }];
     }
 
     function displayThumbnail(thumbElement, imageUrl, x, y, width, height, offsetX, percent) {
-      // Set background image and position
+      // Set the sprite image and coordinates
       thumbElement.style.backgroundImage = `url(${imageUrl})`;
       thumbElement.style.backgroundPosition = `-${x}px -${y}px`;
       thumbElement.style.width = `${width}px`;
       thumbElement.style.height = `${height}px`;
 
-      // Ensure thumbnail is centered and doesn't overflow from the edges of the seek bar
+      // Center the thumbnail on the seek bar
       const seekBarRect = seekBar.getBoundingClientRect();
-      let thumbX = offsetX - (width / 2); // Center the thumbnail
+      let thumbX = offsetX - (width / 2);
 
       // Prevent thumbnail from overflowing on the left and right edges of the seek bar
       if (thumbX < 0) {
@@ -160,12 +161,10 @@
         thumbX = seekBarRect.width - width;
       }
 
-      // Position the thumbnail and display it above the seek bar
       thumbElement.style.left = `${thumbX}px`;
-      thumbElement.style.top = `-96px`;
+      thumbElement.style.top = `-96px`;  // Adjust to position it above the seek bar
       thumbElement.style.display = 'block';
     }
-
     function handleError(message, error) {
       console.error(message, error);
       errorDisplay.textContent = `${message}: ${error.message}`;
