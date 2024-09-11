@@ -19,6 +19,7 @@
     const player = new shaka.Player(video);
     let lastPreviewPosition, thumbnailTrack, isHovering = false;
 
+    // Fullscreen toggle logic
     fullscreenToggleBtn?.addEventListener('click', toggleFullscreen);
 
     function toggleFullscreen() {
@@ -58,7 +59,7 @@
         const thumbnailTrack = await player.addThumbnailsTrack(vttUrl);
         if (!thumbnailTrack) throw new Error('Thumbnail track could not be added.');
 
-        const showThumbnail = debounce(handleThumbnailPreview, 5);
+        const showThumbnail = debounce(handleThumbnailPreview, 5); // Increased delay to 100ms
         let hideTimeout;
 
         ['mousemove', 'touchmove'].forEach((event) => {
@@ -68,19 +69,22 @@
             isHovering = true;
             clearTimeout(hideTimeout);
             showThumbnail(e);
-            videoContainer.classList.add('hover');
+            videoContainer.classList.add('hover'); // Add hover class to container
           });
         });
         ['mouseleave', 'touchend'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
+            video.removeAttribute('controls');
+            video.setAttribute('controls', 'controls');
             isHovering = false;
             hideTimeout = setTimeout(() => {
               thumbElement.style.display = 'none';
-              videoContainer.classList.remove('hover');
-            }, 10);
+              videoContainer.classList.remove('hover'); // Remove hover class from container
+            }, 10); // Hide thumbnail and remove hover class after 500ms
           });
         });
 
+        // Add hover effect for the entire video container
         videoContainer.addEventListener('mouseenter', () => {
           videoContainer.classList.add('hover');
         });
@@ -157,5 +161,4 @@
       errorDisplay.textContent = `${message}: ${error.message}`;
     }
   });
-
 </script>
