@@ -110,6 +110,7 @@
       }).catch((error) => handleError('Error getting thumbnail', error));
     }
 
+
     function seekToPosition(event) {
       const { position } = getSeekBarInfo(event);
       video.currentTime = position;
@@ -139,9 +140,23 @@
 
     function parseThumbnailData(thumbnail) {
       const imageUrl = thumbnail.uris[0].split('#')[0];
-      const { x = 0, y = 0, width = 120, height = 68 } = thumbnail;
+
+      // Extract the fragment after #xywh=
+      const fragment = thumbnail.uris[0].split('#')[1];
+      let x = 0, y = 0, width = 120, height = 68;
+
+      if (fragment && fragment.startsWith("xywh=")) {
+        const [, coords] = fragment.split("=");
+        const [xValue, yValue, widthValue, heightValue] = coords.split(",");
+        x = parseInt(xValue, 10);
+        y = parseInt(yValue, 10);
+        width = parseInt(widthValue, 10);
+        height = parseInt(heightValue, 10);
+      }
+
       return [imageUrl, { x, y, width, height }];
     }
+
 
     function displayThumbnail(thumbElement, imageUrl, x, y, width, height, offsetX, percent) {
       thumbElement.style.backgroundImage = `url(${imageUrl})`;
