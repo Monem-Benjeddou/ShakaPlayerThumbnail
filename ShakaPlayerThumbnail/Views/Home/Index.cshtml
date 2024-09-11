@@ -58,7 +58,7 @@
         const thumbnailTrack = await player.addThumbnailsTrack(vttUrl);
         if (!thumbnailTrack) throw new Error('Thumbnail track could not be added.');
 
-        const showThumbnail = debounce(handleThumbnailPreview, 10);
+        const showThumbnail = debounce(handleThumbnailPreview, 5);
         let hideTimeout;
 
         ['mousemove', 'touchmove'].forEach((event) => {
@@ -75,7 +75,7 @@
             hideTimeout = setTimeout(() => {
               thumbElement.style.display = 'none';
               videoContainer.classList.remove('hover'); // Remove hover class from container
-            }, 10); // Hide thumbnail and remove hover class after 1 second
+            }, 5); // Hide thumbnail and remove hover class after 1 second
           });
         });
 
