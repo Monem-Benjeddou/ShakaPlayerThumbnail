@@ -8,7 +8,8 @@
   <div id="error" class="error-message"></div>
 </div>
 
-<script>document.addEventListener('DOMContentLoaded', async () => {
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
     const fullscreenToggleBtn = document.getElementById('fullscreen-toggle-btn');
     const video = document.getElementById('video');
     const seekBar = document.getElementById('seek-bar');
@@ -58,7 +59,7 @@
         const thumbnailTrack = await player.addThumbnailsTrack(vttUrl);
         if (!thumbnailTrack) throw new Error('Thumbnail track could not be added.');
 
-        const showThumbnail = debounce(handleThumbnailPreview, 5);
+        const showThumbnail = debounce(handleThumbnailPreview, 100); // Increased delay to 100ms
         let hideTimeout;
 
         ['mousemove', 'touchmove'].forEach((event) => {
@@ -75,7 +76,7 @@
             hideTimeout = setTimeout(() => {
               thumbElement.style.display = 'none';
               videoContainer.classList.remove('hover'); // Remove hover class from container
-            }, 5); // Hide thumbnail and remove hover class after 1 second
+            }, 500); // Hide thumbnail and remove hover class after 500ms
           });
         });
 
@@ -113,7 +114,8 @@
     }
 
     function adjustSeekbarPosition() {
-      document.getElementById('seekbar-container').classList.toggle('fullscreen', !!document.fullscreenElement);
+      const seekbarContainer = document.getElementById('seekbar-container');
+      seekbarContainer.classList.toggle('fullscreen', !!document.fullscreenElement);
     }
 
     function debounce(func, delay) {
@@ -154,4 +156,5 @@
       console.error(message, error);
       errorDisplay.textContent = `${message}: ${error.message}`;
     }
-  });</script>
+  });
+</script>
