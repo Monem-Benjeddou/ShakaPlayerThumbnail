@@ -64,7 +64,9 @@
 
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
-            isHovering = true; // Update isHovering when the user is interacting
+            video.removeAttribute('controls');
+            video.setAttribute('controls', 'controls');
+            isHovering = true; 
             showThumbnail(e);
           });
         });
