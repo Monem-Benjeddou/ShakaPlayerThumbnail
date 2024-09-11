@@ -58,8 +58,8 @@
         const thumbnailTrack = await player.addThumbnailsTrack(vttUrl);
         if (!thumbnailTrack) throw new Error('Thumbnail track could not be added.');
 
-        const showThumbnail = debounce(handleThumbnailPreview, 100);
-        const hideThumbnail = debounce(hideThumbnailPreview, 200);
+        const showThumbnail = debounce(handleThumbnailPreview, 10);
+        const hideThumbnail = debounce(hideThumbnailPreview, 20);
 
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
@@ -97,7 +97,7 @@
       hideThumbnailTimer = setTimeout(() => {
         thumbElement.style.display = 'none';
         if (!isHovering && video.paused) video.play();
-      }, 100);
+      }, 10);
     }
 
     function seekToPosition(event) {
