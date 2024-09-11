@@ -8,8 +8,7 @@
   <div id="error" class="error-message"></div>
 </div>
 
-<script>
-  document.addEventListener('DOMContentLoaded', async () => {
+<script>document.addEventListener('DOMContentLoaded', async () => {
     const fullscreenToggleBtn = document.getElementById('fullscreen-toggle-btn');
     const video = document.getElementById('video');
     const seekBar = document.getElementById('seek-bar');
@@ -17,7 +16,7 @@
     const errorDisplay = document.getElementById('error');
     const videoContainer = document.getElementById('video-container');
     const player = new shaka.Player(video);
-    let lastPreviewPosition, isPlayingPreview = false, hideThumbnailTimer, thumbnailTrack;
+    let lastPreviewPosition, isPlayingPreview = false, hideThumbnailTimer, thumbnailTrack, isHovering = false; // Initialize isHovering here
 
     // Fullscreen toggle logic
     fullscreenToggleBtn?.addEventListener('click', toggleFullscreen);
@@ -59,11 +58,21 @@
         const thumbnailTrack = await player.addThumbnailsTrack(vttUrl);
         if (!thumbnailTrack) throw new Error('Thumbnail track could not be added.');
 
-        const showThumbnail = debounce(handleThumbnailPreview, 20);
-        const hideThumbnail = debounce(hideThumbnailPreview, 20);
+        const showThumbnail = debounce(handleThumbnailPreview, 100);
+        const hideThumbnail = debounce(hideThumbnailPreview, 200);
 
-        ['mousemove', 'touchmove'].forEach((event) => seekBar.addEventListener(event, showThumbnail));
-        ['mouseleave', 'touchend'].forEach((event) => seekBar.addEventListener(event, hideThumbnail));
+        ['mousemove', 'touchmove'].forEach((event) => {
+          seekBar.addEventListener(event, (e) => {
+            isHovering = true; // Update isHovering when the user is interacting
+            showThumbnail(e);
+          });
+        });
+        ['mouseleave', 'touchend'].forEach((event) => {
+          seekBar.addEventListener(event, (e) => {
+            isHovering = false; // Update isHovering when interaction ends
+            hideThumbnail(e);
+          });
+        });
 
         return thumbnailTrack;
       } catch (error) {
@@ -88,7 +97,7 @@
       hideThumbnailTimer = setTimeout(() => {
         thumbElement.style.display = 'none';
         if (!isHovering && video.paused) video.play();
-      }, 10);
+      }, 100);
     }
 
     function seekToPosition(event) {
