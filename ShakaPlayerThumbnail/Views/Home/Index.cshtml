@@ -11,41 +11,32 @@
 <script>
   document.addEventListener('DOMContentLoaded', async () => {
     const fullscreenToggleBtn = document.getElementById('fullscreen-toggle-btn');
-    let lastPreviewPosition;
-    let isHovering = false;
-    let isPlayingPreview = false;
-    let hideThumbnailTimer;
-
-    if (fullscreenToggleBtn) {
-      fullscreenToggleBtn.addEventListener('click', () => {
-        const videoContainer = document.getElementById('video-container');
-        if (!document.fullscreenElement) {
-          if (videoContainer.requestFullscreen) {
-            videoContainer.requestFullscreen();
-          } else if (videoContainer.mozRequestFullScreen) {
-            videoContainer.mozRequestFullScreen();
-          } else if (videoContainer.webkitRequestFullscreen) {
-            videoContainer.webkitRequestFullscreen();
-          } else if (videoContainer.msRequestFullscreen) {
-            videoContainer.msRequestFullscreen();
-          }
-        } else {
-          if (document.exitFullscreen) {
-            document.exitFullscreen();
-          }
-        }
-      });
-    } else {
-      console.error('Fullscreen toggle button not found.');
-    }
-
     const video = document.getElementById('video');
     const seekBar = document.getElementById('seek-bar');
     const thumbElement = document.getElementById('thumb');
     const errorDisplay = document.getElementById('error');
     const videoContainer = document.getElementById('video-container');
     const player = new shaka.Player(video);
-    let thumbnailTrack;
+    let lastPreviewPosition, isPlayingPreview = false, hideThumbnailTimer, thumbnailTrack;
+
+    // Fullscreen toggle logic
+    fullscreenToggleBtn?.addEventListener('click', toggleFullscreen);
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        videoContainer.requestFullscreen?.() ||
+        videoContainer.mozRequestFullScreen?.() ||
+        videoContainer.webkitRequestFullscreen?.() ||
+        videoContainer.msRequestFullscreen?.();
+      } else {
+        document.exitFullscreen?.();
+      }
+    }
+
+    document.addEventListener('fullscreenchange', () => {
+      videoContainer.classList.toggle('fullscreen', !!document.fullscreenElement);
+      adjustSeekbarPosition();
+    });
 
     try {
       const videoUrl = "@Html.Raw(Model.Item1)";
@@ -54,116 +45,60 @@
       console.log('Video loaded successfully!');
       thumbnailTrack = await setupThumbnails(player, thumbElement, vttUrl);
     } catch (error) {
-      console.error('Error loading video:', error);
-      errorDisplay.textContent = `Error loading video: ${error.message}`;
+      handleError('Error loading video', error);
     }
 
     player.addEventListener('error', (event) => {
-      console.error('Player error:', event.detail);
-      errorDisplay.textContent = `Player Error: ${event.detail.message}`;
+      handleError('Player error', event.detail);
     });
 
-    seekBar.addEventListener('click', (event) => {
-      const duration = player.seekRange().end;
-      const percent = (event.offsetX || event.touches[0].clientX - seekBar.getBoundingClientRect().left) / seekBar.clientWidth;
-      const position = percent * duration;
-      video.pause();
-      video.currentTime = position;
-    });
-
-    document.addEventListener('fullscreenchange', () => {
-      adjustSeekbarPosition();
-
-      if (document.fullscreenElement) {
-        videoContainer.classList.add('fullscreen');
-      } else {
-        videoContainer.classList.remove('fullscreen');
-      }
-    });
+    seekBar.addEventListener('click', seekToPosition);
 
     async function setupThumbnails(player, thumbElement, vttUrl) {
       try {
         const thumbnailTrack = await player.addThumbnailsTrack(vttUrl);
+        if (!thumbnailTrack) throw new Error('Thumbnail track could not be added.');
 
-        if (!thumbnailTrack) {
-          throw new Error('Thumbnail track could not be added.');
-        }
+        const showThumbnail = debounce(handleThumbnailPreview, 20);
+        const hideThumbnail = debounce(hideThumbnailPreview, 20);
 
-        const showThumbnail = debounce(async (event) => {
-          clearTimeout(hideThumbnailTimer); // Prevent hiding the thumbnail too soon
-          video.pause();
-
-          const seekBarRect = seekBar.getBoundingClientRect();
-          const duration = player.seekRange().end;
-          let offsetX;
-
-          if (event.type.includes('touch')) {
-            offsetX = event.touches[0].clientX - seekBarRect.left;
-          } else {
-            offsetX = event.pageX - seekBarRect.left;
-          }
-
-          const percent = offsetX / seekBarRect.width;
-          const position = percent * duration;
-          lastPreviewPosition = position;
-
-          try {
-            const thumbnail = await player.getThumbnails(thumbnailTrack.id, position);
-
-            if (thumbnail && thumbnail.uris.length > 0) {
-              const imageUrl = thumbnail.uris[0].split('#')[0];
-              const x = thumbnail.positionX || 0;
-              const y = thumbnail.positionY || 0;
-              const width = thumbnail.width || 120;
-              const height = thumbnail.height || 68;
-
-              thumbElement.style.backgroundImage = `url(${imageUrl})`;
-              thumbElement.style.backgroundPosition = `-${x}px -${y}px`;
-              thumbElement.style.width = `${width}px`;
-              thumbElement.style.height = `${height}px`;
-
-              let thumbX = offsetX;
-              thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(seekBarRect.width - thumbElement.clientWidth / 2, thumbX));
-              thumbElement.style.left = `${thumbX}px`;
-              thumbElement.style.top = `-80px`;
-              thumbElement.style.display = 'block';
-            } else {
-              console.log('No thumbnail found for this position.');
-            }
-
-            if (!isPlayingPreview) {
-              isPlayingPreview = true;
-            }
-          } catch (error) {
-            console.error('Error getting thumbnail:', error);
-            errorDisplay.textContent = `Error getting thumbnail: ${error.message}`;
-          }
-        }, 10); // Increased debounce time for better performance
-
-        const hideThumbnail = debounce(() => {
-          hideThumbnailTimer = setTimeout(() => {
-            thumbElement.style.display = 'none';
-            isPlayingPreview = false;
-
-            // Resume the video if it was paused during thumbnail preview
-            if (video.paused && !isHovering) {
-              video.play();
-            }
-          }, 10); // Slightly longer delay for better UX
-        }, 10);
-
-        // Unified mouse and touch events for showing/hiding thumbnails
-        seekBar.addEventListener('mousemove', showThumbnail);
-        seekBar.addEventListener('mouseleave', hideThumbnail);
-        seekBar.addEventListener('touchstart', showThumbnail);
-        seekBar.addEventListener('touchmove', showThumbnail); // No redundant debounce
-        seekBar.addEventListener('touchend', hideThumbnail);
+        ['mousemove', 'touchmove'].forEach((event) => seekBar.addEventListener(event, showThumbnail));
+        ['mouseleave', 'touchend'].forEach((event) => seekBar.addEventListener(event, hideThumbnail));
 
         return thumbnailTrack;
       } catch (error) {
-        console.error('Failed to set up thumbnails:', error);
-        errorDisplay.textContent = `Failed to set up thumbnails: ${error.message}`;
+        handleError('Failed to set up thumbnails', error);
       }
+    }
+
+    function handleThumbnailPreview(event) {
+      clearTimeout(hideThumbnailTimer);
+      const { offsetX, touchX, position, percent } = getSeekBarInfo(event);
+      lastPreviewPosition = position;
+
+      player.getThumbnails(thumbnailTrack.id, position).then((thumbnail) => {
+        if (thumbnail?.uris.length) {
+          const [imageUrl, { x, y, width, height }] = parseThumbnailData(thumbnail);
+          displayThumbnail(thumbElement, imageUrl, x, y, width, height, offsetX, percent);
+        }
+      }).catch((error) => handleError('Error getting thumbnail', error));
+    }
+
+    function hideThumbnailPreview() {
+      hideThumbnailTimer = setTimeout(() => {
+        thumbElement.style.display = 'none';
+        if (!isHovering && video.paused) video.play();
+      }, 10);
+    }
+
+    function seekToPosition(event) {
+      const { position } = getSeekBarInfo(event);
+      video.currentTime = position;
+      video.pause();
+    }
+
+    function adjustSeekbarPosition() {
+      document.getElementById('seekbar-container').classList.toggle('fullscreen', !!document.fullscreenElement);
     }
 
     function debounce(func, delay) {
@@ -174,14 +109,35 @@
       };
     }
 
-    function adjustSeekbarPosition() {
-      const seekbarContainer = document.getElementById('seekbar-container');
+    function getSeekBarInfo(event) {
+      const seekBarRect = seekBar.getBoundingClientRect();
+      const duration = player.seekRange().end;
+      const offsetX = event.touches ? event.touches[0].clientX - seekBarRect.left : event.pageX - seekBarRect.left;
+      const percent = offsetX / seekBarRect.width;
+      const position = percent * duration;
+      return { offsetX, percent, position };
+    }
 
-      if (document.fullscreenElement) {
-        seekbarContainer.classList.add('fullscreen');
-      } else {
-        seekbarContainer.classList.remove('fullscreen');
-      }
+    function parseThumbnailData(thumbnail) {
+      const imageUrl = thumbnail.uris[0].split('#')[0];
+      const { x = 0, y = 0, width = 120, height = 68 } = thumbnail;
+      return [imageUrl, { x, y, width, height }];
+    }
+
+    function displayThumbnail(thumbElement, imageUrl, x, y, width, height, offsetX, percent) {
+      thumbElement.style.backgroundImage = `url(${imageUrl})`;
+      thumbElement.style.backgroundPosition = `-${x}px -${y}px`;
+      thumbElement.style.width = `${width}px`;
+      thumbElement.style.height = `${height}px`;
+      const thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(seekBar.clientWidth - thumbElement.clientWidth / 2, offsetX));
+      thumbElement.style.left = `${thumbX}px`;
+      thumbElement.style.top = `-80px`;
+      thumbElement.style.display = 'block';
+    }
+
+    function handleError(message, error) {
+      console.error(message, error);
+      errorDisplay.textContent = `${message}: ${error.message}`;
     }
   });
 </script>
