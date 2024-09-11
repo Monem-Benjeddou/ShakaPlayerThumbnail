@@ -149,7 +149,7 @@
       thumbElement.style.width = `${width}px`;
       thumbElement.style.height = `${height}px`;
       let thumbX = offsetX;
-      thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(seekBarRect.width - thumbElement.clientWidth / 2, thumbX));
+      thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(width - thumbElement.clientWidth / 2, thumbX));
       thumbElement.style.left = `${thumbX}px`;
       thumbElement.style.top = `-96px`;
       thumbElement.style.display = 'block';
