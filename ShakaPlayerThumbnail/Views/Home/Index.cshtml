@@ -16,7 +16,7 @@
     const errorDisplay = document.getElementById('error');
     const videoContainer = document.getElementById('video-container');
     const player = new shaka.Player(video);
-    let lastPreviewPosition, thumbnailTrack, isHovering = false;
+    let lastPreviewPosition = 0, thumbnailTrack, isHovering = false;
 
     // Fullscreen toggle logic
     fullscreenToggleBtn?.addEventListener('click', toggleFullscreen);
@@ -51,8 +51,7 @@
       handleError('Player error', event.detail);
     });
 
-    seekBar.addEventListener('click', seekToPosition);
-
+    // Setup events for seeking and previewing thumbnails
     async function setupThumbnails(player, thumbElement, vttUrl) {
       try {
         const thumbnailTrack = await player.addThumbnailsTrack(vttUrl);
@@ -61,6 +60,7 @@
         const showThumbnail = debounce(handleThumbnailPreview, 5);
         let hideTimeout;
 
+        // Show thumbnail on hover or touchmove
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
             video.removeAttribute('controls');
@@ -71,24 +71,20 @@
             videoContainer.classList.add('hover');
           });
         });
+
+        // Hide thumbnail and seek to last previewed position when touch ends or mouse leaves
         ['mouseleave', 'touchend'].forEach((event) => {
-          seekBar.addEventListener(event, (e) => {
+          seekBar.addEventListener(event, () => {
             isHovering = false;
             hideTimeout = setTimeout(() => {
               thumbElement.style.display = 'none';
               videoContainer.classList.remove('hover');
+              if (lastPreviewPosition !== undefined) {
+                // Seek to the last previewed position on touchend/mouseleave
+                video.currentTime = lastPreviewPosition;
+              }
             }, 5);
           });
-        });
-
-        // Add hover effect for the entire video container
-        videoContainer.addEventListener('mouseenter', () => {
-          videoContainer.classList.add('hover');
-        });
-        videoContainer.addEventListener('mouseleave', () => {
-          if (!isHovering) {
-            videoContainer.classList.remove('hover');
-          }
         });
 
         return thumbnailTrack;
@@ -97,9 +93,10 @@
       }
     }
 
+    // Handle thumbnail preview when moving over the seek bar
     function handleThumbnailPreview(event) {
       const { offsetX, position, percent } = getSeekBarInfo(event);
-      lastPreviewPosition = position; // Update the last preview position
+      lastPreviewPosition = position; // Update the last previewed position
 
       player.getThumbnails(thumbnailTrack.id, position).then((thumbnail) => {
         if (thumbnail?.uris.length) {
@@ -107,18 +104,6 @@
           displayThumbnail(thumbElement, imageUrl, x, y, width, height, offsetX, percent);
         }
       }).catch((error) => handleError('Error getting thumbnail', error));
-    }
-
-    // Update seekToPosition function
-    function seekToPosition() {
-      if (lastPreviewPosition !== undefined) {
-        // Seek to the last known thumbnail preview position
-        video.currentTime = lastPreviewPosition;
-      } else {
-        // Fallback to seeking based on the click event if no preview position exists
-        const { position } = getSeekBarInfo(event);
-        video.currentTime = position;
-      }
     }
 
     function adjustSeekbarPosition() {
