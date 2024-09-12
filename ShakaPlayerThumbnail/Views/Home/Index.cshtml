@@ -51,7 +51,6 @@
       handleError('Player error', event.detail);
     });
 
-    // Setup events for seeking and previewing thumbnails
     async function setupThumbnails(player, thumbElement, vttUrl) {
       try {
         const thumbnailTrack = await player.addThumbnailsTrack(vttUrl);
@@ -60,18 +59,16 @@
         const showThumbnail = debounce(handleThumbnailPreview, 5);
         let hideTimeout;
 
-        // Show thumbnail on hover or touchmove
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
             isHovering = true;
             clearTimeout(hideTimeout);
             showThumbnail(e);
             videoContainer.classList.add('hover');
-            video.controls = true; // Ensure controls are visible during interaction
+            video.controls = true; 
           });
         });
 
-        // Hide thumbnail on mouseleave, touchend, or click
         ['mouseleave', 'touchend', 'click', 'mouseup'].forEach((event) => {
           seekBar.addEventListener(event, () => {
             isHovering = false;
@@ -91,11 +88,11 @@
       }
     }
 
-    // Handle thumbnail preview when moving over the seek bar
     function handleThumbnailPreview(event) {
+      video.removeAttribute('controls');
+      video.setAttribute('controls', 'controls');
       const { offsetX, position } = getSeekBarInfo(event);
       lastPreviewPosition = position;
-
       player.getThumbnails(thumbnailTrack.id, position).then((thumbnail) => {
         if (thumbnail?.uris.length) {
           const [imageUrl, { x, y, width, height }] = parseThumbnailData(thumbnail);
