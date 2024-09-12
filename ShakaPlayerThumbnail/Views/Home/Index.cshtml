@@ -58,6 +58,7 @@
         if (!thumbnailTrack) throw new Error('Thumbnail track could not be added.');
 
         const showThumbnail = debounce(handleThumbnailPreview, 5);
+        
         let hideTimeout;
 
         // Show thumbnail on hover or touchmove
@@ -72,7 +73,6 @@
           });
         });
 
-        // Hide thumbnail and seek to last previewed position when touch ends or mouse leaves
         ['mouseleave', 'touchend'].forEach((event) => {
           seekBar.addEventListener(event, () => {
             isHovering = false;
@@ -80,7 +80,6 @@
               thumbElement.style.display = 'none';
               videoContainer.classList.remove('hover');
               if (lastPreviewPosition !== undefined) {
-                // Seek to the last previewed position on touchend/mouseleave
                 video.currentTime = lastPreviewPosition;
               }
             }, 5);
@@ -95,8 +94,10 @@
 
     // Handle thumbnail preview when moving over the seek bar
     function handleThumbnailPreview(event) {
+      video.removeAttribute('controls');
+      video.setAttribute('controls', 'controls');
       const { offsetX, position, percent } = getSeekBarInfo(event);
-      lastPreviewPosition = position; // Update the last previewed position
+      lastPreviewPosition = position; 
 
       player.getThumbnails(thumbnailTrack.id, position).then((thumbnail) => {
         if (thumbnail?.uris.length) {
@@ -143,6 +144,7 @@
         width = parseInt(widthValue, 10);
         height = parseInt(heightValue, 10);
       }
+      
 
       return [imageUrl, { x, y, width, height }];
     }
