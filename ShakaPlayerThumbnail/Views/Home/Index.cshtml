@@ -8,8 +8,7 @@
   <div id="error" class="error-message"></div>
 </div>
 
-<script>
-  document.addEventListener('DOMContentLoaded', async () => {
+<script>document.addEventListener('DOMContentLoaded', async () => {
     const fullscreenToggleBtn = document.getElementById('fullscreen-toggle-btn');
     const video = document.getElementById('video');
     const seekBar = document.getElementById('seek-bar');
@@ -59,7 +58,6 @@
         if (!thumbnailTrack) throw new Error('Thumbnail track could not be added.');
 
         const showThumbnail = debounce(handleThumbnailPreview, 5);
-
         let hideTimeout;
 
         // Show thumbnail on hover or touchmove
@@ -69,6 +67,7 @@
             clearTimeout(hideTimeout);
             showThumbnail(e);
             videoContainer.classList.add('hover');
+            video.controls = true; // Ensure controls are visible during interaction
           });
         });
 
@@ -94,13 +93,13 @@
 
     // Handle thumbnail preview when moving over the seek bar
     function handleThumbnailPreview(event) {
-      const { offsetX, position, percent } = getSeekBarInfo(event);
+      const { offsetX, position } = getSeekBarInfo(event);
       lastPreviewPosition = position;
 
       player.getThumbnails(thumbnailTrack.id, position).then((thumbnail) => {
         if (thumbnail?.uris.length) {
           const [imageUrl, { x, y, width, height }] = parseThumbnailData(thumbnail);
-          displayThumbnail(thumbElement, imageUrl, x, y, width, height, offsetX, percent);
+          displayThumbnail(thumbElement, imageUrl, x, y, width, height, offsetX);
         }
       }).catch((error) => handleError('Error getting thumbnail', error));
     }
@@ -122,15 +121,12 @@
       const seekBarRect = seekBar.getBoundingClientRect();
       const duration = player.seekRange().end;
       const offsetX = event.touches ? event.touches[0].clientX - seekBarRect.left : event.pageX - seekBarRect.left;
-      const percent = offsetX / seekBarRect.width;
-      const position = percent * duration;
-      return { offsetX, percent, position };
+      const position = (offsetX / seekBarRect.width) * duration;
+      return { offsetX, position };
     }
 
     function parseThumbnailData(thumbnail) {
       const imageUrl = thumbnail.uris[0].split('#')[0];
-
-      // Extract the fragment after #xywh=
       const fragment = thumbnail.uris[0].split('#')[1];
       let x = 0, y = 0, width = 120, height = 68;
 
@@ -143,11 +139,10 @@
         height = parseInt(heightValue, 10);
       }
 
-
       return [imageUrl, { x, y, width, height }];
     }
 
-    function displayThumbnail(thumbElement, imageUrl, x, y, width, height, offsetX, percent) {
+    function displayThumbnail(thumbElement, imageUrl, x, y, width, height, offsetX) {
       thumbElement.style.backgroundImage = `url(${imageUrl})`;
       thumbElement.style.backgroundPosition = `-${x}px -${y}px`;
       thumbElement.style.width = `${width}px`;
