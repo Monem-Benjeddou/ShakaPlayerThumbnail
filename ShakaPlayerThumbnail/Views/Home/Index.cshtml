@@ -59,26 +59,25 @@
         const showThumbnail = debounce(handleThumbnailPreview, 5);
         let hideTimeout;
 
+        // Show thumbnail preview on hover and touch move but don't seek yet
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
             isHovering = true;
             clearTimeout(hideTimeout);
             showThumbnail(e);
             videoContainer.classList.add('hover');
-            video.controls = true;
+            video.controls = true; // Keep video controls visible while hovering
           });
         });
 
-        ['mouseleave', 'touchend', 'click', 'mouseup'].forEach((event) => {
-          seekBar.addEventListener(event, () => {
+        // Seek on click or touchend
+        ['click', 'touchend'].forEach((event) => {
+          seekBar.addEventListener(event, (e) => {
             isHovering = false;
-            hideTimeout = setTimeout(() => {
-              thumbElement.style.display = 'none';
-              videoContainer.classList.remove('hover');
-              if (lastPreviewPosition !== undefined) {
-                video.currentTime = lastPreviewPosition;
-              }
-            }, 5);
+            const { position } = getSeekBarInfo(e);
+            video.currentTime = position; // Seek video to the selected time
+            thumbElement.style.display = 'none';
+            videoContainer.classList.remove('hover');
           });
         });
 
