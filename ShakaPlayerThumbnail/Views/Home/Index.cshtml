@@ -8,8 +8,7 @@
   <div id="error" class="error-message"></div>
 </div>
 
-<script>
-  document.addEventListener('DOMContentLoaded', async () => {
+<script>document.addEventListener('DOMContentLoaded', async () => {
     const fullscreenToggleBtn = document.getElementById('fullscreen-toggle-btn');
     const video = document.getElementById('video');
     const seekBar = document.getElementById('seek-bar');
@@ -59,7 +58,7 @@
         const thumbnailTrack = await player.addThumbnailsTrack(vttUrl);
         if (!thumbnailTrack) throw new Error('Thumbnail track could not be added.');
 
-        const showThumbnail = debounce(handleThumbnailPreview, 5); 
+        const showThumbnail = debounce(handleThumbnailPreview, 5);
         let hideTimeout;
 
         ['mousemove', 'touchmove'].forEach((event) => {
@@ -78,7 +77,7 @@
             hideTimeout = setTimeout(() => {
               thumbElement.style.display = 'none';
               videoContainer.classList.remove('hover');
-            }, 5); 
+            }, 5);
           });
         });
 
@@ -100,7 +99,7 @@
 
     function handleThumbnailPreview(event) {
       const { offsetX, position, percent } = getSeekBarInfo(event);
-      lastPreviewPosition = position;
+      lastPreviewPosition = position; // Update the last preview position
 
       player.getThumbnails(thumbnailTrack.id, position).then((thumbnail) => {
         if (thumbnail?.uris.length) {
@@ -110,10 +109,16 @@
       }).catch((error) => handleError('Error getting thumbnail', error));
     }
 
-
-    function seekToPosition(event) {
-      const { position } = getSeekBarInfo(event);
-      video.currentTime = position;
+    // Update seekToPosition function
+    function seekToPosition() {
+      if (lastPreviewPosition !== undefined) {
+        // Seek to the last known thumbnail preview position
+        video.currentTime = lastPreviewPosition;
+      } else {
+        // Fallback to seeking based on the click event if no preview position exists
+        const { position } = getSeekBarInfo(event);
+        video.currentTime = position;
+      }
     }
 
     function adjustSeekbarPosition() {
@@ -156,7 +161,6 @@
 
       return [imageUrl, { x, y, width, height }];
     }
-
 
     function displayThumbnail(thumbElement, imageUrl, x, y, width, height, offsetX, percent) {
       thumbElement.style.backgroundImage = `url(${imageUrl})`;
