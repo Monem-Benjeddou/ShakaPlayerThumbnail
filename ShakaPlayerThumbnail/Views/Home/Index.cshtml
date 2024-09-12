@@ -69,14 +69,20 @@
           });
         });
 
-        // Seek on click or touchend
+        // Seek on click or touchend and hide the thumbnail
         ['click', 'touchend'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
             isHovering = false;
             const { position } = getSeekBarInfo(e);
             video.currentTime = position; // Seek video to the selected time
-            thumbElement.style.display = 'none';
-            videoContainer.classList.remove('hover');
+            hideThumbnail();
+          });
+        });
+
+        // Hide the thumbnail when leaving the seekbar area or when the interaction ends
+        ['mouseleave', 'touchend'].forEach((event) => {
+          seekBar.addEventListener(event, () => {
+            hideThumbnail();
           });
         });
 
@@ -145,6 +151,11 @@
       thumbElement.style.left = `${thumbX}px`;
       thumbElement.style.top = `-80px`;
       thumbElement.style.display = 'block';
+    }
+
+    function hideThumbnail() {
+      thumbElement.style.display = 'none';
+      videoContainer.classList.remove('hover');
     }
 
     function handleError(message, error) {
