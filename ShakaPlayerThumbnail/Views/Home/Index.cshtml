@@ -66,7 +66,6 @@
             clearTimeout(hideTimeout);
             showThumbnail(e);
             videoContainer.classList.add('hover');
-            video.controls = true; // Keep video controls visible while hovering
           });
         });
 
@@ -88,10 +87,9 @@
     }
 
     function handleThumbnailPreview(event) {
-      video.removeAttribute('controls');
-      video.setAttribute('controls', 'controls');
       const { offsetX, position } = getSeekBarInfo(event);
       lastPreviewPosition = position;
+
       player.getThumbnails(thumbnailTrack.id, position).then((thumbnail) => {
         if (thumbnail?.uris.length) {
           const [imageUrl, { x, y, width, height }] = parseThumbnailData(thumbnail);
