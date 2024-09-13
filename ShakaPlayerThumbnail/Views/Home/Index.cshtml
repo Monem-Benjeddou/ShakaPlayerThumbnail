@@ -59,33 +59,47 @@
         const showThumbnail = debounce(handleThumbnailPreview, 5);
         let hideTimeout;
 
+        // Display thumbnail when hovering or dragging
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
             video.removeAttribute('controls');
             video.setAttribute('controls', 'controls');
+                        clearTimeout(hideTimeout);
             isHovering = true;
-            clearTimeout(hideTimeout);
+
+            // Show the thumbnail
             showThumbnail(e);
+
+            // Add 'hover' class to the video container
             videoContainer.classList.add('hover');
           });
         });
 
+        // Hide thumbnail when the user stops interacting
+        ['mouseleave', 'touchend'].forEach((event) => {
+          seekBar.addEventListener(event, () => {
+            video.removeAttribute('controls');
+            video.setAttribute('controls', 'controls');
+            hideTimeout = setTimeout(() => {
+              hideThumbnail();
+              isHovering = false;
+              videoContainer.classList.remove('hover');
+            }, 100); // 20ms delay before hiding
+          });
+        });
+
+        // Hide thumbnail on click or when the user stops interacting
         ['click', 'touchend'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
             video.removeAttribute('controls');
             video.setAttribute('controls', 'controls');
-            isHovering = false;
+            hideTimeout = setTimeout(() => {
+              hideThumbnail();
+              isHovering = false;
+              videoContainer.classList.remove('hover');
+            }, 100); 
             const { position } = getSeekBarInfo(e);
             video.currentTime = position;
-            hideThumbnail();
-          });
-        });
-
-        ['mouseleave', 'touchend'].forEach((event) => {
-          video.removeAttribute('controls');
-          video.setAttribute('controls', 'controls');
-          seekBar.addEventListener(event, () => {
-            hideThumbnail();
           });
         });
 
@@ -104,8 +118,6 @@
           const [imageUrl, { x, y, width, height }] = parseThumbnailData(thumbnail);
 
           displayThumbnail(thumbElement, imageUrl, x, y, width, height, offsetX);
-          video.removeAttribute('controls');
-          video.setAttribute('controls', 'controls');
         }
       }).catch((error) => handleError('Error getting thumbnail', error));
     }
@@ -126,7 +138,16 @@
     function getSeekBarInfo(event) {
       const seekBarRect = seekBar.getBoundingClientRect();
       const duration = player.seekRange().end;
-      const offsetX = event.touches ? event.touches[0].clientX - seekBarRect.left : event.pageX - seekBarRect.left;
+
+      let offsetX;
+      if (event.touches && event.touches.length > 0) {
+        offsetX = event.touches[0].clientX - seekBarRect.left;
+      } else if (event.changedTouches && event.changedTouches.length > 0) {
+        offsetX = event.changedTouches[0].clientX - seekBarRect.left;
+      } else {
+        offsetX = event.pageX - seekBarRect.left;
+      }
+
       const position = (offsetX / seekBarRect.width) * duration;
       return { offsetX, position };
     }

@@ -32,6 +32,12 @@
       <_ContentIncludedByDefault Remove="wwwroot\previews\video7.png" />
       <_ContentIncludedByDefault Remove="wwwroot\previews\video8.png" />
       <_ContentIncludedByDefault Remove="wwwroot\previews\video9.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video1.webp" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video2.webp" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video3.webp" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video4.webp" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video5.webp" />
+      <_ContentIncludedByDefault Remove="wwwroot\previews\video6.webp" />
     </ItemGroup>
 
     <ItemGroup>
