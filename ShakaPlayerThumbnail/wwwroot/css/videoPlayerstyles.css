@@ -15,7 +15,7 @@
 #seekbar-container {
     position: absolute;
     width: calc(100% - 30px);
-    bottom: 20px;
+    bottom: 5px;
     left: 16px;
     display: flex;
     align-items: center;
@@ -23,7 +23,6 @@
     transition: bottom 0.3s, width 0.3s;
     z-index: 2147483648;
 }
-
 .video-container.fullscreen #seekbar-container {
     width: calc(100% - 0px);
     left: 0;
@@ -31,7 +30,7 @@
 }
 
 #seek-bar {
-    height: 6px;
+    height: 20px;
     cursor: pointer;
     width: 99%;
     border-radius: 2px;

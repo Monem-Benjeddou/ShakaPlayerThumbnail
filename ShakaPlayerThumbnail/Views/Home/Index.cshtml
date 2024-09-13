@@ -59,9 +59,10 @@
         const showThumbnail = debounce(handleThumbnailPreview, 5);
         let hideTimeout;
 
-        // Show thumbnail preview on hover and touch move but don't seek yet
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
+            video.removeAttribute('controls');
+            video.setAttribute('controls', 'controls');
             isHovering = true;
             clearTimeout(hideTimeout);
             showThumbnail(e);
@@ -69,18 +70,20 @@
           });
         });
 
-        // Seek on click or touchend and hide the thumbnail
         ['click', 'touchend'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
+            video.removeAttribute('controls');
+            video.setAttribute('controls', 'controls');
             isHovering = false;
             const { position } = getSeekBarInfo(e);
-            video.currentTime = position; // Seek video to the selected time
+            video.currentTime = position;
             hideThumbnail();
           });
         });
 
-        // Hide the thumbnail when leaving the seekbar area or when the interaction ends
         ['mouseleave', 'touchend'].forEach((event) => {
+          video.removeAttribute('controls');
+          video.setAttribute('controls', 'controls');
           seekBar.addEventListener(event, () => {
             hideThumbnail();
           });
@@ -99,7 +102,10 @@
       player.getThumbnails(thumbnailTrack.id, position).then((thumbnail) => {
         if (thumbnail?.uris.length) {
           const [imageUrl, { x, y, width, height }] = parseThumbnailData(thumbnail);
+
           displayThumbnail(thumbElement, imageUrl, x, y, width, height, offsetX);
+          video.removeAttribute('controls');
+          video.setAttribute('controls', 'controls');
         }
       }).catch((error) => handleError('Error getting thumbnail', error));
     }
@@ -155,7 +161,6 @@
 
     function hideThumbnail() {
       thumbElement.style.display = 'none';
-      videoContainer.classList.remove('hover');
     }
 
     function handleError(message, error) {
