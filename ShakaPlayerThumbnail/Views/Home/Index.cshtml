@@ -8,7 +8,8 @@
   <div id="error" class="error-message"></div>
 </div>
 
-<script>document.addEventListener('DOMContentLoaded', async () => {
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
     const fullscreenToggleBtn = document.getElementById('fullscreen-toggle-btn');
     const video = document.getElementById('video');
     const seekBar = document.getElementById('seek-bar');
@@ -64,46 +65,34 @@
         const showThumbnail = debounce(handleThumbnailPreview, 5);
         let hideTimeout;
 
-        // Display thumbnail when hovering or dragging
+        // Show video controls when hovering or moving the mouse over the seekbar
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
-
-                        clearTimeout(hideTimeout);
+            clearTimeout(hideTimeout);
             isHovering = true;
-            video.removeAttribute('controls');
+
+            // Show controls when hovering over seekbar
             video.setAttribute('controls', 'controls');
-            // Show the thumbnail
             showThumbnail(e);
-            video.removeAttribute('controls');
-            video.setAttribute('controls', 'controls');
-            // Add 'hover' class to the video container
             videoContainer.classList.add('hover');
           });
         });
 
-        // Hide thumbnail when the user stops interacting
+        // Hide controls when the mouse leaves the seekbar
         ['mouseleave', 'touchend'].forEach((event) => {
           seekBar.addEventListener(event, () => {
-            video.removeAttribute('controls');
-            video.setAttribute('controls', 'controls');
             hideTimeout = setTimeout(() => {
+              video.removeAttribute('controls');
               hideThumbnail();
               isHovering = false;
               videoContainer.classList.remove('hover');
-            }, 100); // 20ms delay before hiding
+            }, 100);
           });
         });
 
-        // Hide thumbnail on click or when the user stops interacting
+        // Seek the video when clicking on the seekbar
         ['click', 'touchend'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
-            video.removeAttribute('controls');
-            video.setAttribute('controls', 'controls');
-            hideTimeout = setTimeout(() => {
-              hideThumbnail();
-              isHovering = false;
-              videoContainer.classList.remove('hover');
-            }, 100); 
             const { position } = getSeekBarInfo(e);
             video.currentTime = position;
           });
@@ -122,7 +111,6 @@
       player.getThumbnails(thumbnailTrack.id, position).then((thumbnail) => {
         if (thumbnail?.uris.length) {
           const [imageUrl, { x, y, width, height }] = parseThumbnailData(thumbnail);
-
           displayThumbnail(thumbElement, imageUrl, x, y, width, height, offsetX);
         }
       }).catch((error) => handleError('Error getting thumbnail', error));
