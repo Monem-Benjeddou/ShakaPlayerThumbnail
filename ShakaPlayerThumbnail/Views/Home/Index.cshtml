@@ -8,7 +8,8 @@
   <div id="error" class="error-message"></div>
 </div>
 
-<script>document.addEventListener('DOMContentLoaded', async () => {
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
     const fullscreenToggleBtn = document.getElementById('fullscreen-toggle-btn');
     const video = document.getElementById('video');
     const seekBar = document.getElementById('seek-bar');
@@ -17,6 +18,7 @@
     const videoContainer = document.getElementById('video-container');
     const player = new shaka.Player(video);
     let lastPreviewPosition = 0, thumbnailTrack, isHovering = false;
+    let hideTimeout;
 
     // Fullscreen toggle logic
     fullscreenToggleBtn?.addEventListener('click', toggleFullscreen);
@@ -61,40 +63,51 @@
         if (!thumbnailTrack) throw new Error('Thumbnail track could not be added.');
 
         const showThumbnail = debounce(handleThumbnailPreview, 5);
-        let hideTimeout;
 
         function showControls() {
           clearTimeout(hideTimeout);
-          isHovering = true;
           video.setAttribute('controls', 'controls');
           videoContainer.classList.add('hover');
+          isHovering = true;
         }
 
         function hideControls() {
           hideTimeout = setTimeout(() => {
-            if (!isHovering) {
-              video.removeAttribute('controls');
-              hideThumbnail();
-              videoContainer.classList.remove('hover');
-            }
-          }, 2000);
+            video.removeAttribute('controls');
+            hideThumbnail();
+            videoContainer.classList.remove('hover');
+            isHovering = false;
+          }, 100);
         }
 
-        // Show video controls when hovering or moving the mouse over the video or seekbar
+        // Show controls on hover over the seekbar
         ['mousemove', 'touchmove'].forEach((event) => {
-          videoContainer.addEventListener(event, (e) => {
+          seekBar.addEventListener(event, (e) => {
             showControls();
-            if (e.target === seekBar) {
-              showThumbnail(e);
-            }
+            showThumbnail(e);
           });
         });
 
-        // Hide controls when the mouse leaves the video container
+        // Hide controls when not hovering over the seekbar
         ['mouseleave', 'touchend'].forEach((event) => {
-          videoContainer.addEventListener(event, () => {
-            isHovering = false;
+          seekBar.addEventListener(event, () => {
             hideControls();
+          });
+        });
+
+        // Show controls on hover over the video
+        ['mousemove', 'touchmove'].forEach((event) => {
+          video.addEventListener(event, (e) => {
+            showControls();
+            // Optionally, show thumbnail if hovering over the video
+            showThumbnail(e);
+          });
+        });
+
+        // Hide controls when not hovering over the video
+        ['mouseleave', 'touchend'].forEach((event) => {
+          video.addEventListener(event, () => {
+            if (!isHovering) hideControls();
           });
         });
 
@@ -190,5 +203,5 @@
       console.error(message, error);
       errorDisplay.textContent = `${message}: ${error.message}`;
     }
-  });</script>
-
+  });
+</script>
