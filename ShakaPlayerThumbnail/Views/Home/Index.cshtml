@@ -179,20 +179,25 @@
       return video.matches(':hover');
     }
 
+    // Show controls when hovering over video container
+    videoContainer.addEventListener('mouseenter', () => {
+      video.setAttribute('controls', 'controls');
+    });
+
+    // Hide controls when mouse leaves video container (with a small delay)
+    videoContainer.addEventListener('mouseleave', () => {
+      hideTimeout = setTimeout(() => {
+        if (!isHoveringSeekbar()) {
+          video.removeAttribute('controls');
+        }
+      }, 300);
+    });
+
     // Remove controls when clicking away from the video or seekbar
     document.addEventListener('click', (event) => {
       if (!videoContainer.contains(event.target)) {
         video.removeAttribute('controls');
       }
-    });
-
-    // Hide controls after a short delay when the mouse leaves the video or seekbar
-    video.addEventListener('mouseleave', () => {
-      hideTimeout = setTimeout(() => {
-        if (!isHoveringSeekbar()) {
-          video.removeAttribute('controls');
-        }
-      }, 100);
     });
 
     // Function to check if the mouse is over the seekbar
