@@ -48,6 +48,10 @@
       await player.load(videoUrl);
       console.log('Video loaded successfully!');
       thumbnailTrack = await setupThumbnails(player, thumbElement, vttUrl);
+
+      // Simulate click on video after user interaction (button click, etc.)
+      simulateVideoClick();
+
     } catch (error) {
       handleError('Error loading video', error);
     }
@@ -67,10 +71,12 @@
           seekBar.addEventListener(event, (e) => {
             clearTimeout(hideTimeout);
             isHovering = true;
-
+            video.pause();
+              video.play();
             video.setAttribute('controls', 'controls');
             showThumbnail(e);
             videoContainer.classList.add('hover');
+            
           });
         });
 
@@ -100,6 +106,14 @@
       }
     }
 
+    function simulateVideoClick() {
+      // Attach an event to simulate video click when user interacts
+      document.body.addEventListener('click', () => {
+        video.focus();
+        video.dispatchEvent(new Event('click')); // Explicit click simulation
+      }, { once: true }); // Only do this once per session
+    }
+
     function handleThumbnailPreview(event) {
       const { offsetX, position } = getSeekBarInfo(event);
       lastPreviewPosition = position;
@@ -108,9 +122,6 @@
         if (thumbnail?.uris.length) {
           const [imageUrl, { x, y, width, height }] = parseThumbnailData(thumbnail);
           displayThumbnail(thumbElement, imageUrl, x, y, width, height, offsetX);
-          video.removeAttribute('controls');
-          video.setAttribute('controls', 'controls');
-
         }
       }).catch((error) => handleError('Error getting thumbnail', error));
     }
@@ -171,23 +182,22 @@
       thumbElement.style.left = `${thumbX}px`;
       thumbElement.style.top = `-80px`;
       thumbElement.style.display = 'block';
+      video.removeAttribute('controls');
+      video.setAttribute('controls', 'controls');
     }
 
     function hideThumbnail() {
       thumbElement.style.display = 'none';
     }
 
-    // Helper functions to check hover status
     function isHoveringVideo() {
       return video.matches(':hover');
     }
 
-    // Show controls when hovering over video container
     videoContainer.addEventListener('mouseenter', () => {
       video.setAttribute('controls', 'controls');
     });
 
-    // Hide controls when mouse leaves video container (with a small delay)
     videoContainer.addEventListener('mouseleave', () => {
       hideTimeout = setTimeout(() => {
         if (!isHoveringSeekbar()) {
@@ -196,14 +206,12 @@
       }, 300);
     });
 
-    // Remove controls when clicking away from the video or seekbar
     document.addEventListener('click', (event) => {
-      if (!videoContainer.contains(event.target)) {
+      if (!videoContainer.contains(event.target) && !isHoveringSeekbar()) {
         video.removeAttribute('controls');
       }
     });
 
-    // Function to check if the mouse is over the seekbar
     function isHoveringSeekbar() {
       return seekBar.matches(':hover');
     }
