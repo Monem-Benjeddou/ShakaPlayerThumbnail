@@ -39,6 +39,7 @@
     document.addEventListener('fullscreenchange', () => {
       videoContainer.classList.toggle('fullscreen', !!document.fullscreenElement);
       adjustSeekbarPosition();
+
     });
 
     try {
@@ -66,12 +67,16 @@
         // Display thumbnail when hovering or dragging
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
-            clearTimeout(hideTimeout);
-            isHovering = true;
 
+                        clearTimeout(hideTimeout);
+            isHovering = true;
+            video.removeAttribute('controls');
+            video.setAttribute('controls', 'controls');
             // Show the thumbnail
             showThumbnail(e);
-            // Show controls by adding the 'hover' class
+            video.removeAttribute('controls');
+            video.setAttribute('controls', 'controls');
+            // Add 'hover' class to the video container
             videoContainer.classList.add('hover');
           });
         });
@@ -79,23 +84,26 @@
         // Hide thumbnail when the user stops interacting
         ['mouseleave', 'touchend'].forEach((event) => {
           seekBar.addEventListener(event, () => {
+            video.removeAttribute('controls');
+            video.setAttribute('controls', 'controls');
             hideTimeout = setTimeout(() => {
               hideThumbnail();
               isHovering = false;
-              // Remove 'hover' class to hide controls
               videoContainer.classList.remove('hover');
-            }, 100);
+            }, 100); // 20ms delay before hiding
           });
         });
 
-        // Seek video position on click or touch
+        // Hide thumbnail on click or when the user stops interacting
         ['click', 'touchend'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
+            video.removeAttribute('controls');
+            video.setAttribute('controls', 'controls');
             hideTimeout = setTimeout(() => {
               hideThumbnail();
               isHovering = false;
               videoContainer.classList.remove('hover');
-            }, 100);
+            }, 100); 
             const { position } = getSeekBarInfo(e);
             video.currentTime = position;
           });
@@ -114,6 +122,7 @@
       player.getThumbnails(thumbnailTrack.id, position).then((thumbnail) => {
         if (thumbnail?.uris.length) {
           const [imageUrl, { x, y, width, height }] = parseThumbnailData(thumbnail);
+
           displayThumbnail(thumbElement, imageUrl, x, y, width, height, offsetX);
         }
       }).catch((error) => handleError('Error getting thumbnail', error));
@@ -135,12 +144,14 @@
     function getSeekBarInfo(event) {
       const seekBarRect = seekBar.getBoundingClientRect();
       const duration = player.seekRange().end;
-      let offsetX = event.pageX - seekBarRect.left;
 
+      let offsetX;
       if (event.touches && event.touches.length > 0) {
         offsetX = event.touches[0].clientX - seekBarRect.left;
       } else if (event.changedTouches && event.changedTouches.length > 0) {
         offsetX = event.changedTouches[0].clientX - seekBarRect.left;
+      } else {
+        offsetX = event.pageX - seekBarRect.left;
       }
 
       const position = (offsetX / seekBarRect.width) * duration;
