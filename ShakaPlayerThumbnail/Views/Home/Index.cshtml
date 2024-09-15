@@ -31,12 +31,13 @@
         document.exitFullscreen?.();
       }
       video.pause();
+      video.play();
+
     }
 
     document.addEventListener('fullscreenchange', () => {
       videoContainer.classList.toggle('fullscreen', !!document.fullscreenElement);
       adjustSeekbarPosition();
-      video.play();
 
     });
 
