@@ -34,6 +34,8 @@
 
     document.addEventListener('fullscreenchange', () => {
       videoContainer.classList.toggle('fullscreen', !!document.fullscreenElement);
+      video.pause();
+      video.resume();
       adjustSeekbarPosition();
     });
 
