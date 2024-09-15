@@ -67,8 +67,6 @@
           seekBar.addEventListener(event, (e) => {
             clearTimeout(hideTimeout);
             isHovering = true;
-
-            video.setAttribute('controls', 'controls');
             showThumbnail(e);
             videoContainer.classList.add('hover');
           });
@@ -79,14 +77,12 @@
             hideTimeout = setTimeout(() => {
               hideThumbnail();
               if (!isHoveringVideo()) {
-                video.removeAttribute('controls');
                 videoContainer.classList.remove('hover');
               }
             }, 100);
           });
         });
 
-        // Click to seek video
         ['click', 'touchend'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
             const { position } = getSeekBarInfo(e);
