@@ -17,7 +17,7 @@
     const errorDisplay = document.getElementById('error');
     const videoContainer = document.getElementById('video-container');
     const player = new shaka.Player(video);
-    let lastPreviewPosition = 0, thumbnailTrack, isHovering = false;
+    let lastPreviewPosition = 0, thumbnailTrack, isHoveringSeekbar = false, isHoveringVideo = false;
 
     // Fullscreen toggle logic
     fullscreenToggleBtn?.addEventListener('click', toggleFullscreen);
@@ -64,48 +64,41 @@
         const showThumbnail = debounce(handleThumbnailPreview, 5);
         let hideTimeout;
 
-        // Show controls and thumbnails when hovering over the seekbar
+        // Hover events on the seekbar
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
             clearTimeout(hideTimeout);
-            isHovering = true;
+            isHoveringSeekbar = true;
 
-            // Show video controls
+            // Show video controls and thumbnail preview
             video.setAttribute('controls', 'controls');
             showThumbnail(e);
-            videoContainer.classList.add('hover');
+            videoContainer.classList.add('hover-seekbar');
           });
         });
 
-        // Show controls when hovering over the video
+        // Hover events on the video
         ['mousemove', 'touchmove'].forEach((event) => {
-          video.addEventListener(event, (e) => {
+          video.addEventListener(event, () => {
             clearTimeout(hideTimeout);
-            isHovering = true;
+            isHoveringVideo = true;
 
             // Show video controls when hovering over the video
             video.setAttribute('controls', 'controls');
-            videoContainer.classList.add('hover');
+            videoContainer.classList.add('hover-video');
           });
         });
 
-        // Hide controls when the mouse leaves the seekbar or video
+        // Leave events for both the seekbar and video
         ['mouseleave', 'touchend'].forEach((event) => {
           seekBar.addEventListener(event, () => {
-            hideTimeout = setTimeout(() => {
-              video.removeAttribute('controls');
-              hideThumbnail();
-              isHovering = false;
-              videoContainer.classList.remove('hover');
-            }, 100);
+            isHoveringSeekbar = false;
+            hideControlsWithDelay();
           });
+
           video.addEventListener(event, () => {
-            hideTimeout = setTimeout(() => {
-              video.removeAttribute('controls');
-              hideThumbnail();
-              isHovering = false;
-              videoContainer.classList.remove('hover');
-            }, 100);
+            isHoveringVideo = false;
+            hideControlsWithDelay();
           });
         });
 
@@ -133,6 +126,16 @@
           displayThumbnail(thumbElement, imageUrl, x, y, width, height, offsetX);
         }
       }).catch((error) => handleError('Error getting thumbnail', error));
+    }
+
+    function hideControlsWithDelay() {
+      let hideTimeout = setTimeout(() => {
+        if (!isHoveringSeekbar && !isHoveringVideo) {
+          video.removeAttribute('controls');
+          hideThumbnail();
+          videoContainer.classList.remove('hover-seekbar', 'hover-video');
+        }
+      }, 300);
     }
 
     function adjustSeekbarPosition() {
