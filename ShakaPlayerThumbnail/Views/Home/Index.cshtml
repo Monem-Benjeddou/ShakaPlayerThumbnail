@@ -31,8 +31,9 @@
         document.exitFullscreen?.();
       }
       video.pause();
-      video.play();
-
+      setTimeout(() => {
+        video.play();
+      }, 300);
     }
 
     document.addEventListener('fullscreenchange', () => {
