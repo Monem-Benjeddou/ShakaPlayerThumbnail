@@ -147,3 +147,17 @@
         left: calc(100% - 130px);
     }
 }
+.video-container.hover video {
+    controls: controls !important;
+    opacity: 1;
+}
+
+.video-container video {
+    opacity: 0 !important; /* Hide controls by default */
+    transition: opacity 0.3s ease !important;
+}
+
+.video-container:hover video,
+.video-container.hover video {
+    opacity: 1 !important; 
+}
