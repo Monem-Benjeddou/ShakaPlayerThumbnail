@@ -62,14 +62,15 @@
         // Display thumbnail when hovering or dragging
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
-            video.removeAttribute('controls');
-            video.setAttribute('controls', 'controls');
+
                         clearTimeout(hideTimeout);
             isHovering = true;
-
+            video.removeAttribute('controls');
+            video.setAttribute('controls', 'controls');
             // Show the thumbnail
             showThumbnail(e);
-
+            video.removeAttribute('controls');
+            video.setAttribute('controls', 'controls');
             // Add 'hover' class to the video container
             videoContainer.classList.add('hover');
           });
