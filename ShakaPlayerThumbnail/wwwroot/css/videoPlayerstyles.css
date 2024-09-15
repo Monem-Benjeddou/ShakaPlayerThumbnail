@@ -147,20 +147,3 @@
         left: calc(100% - 130px);
     }
 }
-.video-container.hover video {
-    controls: controls !important;
-    opacity: 1;
-}
-
-.video-container video {
-    opacity: 0 !important; 
-    transition: opacity 0.3s ease !important;
-}
-
-.video-container.hover video {
-    opacity: 1 !important; 
-}
-video::-webkit-media-controls-panel {
-    display: flex !important;
-    opacity: 1 !important;
-}
