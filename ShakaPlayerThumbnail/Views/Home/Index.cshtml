@@ -8,8 +8,7 @@
   <div id="error" class="error-message"></div>
 </div>
 
-<script>
-  document.addEventListener('DOMContentLoaded', async () => {
+<script>document.addEventListener('DOMContentLoaded', async () => {
     const fullscreenToggleBtn = document.getElementById('fullscreen-toggle-btn');
     const video = document.getElementById('video');
     const seekBar = document.getElementById('seek-bar');
@@ -18,6 +17,7 @@
     const videoContainer = document.getElementById('video-container');
     const player = new shaka.Player(video);
     let lastPreviewPosition = 0, thumbnailTrack, isHovering = false;
+    let hideTimeout;
 
     // Fullscreen toggle logic
     fullscreenToggleBtn?.addEventListener('click', toggleFullscreen);
@@ -40,7 +40,6 @@
     document.addEventListener('fullscreenchange', () => {
       videoContainer.classList.toggle('fullscreen', !!document.fullscreenElement);
       adjustSeekbarPosition();
-
     });
 
     try {
@@ -63,7 +62,6 @@
         if (!thumbnailTrack) throw new Error('Thumbnail track could not be added.');
 
         const showThumbnail = debounce(handleThumbnailPreview, 5);
-        let hideTimeout;
 
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
@@ -79,15 +77,16 @@
         ['mouseleave', 'touchend'].forEach((event) => {
           seekBar.addEventListener(event, () => {
             hideTimeout = setTimeout(() => {
-              video.removeAttribute('controls');
               hideThumbnail();
-              isHovering = false;
-              videoContainer.classList.remove('hover');
+              if (!isHoveringVideo()) {
+                video.removeAttribute('controls');
+                videoContainer.classList.remove('hover');
+              }
             }, 100);
           });
         });
 
-        // Seek the video when clicking on the seekbar
+        // Click to seek video
         ['click', 'touchend'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
             const { position } = getSeekBarInfo(e);
@@ -173,6 +172,32 @@
 
     function hideThumbnail() {
       thumbElement.style.display = 'none';
+    }
+
+    // Helper functions to check hover status
+    function isHoveringVideo() {
+      return video.matches(':hover');
+    }
+
+    // Remove controls when clicking away from the video or seekbar
+    document.addEventListener('click', (event) => {
+      if (!videoContainer.contains(event.target)) {
+        video.removeAttribute('controls');
+      }
+    });
+
+    // Hide controls after a short delay when the mouse leaves the video or seekbar
+    video.addEventListener('mouseleave', () => {
+      hideTimeout = setTimeout(() => {
+        if (!isHoveringSeekbar()) {
+          video.removeAttribute('controls');
+        }
+      }, 100);
+    });
+
+    // Function to check if the mouse is over the seekbar
+    function isHoveringSeekbar() {
+      return seekBar.matches(':hover');
     }
 
     function handleError(message, error) {
