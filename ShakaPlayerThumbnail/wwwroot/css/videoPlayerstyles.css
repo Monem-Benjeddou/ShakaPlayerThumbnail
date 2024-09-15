@@ -153,11 +153,14 @@
 }
 
 .video-container video {
-    opacity: 0 !important; /* Hide controls by default */
+    opacity: 0 !important; 
     transition: opacity 0.3s ease !important;
 }
 
-.video-container:hover video,
 .video-container.hover video {
     opacity: 1 !important; 
+}
+video::-webkit-media-controls-panel {
+    display: flex !important;
+    opacity: 1 !important;
 }
