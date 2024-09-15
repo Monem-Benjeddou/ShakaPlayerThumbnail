@@ -136,7 +136,7 @@
 @media (max-width: 1199px) {
     .video-container.fullscreen #fullscreen-toggle-btn {
         bottom: 30px;
-        left: calc(100% - 100px);
+        left: calc(100% - 93px);
     }
 }
 
