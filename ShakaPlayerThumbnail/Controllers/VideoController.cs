@@ -72,7 +72,7 @@ namespace ShakaPlayerThumbnail.Controllers
                 UploadDate = System.IO.File.GetCreationTime(file)
             }).ToList();
 
-            return videoFiles.Any()? View(videoFiles): NotFound("No video were found");
+            return  View(videoFiles);
         }
 
         private bool IsVideoFile(string filePath)
