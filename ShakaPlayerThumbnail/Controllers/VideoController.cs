@@ -36,6 +36,8 @@ namespace ShakaPlayerThumbnail.Controllers
                 if (chunkIndex + 1 == totalChunks)
                 {
                     var outputImagePath = Path.Combine(PreviewsFolderPath, nameOfFileWithoutExtension);
+                    if (!Directory.Exists(outputImagePath))
+                        Directory.CreateDirectory(outputImagePath);
                     await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, nameOfFileWithoutExtension, 5);
                 }
 
