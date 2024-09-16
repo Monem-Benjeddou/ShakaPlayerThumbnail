@@ -133,11 +133,9 @@ namespace ShakaPlayerThumbnail.Tools
             var columnIndex = frameIndex % tileWidth;
             var xOffset = columnIndex * 120;
             var yOffset = rowIndex * 68;
-
             return (startTime, endTime, xOffset, yOffset);
         }
     }
-
     public class ThumbnailInfo
     {
         public int TileIndex { get; }

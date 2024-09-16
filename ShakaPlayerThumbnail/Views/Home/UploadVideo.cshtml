@@ -1,0 +1,43 @@
+@model ShakaPlayerThumbnail.Data.Video
+@{
+    ViewData["Title"] = "Upload Video";
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4">Upload Your Video</h2>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            @using (Html.BeginForm("UploadVideo", "Video", FormMethod.Post, new { enctype = "multipart/form-data", @class = "row g-3" }))
+            {
+                <div class="mb-3">
+                    <label for="VideoTitle" class="form-label">Video Title</label>
+                    @Html.TextBoxFor(m => m.Name, new { @class = "form-control", placeholder = "Enter video title" })
+                </div>
+
+                <div class="mb-3">
+                    <label for="VideoFile" class="form-label">Select Video</label>
+                    <input type="file" name="VideoFile" class="form-control" accept="video/*" required />
+                    <small class="text-muted">Only video files are allowed (e.g., MP4, AVI, MOV).</small>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">Upload Video</button>
+            }
+        </div>
+    </div>
+
+    <div class="mt-4">
+        @if (!string.IsNullOrEmpty(ViewBag.Message))
+        {
+            <div class="alert alert-success">
+                @ViewBag.Message
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(ViewBag.Error))
+        {
+            <div class="alert alert-danger">
+                @ViewBag.Error
+            </div>
+        }
+    </div>
+</div>

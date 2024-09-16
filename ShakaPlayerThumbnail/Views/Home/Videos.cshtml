@@ -1,0 +1,40 @@
+@model IEnumerable<ShakaPlayerThumbnail.Data.Video>
+
+@{
+    ViewData["Title"] = "Video List";
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4">Uploaded Videos</h2>
+
+    @if (Model != null && Model.Any())
+    {
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th scope="col">Video Title</th>
+                <th scope="col">File Name</th>
+                <th scope="col">Upload Date</th>
+                <th scope="col">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var video in Model)
+            {
+                <tr>
+                    <td>@video.Name</td>
+                    <td>@video.FileName</td>
+                    <td>@video.UploadDate.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>
+                        <a href="@Url.Content($"/etc/data/video/{video.FileName}")" class="btn btn-primary btn-sm" target="_blank">View</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="alert alert-info">No videos uploaded yet.</div>
+    }
+</div>
