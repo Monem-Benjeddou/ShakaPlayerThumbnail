@@ -63,6 +63,8 @@ namespace ShakaPlayerThumbnail.Controllers
         [HttpGet]
         public IActionResult ListVideos()
         {
+            if (Directory.Exists(videoDirectory))
+                Directory.CreateDirectory(videoDirectory);
             var videoFiles = Directory.GetFiles(videoDirectory).Select(file => new Video
             {
                 Name = Path.GetFileNameWithoutExtension(file),
@@ -70,7 +72,7 @@ namespace ShakaPlayerThumbnail.Controllers
                 UploadDate = System.IO.File.GetCreationTime(file)
             }).ToList();
 
-            return View(videoFiles);
+            return videoFiles.Any()? View(videoFiles): NotFound("No video were found");
         }
 
         private bool IsVideoFile(string filePath)
