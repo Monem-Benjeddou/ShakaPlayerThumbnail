@@ -16,13 +16,16 @@ namespace ShakaPlayerThumbnail.Controllers
         [HttpPost]
         public async Task<IActionResult> UploadVideoChunk(IFormFile videoChunk, int chunkIndex, int totalChunks, string fileName, CancellationToken cancellationToken)
         {
+            int fileExtPos = fileName.LastIndexOf(".");
+            var nameOfFileWithoutExtension = string.Empty;
+            if (fileExtPos >= 0 )
+                nameOfFileWithoutExtension= fileName.Substring(0, fileExtPos);
             var videoPath = Path.Combine(VideoFolderPath, fileName);
 
             if (!Directory.Exists(VideoFolderPath))
             {
                 Directory.CreateDirectory(VideoFolderPath);
             }
-
             try
             {
                 await using (var stream = new FileStream(videoPath, chunkIndex == 0 ? FileMode.Create : FileMode.Append, FileAccess.Write, FileShare.None, 4096, true))
@@ -32,8 +35,8 @@ namespace ShakaPlayerThumbnail.Controllers
 
                 if (chunkIndex + 1 == totalChunks)
                 {
-                    var outputImagePath = Path.Combine(PreviewsFolderPath, fileName);
-                    await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, fileName, 5);
+                    var outputImagePath = Path.Combine(PreviewsFolderPath, nameOfFileWithoutExtension);
+                    await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, nameOfFileWithoutExtension, 5);
                 }
 
                 return Ok();
