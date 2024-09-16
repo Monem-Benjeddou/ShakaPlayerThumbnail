@@ -71,8 +71,6 @@
           seekBar.addEventListener(event, (e) => {
             clearTimeout(hideTimeout);
             isHovering = true;
-            video.pause();
-              video.play();
             video.setAttribute('controls', 'controls');
             showThumbnail(e);
             videoContainer.classList.add('hover');
