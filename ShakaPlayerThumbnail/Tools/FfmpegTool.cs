@@ -30,17 +30,24 @@ namespace ShakaPlayerThumbnail.Tools
 
             GenerateVttFile(videoName, thumbnailInfo, intervalSeconds, tileWidth, tileHeight);
         }
-        private static string BuildFfmpegArguments(string videoPath, double startTime, string outputImagePath, int tileIndex, int intervalSeconds, string videoName) =>
-            $"-i \"{videoPath}\" -vf \"fps=1/{intervalSeconds},scale=120:-1,tile=10x10\" " +
-            $"-frames:v 1 -quality 50 -compression_level 6 -y \"{outputImagePath}/{videoName}{tileIndex}.webp\"";
 
+        private static string BuildFfmpegArguments(string videoPath, double startTime, double endTime, string outputImagePath, int tileIndex, int intervalSeconds, string videoName) =>
+            $"-i \"{videoPath}\" -ss {startTime} -frames:v {(endTime - startTime) / intervalSeconds} " +
+            $"-vf \"fps=1/{intervalSeconds},scale=120:-1,tile=10x10\" " +
+            $"-quality 50 -compression_level 6 -y \"{outputImagePath}/{videoName}{tileIndex}.webp\"";
 
 
         private static double GetVideoDuration(string videoPath)
         {
-            string arguments = $"-v error -select_streams v:0 -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{videoPath}\"";
-            return ExecuteProcess("ffprobe", arguments);
+            string arguments = $"-v error -show_entries format=duration -of csv=p=0 \"{videoPath}\"";
+            double duration = ExecuteProcess("ffprobe", arguments);
+            if (duration <= 0)
+            {
+                throw new InvalidOperationException("Could not determine video duration.");
+            }
+            return duration;
         }
+
 
         private static async Task RunFFmpeg(string arguments)
         {
