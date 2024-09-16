@@ -67,7 +67,7 @@ namespace ShakaPlayerThumbnail.Controllers
 
             return View(videoFiles);
         }
-        public ActionResult DisplayVideo(string videoName)
+        public ActionResult DisplayVideo([FromQuery]string videoName)
         {
             var fileNameWithoutExtension = GetFileNameWithoutExtension(videoName);
             var returnedVttFilePath = $"/data/previews/{fileNameWithoutExtension}/{fileNameWithoutExtension}.vtt";
