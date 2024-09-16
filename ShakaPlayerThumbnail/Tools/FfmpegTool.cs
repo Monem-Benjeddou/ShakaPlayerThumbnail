@@ -105,7 +105,10 @@ namespace ShakaPlayerThumbnail.Tools
 
         private static void GenerateVttFile(string videoName, List<ThumbnailInfo> thumbnailInfo, int intervalSeconds, int tileWidth, int tileHeight)
         {
-            var vttFilePath = Path.Combine("/etc/data/previews", $"{videoName}.vtt");
+            var previewDirectory = $"/etc/data/previews/{videoName}";
+            if (!Directory.Exists(previewDirectory))
+                Directory.CreateDirectory(previewDirectory);
+            var vttFilePath = Path.Combine(previewDirectory, $"{videoName}.vtt");
             //var vttFilePath = Path.Combine(Directory.GetCurrentDirectory(),"wwwroot","previews", $"{videoName}.vtt");
             using var writer = new StreamWriter(vttFilePath);
             writer.WriteLine("WEBVTT");

@@ -27,7 +27,7 @@ namespace ShakaPlayerThumbnail.Controllers
             {
                 await using (var stream = new FileStream(videoPath, chunkIndex == 0 ? FileMode.Create : FileMode.Append, FileAccess.Write, FileShare.None, 4096, true))
                 {
-                    await videoChunk.CopyToAsync(stream, cancellationToken); // Pass the cancellation token here
+                    await videoChunk.CopyToAsync(stream, cancellationToken); 
                 }
 
                 if (chunkIndex + 1 == totalChunks)
