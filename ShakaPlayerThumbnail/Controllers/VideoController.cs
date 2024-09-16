@@ -7,7 +7,7 @@ namespace ShakaPlayerThumbnail.Controllers
     public class VideoController : Controller
     {
         private string PreviewsFolderPath = "/etc/data/previews";
-        private readonly string videoDirectory = "/etc/data/video";
+        private readonly string VideoFolderPath = "/etc/data/video";
 
         public ActionResult Upload()
         {
@@ -23,7 +23,7 @@ namespace ShakaPlayerThumbnail.Controllers
                 {
                     var fileExtension = Path.GetExtension(videoFile.FileName).ToLower();
                     var fileName = Path.GetFileName(videoFile.FileName);
-                    var videoPath = Path.Combine(videoDirectory, fileName);
+                    var videoPath = Path.Combine(VideoFolderPath, fileName);
 
                     if (System.IO.File.Exists(videoPath))
                     {
@@ -31,9 +31,9 @@ namespace ShakaPlayerThumbnail.Controllers
                     }
                     else
                     {
-                        if (!Directory.Exists(videoDirectory))
+                        if (!Directory.Exists(VideoFolderPath))
                         {
-                            Directory.CreateDirectory(videoDirectory);
+                            Directory.CreateDirectory(VideoFolderPath);
                         }
 
                         await using (var stream = new FileStream(videoPath, FileMode.Create))
@@ -63,9 +63,9 @@ namespace ShakaPlayerThumbnail.Controllers
         [HttpGet]
         public IActionResult ListVideos()
         {
-            if (!Directory.Exists(videoDirectory))
-                Directory.CreateDirectory(videoDirectory);
-            var videoFiles = Directory.GetFiles(videoDirectory).Select(file => new Video
+            if (!Directory.Exists(VideoFolderPath))
+                Directory.CreateDirectory(VideoFolderPath);
+            var videoFiles = Directory.GetFiles(VideoFolderPath).Select(file => new Video
             {
                 Name = Path.GetFileNameWithoutExtension(file),
                 FileName = Path.GetFileName(file),
@@ -80,5 +80,20 @@ namespace ShakaPlayerThumbnail.Controllers
             var validExtensions = new[] { ".mp4", ".avi", ".mov", ".mkv", ".webm" };
             return validExtensions.Contains(Path.GetExtension(filePath).ToLowerInvariant());
         }
+        public async Task<IActionResult> DisplayVideo(string videoName)
+        {
+            if (System.IO.File.Exists(Path.Combine("/etc/data/video",$"{videoName}")))
+            {
+                return null;
+            }
+
+            var returnedVttFilePath = $"/data/previews/{videoName}/{videoName}.vtt";
+            var returnedVideoPath = $"/data/video/{videoName}.mp4";
+
+            var model = new Tuple<string, string>(returnedVideoPath, returnedVttFilePath);
+            
+            return View((object)model);
+        }
+
     }
 }
