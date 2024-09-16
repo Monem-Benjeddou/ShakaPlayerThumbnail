@@ -14,7 +14,7 @@ namespace ShakaPlayerThumbnail.Controllers
             return View(new Video());
         }
         [HttpPost]
-        public async Task<IActionResult> UploadVideoChunk(IFormFile videoChunk, int chunkIndex, int totalChunks, string fileName)
+        public async Task<IActionResult> UploadVideoChunk(IFormFile videoChunk, int chunkIndex, int totalChunks, string fileName, CancellationToken cancellationToken)
         {
             var videoPath = Path.Combine(VideoFolderPath, fileName);
 
@@ -23,19 +23,31 @@ namespace ShakaPlayerThumbnail.Controllers
                 Directory.CreateDirectory(VideoFolderPath);
             }
 
-            await using (var stream = new FileStream(videoPath, chunkIndex == 0 ? FileMode.Create : FileMode.Append))
+            try
             {
-                await videoChunk.CopyToAsync(stream);
-            }
+                await using (var stream = new FileStream(videoPath, chunkIndex == 0 ? FileMode.Create : FileMode.Append, FileAccess.Write, FileShare.None, 4096, true))
+                {
+                    await videoChunk.CopyToAsync(stream, cancellationToken); // Pass the cancellation token here
+                }
 
-            if (chunkIndex + 1 == totalChunks)
+                if (chunkIndex + 1 == totalChunks)
+                {
+                    var outputImagePath = Path.Combine(PreviewsFolderPath, fileName);
+                    await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, fileName, 5);
+                }
+
+                return Ok();
+            }
+            catch (OperationCanceledException)
             {
-                var outputImagePath = Path.Combine(PreviewsFolderPath, fileName);
-                await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, fileName, 5);
+                if (System.IO.File.Exists(videoPath))
+                {
+                    System.IO.File.Delete(videoPath);
+                }
+                return StatusCode(499, "Upload cancelled"); 
             }
-
-            return Ok();
         }
+
 
         [HttpGet]
         public IActionResult ListVideos()
