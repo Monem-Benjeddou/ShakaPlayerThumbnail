@@ -63,7 +63,7 @@ namespace ShakaPlayerThumbnail.Controllers
         [HttpGet]
         public IActionResult ListVideos()
         {
-            if (Directory.Exists(videoDirectory))
+            if (!Directory.Exists(videoDirectory))
                 Directory.CreateDirectory(videoDirectory);
             var videoFiles = Directory.GetFiles(videoDirectory).Select(file => new Video
             {
