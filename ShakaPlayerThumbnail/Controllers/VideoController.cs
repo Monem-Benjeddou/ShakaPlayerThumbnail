@@ -3,13 +3,14 @@ using ShakaPlayerThumbnail.Data;
 using Microsoft.AspNetCore.Http;
 using System.IO;
 using System.Linq;
+using ShakaPlayerThumbnail.Tools;
 
 namespace ShakaPlayerThumbnail.Controllers
 {
     public class VideoController : Controller
     {
         
-        // Define the directory where videos will be saved
+        private string PreviewsFolderPath = "/etc/data/previews";
         private readonly string videoDirectory = "/etc/data/video";  
         
         public ActionResult Upload()
@@ -18,7 +19,7 @@ namespace ShakaPlayerThumbnail.Controllers
         }
 
         [HttpPost]
-        public ActionResult UploadVideo(Video model, IFormFile videoFile) 
+        public async Task<IActionResult> UploadVideo(Video model, IFormFile videoFile) 
         {
             if (ModelState.IsValid)
             {
@@ -32,26 +33,25 @@ namespace ShakaPlayerThumbnail.Controllers
                         var fileName = Path.GetFileName(videoFile.FileName);
                         var videoPath = Path.Combine(videoDirectory, fileName);
 
-                        // Check if the video already exists in the directory
                         if (System.IO.File.Exists(videoPath))
                         {
                             ViewBag.Error = "A video with the same name already exists.";
                         }
                         else
                         {
-                            // Ensure the video directory exists
                             if (!Directory.Exists(videoDirectory))
                             {
                                 Directory.CreateDirectory(videoDirectory);
                             }
 
-                            // Save the video file to /etc/data/video directory
                             using (var stream = new FileStream(videoPath, FileMode.Create))
                             {
                                 videoFile.CopyTo(stream);
                             }
 
                             ViewBag.Message = "Video uploaded successfully!";
+                            var outputImagePath = Path.Combine(PreviewsFolderPath, videoFile.FileName);
+                            await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, videoFile.FileName, 5);
                             return RedirectToAction("Upload");
                         }
                     }
