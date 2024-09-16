@@ -67,7 +67,7 @@ namespace ShakaPlayerThumbnail.Controllers
 
             return View(videoFiles);
         }
-        public async Task<IActionResult> Index(string videoName)
+        public ActionResult DisplayVideo(string videoName)
         {
             var fileNameWithoutExtension = GetFileNameWithoutExtension(videoName);
             var returnedVttFilePath = $"/data/previews/{fileNameWithoutExtension}/{fileNameWithoutExtension}.vtt";
@@ -75,7 +75,7 @@ namespace ShakaPlayerThumbnail.Controllers
             var model = new Tuple<string, string>(returnedVideoPath, returnedVttFilePath);
             return View((object)model);
         }
-
+        
         private string GetFileNameWithoutExtension(string fileName)
         {
             int fileExtPos = fileName.LastIndexOf(".");
