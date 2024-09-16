@@ -1,85 +1,82 @@
 using Microsoft.AspNetCore.Mvc;
 using ShakaPlayerThumbnail.Data;
-using Microsoft.AspNetCore.Http;
-using System.IO;
-using System.Linq;
 using ShakaPlayerThumbnail.Tools;
 
 namespace ShakaPlayerThumbnail.Controllers
 {
     public class VideoController : Controller
     {
-        
         private string PreviewsFolderPath = "/etc/data/previews";
-        private readonly string videoDirectory = "/etc/data/video";  
-        
+        private readonly string videoDirectory = "/etc/data/video";
+
         public ActionResult Upload()
         {
             return View(new Video());
         }
 
         [HttpPost]
-        public async Task<IActionResult> UploadVideo(Video model, IFormFile videoFile) 
+        public async Task<IActionResult> UploadVideo(Video model, IFormFile videoFile)
         {
             if (ModelState.IsValid)
             {
-                if (videoFile != null)
+                if (videoFile != null && IsVideoFile(videoFile.FileName))
                 {
-                    var allowedExtensions = new[] { ".mp4", ".avi", ".mov" };
-                    var fileExtension = Path.GetExtension(videoFile.FileName).ToLower(); 
+                    var fileExtension = Path.GetExtension(videoFile.FileName).ToLower();
+                    var fileName = Path.GetFileName(videoFile.FileName);
+                    var videoPath = Path.Combine(videoDirectory, fileName);
 
-                    if (allowedExtensions.Contains(fileExtension))
+                    if (System.IO.File.Exists(videoPath))
                     {
-                        var fileName = Path.GetFileName(videoFile.FileName);
-                        var videoPath = Path.Combine(videoDirectory, fileName);
-
-                        if (System.IO.File.Exists(videoPath))
-                        {
-                            ViewBag.Error = "A video with the same name already exists.";
-                        }
-                        else
-                        {
-                            if (!Directory.Exists(videoDirectory))
-                            {
-                                Directory.CreateDirectory(videoDirectory);
-                            }
-
-                            using (var stream = new FileStream(videoPath, FileMode.Create))
-                            {
-                                videoFile.CopyTo(stream);
-                            }
-
-                            ViewBag.Message = "Video uploaded successfully!";
-                            var outputImagePath = Path.Combine(PreviewsFolderPath, videoFile.FileName);
-                            await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, videoFile.FileName, 5);
-                            return RedirectToAction("Upload");
-                        }
+                        ViewBag.Error = "A video with the same name already exists.";
                     }
                     else
                     {
-                        ViewBag.Error = "Invalid file type. Please upload a video in MP4, AVI, or MOV format.";
+                        if (!Directory.Exists(videoDirectory))
+                        {
+                            Directory.CreateDirectory(videoDirectory);
+                        }
+
+                        await using (var stream = new FileStream(videoPath, FileMode.Create))
+                        {
+                            await videoFile.CopyToAsync(stream);
+                        }
+
+                        ViewBag.Message = "Video uploaded successfully!";
+                        var outputImagePath = Path.Combine(PreviewsFolderPath, videoFile.FileName);
+                        await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, videoFile.FileName, 5);
+                        return RedirectToAction("Upload");
                     }
                 }
                 else
                 {
-                    ViewBag.Error = "Please select a video to upload.";
+                    ViewBag.Error = "Invalid file type. Please upload a video in MP4, AVI, or MOV format.";
                 }
             }
+            else
+            {
+                ViewBag.Error = "Please select a video to upload.";
+            }
+
             return View("Upload", model);
         }
 
         [HttpGet]
         public IActionResult ListVideos()
         {
-            // Retrieve all video files from the directory
             var videoFiles = Directory.GetFiles(videoDirectory).Select(file => new Video
             {
-                Name = Path.GetFileNameWithoutExtension(file), 
+                Name = Path.GetFileNameWithoutExtension(file),
                 FileName = Path.GetFileName(file),
-                UploadDate = System.IO.File.GetCreationTime(file) 
+                UploadDate = System.IO.File.GetCreationTime(file)
             }).ToList();
 
             return View(videoFiles);
+        }
+
+        private bool IsVideoFile(string filePath)
+        {
+            var validExtensions = new[] { ".mp4", ".avi", ".mov", ".mkv", ".webm" };
+            return validExtensions.Contains(Path.GetExtension(filePath).ToLowerInvariant());
         }
     }
 }
