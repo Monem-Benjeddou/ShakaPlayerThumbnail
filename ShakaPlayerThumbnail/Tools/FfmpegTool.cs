@@ -22,7 +22,7 @@ namespace ShakaPlayerThumbnail.Tools
                 double endTime = Math.Min(startTime + framesPerTile * intervalSeconds, videoDuration);
                 int framesInThisSection = Math.Min(totalFrames - (i - 1) * framesPerTile, framesPerTile);
 
-                var arguments = BuildFfmpegArguments(videoPath, startTime, endTime, outputImagePath, i, intervalSeconds);
+                var arguments = BuildFfmpegArguments(videoPath, startTime, endTime, outputImagePath, i, intervalSeconds,videoName);
                 await RunFFmpeg(arguments);
 
                 thumbnailInfo.Add(new ThumbnailInfo(i, startTime, endTime, framesInThisSection));
@@ -31,10 +31,10 @@ namespace ShakaPlayerThumbnail.Tools
             GenerateVttFile(videoName, thumbnailInfo, intervalSeconds, tileWidth, tileHeight);
         }
 
-        private static string BuildFfmpegArguments(string videoPath, double startTime, double endTime, string outputImagePath, int tileIndex, int intervalSeconds) =>
+        private static string BuildFfmpegArguments(string videoPath, double startTime, double endTime, string outputImagePath, int tileIndex, int intervalSeconds,string videoName) =>
             $"-i \"{videoPath}\" -ss {startTime} -t {endTime - startTime} " +
             $"-vf \"select=not(mod(t\\,{intervalSeconds})),scale=120:-1,tile=10x10\" " +
-            $"-quality 50 -compression_level 6 -threads 0 -y \"{outputImagePath}{tileIndex}.webp\"";
+            $"-quality 50 -compression_level 6 -threads 0 -y \"{outputImagePath}/{videoName}{tileIndex}.webp\"";
 
 
 
