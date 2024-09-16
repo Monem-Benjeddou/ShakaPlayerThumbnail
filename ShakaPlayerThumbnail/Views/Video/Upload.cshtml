@@ -8,36 +8,67 @@
 
     <div class="card shadow-sm">
         <div class="card-body">
-            @using (Html.BeginForm("UploadVideo", "Video", FormMethod.Post, new { enctype = "multipart/form-data", @class = "row g-3" }))
-            {
-                <div class="mb-3">
-                    <label for="VideoTitle" class="form-label">Video Title</label>
-                    @Html.TextBoxFor(m => m.Name, new { @class = "form-control", placeholder = "Enter video title" })
-                </div>
+            <div class="mb-3">
+                <label for="VideoTitle" class="form-label">Video Title</label>
+                @Html.TextBoxFor(m => m.Name, new { @class = "form-control", placeholder = "Enter video title" })
+            </div>
 
-                <div class="mb-3">
-                    <label for="VideoFile" class="form-label">Select Video</label>
-                    <input type="file" name="VideoFile" class="form-control" accept="video/*" required />
-                    <small class="text-muted">Only video files are allowed (e.g., MP4, AVI, MOV).</small>
-                </div>
+            <div class="mb-3">
+                <label for="VideoFile" class="form-label">Select Video</label>
+                <input type="file" id="VideoFile" class="form-control" accept="video/*" required />
+                <small class="text-muted">Only video files are allowed (e.g., MP4, AVI, MOV).</small>
+            </div>
 
-                <button type="submit" class="btn btn-primary w-100">Upload Video</button>
-            }
+            <button id="uploadBtn" class="btn btn-primary w-100">Upload Video</button>
         </div>
     </div>
 
     <div class="mt-4">
-        @if (!string.IsNullOrEmpty(ViewBag.Message))
-        {
-            <div class="alert alert-success">
-                @ViewBag.Message
-            </div>
-        }
-        @if (!string.IsNullOrEmpty(ViewBag.Error))
-        {
-            <div class="alert alert-danger">
-                @ViewBag.Error
-            </div>
-        }
+        <div id="uploadProgress" class="progress mt-2" style="display:none;">
+            <div class="progress-bar" role="progressbar" style="width: 0%;"></div>
+        </div>
+        <div class="alert alert-success" style="display:none;" id="successMessage"></div>
+        <div class="alert alert-danger" style="display:none;" id="errorMessage"></div>
     </div>
 </div>
+
+<script>
+    document.getElementById('uploadBtn').addEventListener('click', async function () {
+        const fileInput = document.getElementById('VideoFile');
+        const file = fileInput.files[0];
+
+        if (!file) {
+            alert("Please select a video file.");
+            return;
+        }
+
+        const chunkSize = 2 * 1024 * 1024; // 2MB chunks
+        const totalChunks = Math.ceil(file.size / chunkSize);
+        const progressBar = document.querySelector('.progress-bar');
+        const progress = document.getElementById('uploadProgress');
+        progress.style.display = 'block';
+
+        for (let i = 0; i < totalChunks; i++) {
+            const start = i * chunkSize;
+            const end = Math.min(start + chunkSize, file.size);
+            const chunk = file.slice(start, end);
+            const formData = new FormData();
+
+            formData.append('videoChunk', chunk);
+            formData.append('chunkIndex', i);
+            formData.append('totalChunks', totalChunks);
+            formData.append('fileName', file.name);
+
+            await fetch('@Url.Action("UploadVideoChunk", "Video")', {
+                method: 'POST',
+                body: formData
+            });
+
+            const percentage = ((i + 1) / totalChunks) * 100;
+            progressBar.style.width = percentage + '%';
+        }
+
+        document.getElementById('successMessage').style.display = 'block';
+        document.getElementById('successMessage').innerText = 'Video uploaded successfully!';
+    });
+</script>
