@@ -9,7 +9,10 @@ namespace ShakaPlayerThumbnail.Controllers
     {
         private string PreviewsFolderPath = "/etc/data/previews";
         private readonly string VideoFolderPath = "/etc/data/video";
-
+        public ActionResult Upload()
+        {
+            return View(new Video());
+        }
         [HttpPost]
         public async Task<IActionResult> UploadVideoChunk(IFormFile videoChunk, int chunkIndex, int totalChunks, string fileName)
         {
@@ -20,7 +23,6 @@ namespace ShakaPlayerThumbnail.Controllers
                 Directory.CreateDirectory(VideoFolderPath);
             }
 
-            // Append the chunk to the file
             await using (var stream = new FileStream(videoPath, chunkIndex == 0 ? FileMode.Create : FileMode.Append))
             {
                 await videoChunk.CopyToAsync(stream);
