@@ -26,7 +26,7 @@
                     <td>@video.FileName</td>
                     <td>@video.UploadDate.ToString("yyyy-MM-dd HH:mm")</td>
                     <td>
-                        <a href="@Url.Action("DisplayVideo", "Video")" class="btn btn-secondary mt-3">Upload Your First Video</a>
+                        <a href="@Url.Action("DisplayVideo", "Video", new { videoName = video.FileName })" class="btn btn-secondary mt-3">Display Video</a>
                     </td>
                 </tr>
             }
