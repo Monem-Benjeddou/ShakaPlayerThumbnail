@@ -8,7 +8,8 @@
   <div id="error" class="error-message"></div>
 </div>
 
-<script>document.addEventListener('DOMContentLoaded', async () => {
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
     const fullscreenToggleBtn = document.getElementById('fullscreen-toggle-btn');
     const video = document.getElementById('video');
     const seekBar = document.getElementById('seek-bar');
@@ -17,9 +18,8 @@
     const videoContainer = document.getElementById('video-container');
     const player = new shaka.Player(video);
     let lastPreviewPosition = 0, thumbnailTrack, isHovering = false;
-    let hideTimeout;
+    let hideTimeout, isDraggingSeekbar = false;
 
-    // Fullscreen toggle logic
     fullscreenToggleBtn?.addEventListener('click', toggleFullscreen);
 
     function toggleFullscreen() {
@@ -49,7 +49,6 @@
       console.log('Video loaded successfully!');
       thumbnailTrack = await setupThumbnails(player, thumbElement, vttUrl);
 
-      // Simulate click on video after user interaction (button click, etc.)
       simulateVideoClick();
 
     } catch (error) {
@@ -69,28 +68,25 @@
 
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
+            isDraggingSeekbar = true; // Set dragging flag
             clearTimeout(hideTimeout);
             isHovering = true;
+            video.removeAttribute('controls');
             video.setAttribute('controls', 'controls');
+
             showThumbnail(e);
-            videoContainer.classList.add('hover');
-            
           });
         });
 
-        ['mouseleave', 'touchend'].forEach((event) => {
+        ['mouseleave', 'touchend', 'mouseup'].forEach((event) => {
           seekBar.addEventListener(event, () => {
             hideTimeout = setTimeout(() => {
               hideThumbnail();
-              if (!isHoveringVideo()) {
-                video.removeAttribute('controls');
-                videoContainer.classList.remove('hover');
-              }
             }, 100);
+            isDraggingSeekbar = false; // Reset dragging flag
           });
         });
 
-        // Click to seek video
         ['click', 'touchend'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
             const { position } = getSeekBarInfo(e);
@@ -105,14 +101,18 @@
     }
 
     function simulateVideoClick() {
-      // Attach an event to simulate video click when user interacts
       document.body.addEventListener('click', () => {
         video.focus();
         video.dispatchEvent(new Event('click')); // Explicit click simulation
-      }, { once: true }); // Only do this once per session
+      }, { once: true });
     }
 
     function handleThumbnailPreview(event) {
+      if (!isDraggingSeekbar) {
+        hideThumbnail(); // Ensure thumbnail hides on simple click
+        return;
+      }
+
       const { offsetX, position } = getSeekBarInfo(event);
       lastPreviewPosition = position;
 
@@ -180,28 +180,29 @@
       thumbElement.style.left = `${thumbX}px`;
       thumbElement.style.top = `-80px`;
       thumbElement.style.display = 'block';
-      video.removeAttribute('controls');
-      video.setAttribute('controls', 'controls');
+      video.focus();
     }
 
     function hideThumbnail() {
       thumbElement.style.display = 'none';
     }
 
+    videoContainer.addEventListener('click', () => {
+      video.setAttribute('controls', 'controls');
+    });
+    video.addEventListener('mouseover', () => {
+      video.setAttribute('controls', 'controls');
+    });
     function isHoveringVideo() {
       return video.matches(':hover');
     }
 
-    videoContainer.addEventListener('mouseenter', () => {
-      video.setAttribute('controls', 'controls');
-    });
-
     videoContainer.addEventListener('mouseleave', () => {
       hideTimeout = setTimeout(() => {
-        if (!isHoveringSeekbar()) {
+        if (!isHoveringSeekbar() && !video.paused) {
           video.removeAttribute('controls');
         }
-      }, 300);
+      }, 200);
     });
 
     document.addEventListener('click', (event) => {
@@ -219,5 +220,6 @@
       errorDisplay.textContent = `${message}: ${error.message}`;
     }
   });
+
 </script>
 
