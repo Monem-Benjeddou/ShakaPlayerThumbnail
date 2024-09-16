@@ -42,7 +42,7 @@
             return;
         }
 
-        const chunkSize = 2 * 1024 * 1024; // 2MB chunks
+        const chunkSize =  1024 * 1024; 
         const totalChunks = Math.ceil(file.size / chunkSize);
         const progressBar = document.querySelector('.progress-bar');
         const progress = document.getElementById('uploadProgress');
@@ -67,7 +67,6 @@
             const percentage = ((i + 1) / totalChunks) * 100;
             progressBar.style.width = percentage + '%';
         }
-
         document.getElementById('successMessage').style.display = 'block';
         document.getElementById('successMessage').innerText = 'Video uploaded successfully!';
     });
