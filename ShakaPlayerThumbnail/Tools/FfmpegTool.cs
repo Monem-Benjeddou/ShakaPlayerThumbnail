@@ -39,10 +39,10 @@ namespace ShakaPlayerThumbnail.Tools
             GenerateVttFile(videoName, thumbnailInfo, intervalSeconds, tileWidth, tileHeight);
         }
 
-        private static string BuildFfmpegArguments(string videoPath, double startTime, double endTime, string outputImagePath, int tileIndex, int intervalSeconds,string videoName) =>
+        private static string BuildFfmpegArguments(string videoPath, double startTime, double endTime, string outputImagePath, int tileIndex, int intervalSeconds, string videoName) =>
             $"-i \"{videoPath}\" -ss {startTime} -t {endTime - startTime} " +
-            $"-vf \"select=not(mod(t\\,{intervalSeconds})),scale=120:-1,tile=10x10\" " +
-            $"-quality 50 -compression_level 6 -threads 0 -y \"{outputImagePath}/{videoName}{tileIndex}.webp\"";
+            $"-vf \"select=not(mod(t\\,{intervalSeconds})),scale=120:-1,tile=10x10,fps=1\" " +
+            $"-quality 40 -compression_level 4 -threads 2 -y \"{outputImagePath}/{videoName}{tileIndex}.webp\"";
 
 
         private static double GetVideoDuration(string videoPath)
