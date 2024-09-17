@@ -6,7 +6,7 @@ using ShakaPlayerThumbnail.BackgroundServices;
 
 namespace ShakaPlayerThumbnail.Controllers
 {
-    public class VideoController(IBackgroundTaskQueue taskQueue) : Controller
+    public class VideoController(IBackgroundTaskQueue taskQueue,IProgressTracker progressTracker) : Controller
     {
         private readonly string PreviewsFolderPath = "/etc/data/previews";
         private readonly string VideoFolderPath = "/etc/data/video";
@@ -46,9 +46,19 @@ namespace ShakaPlayerThumbnail.Controllers
 
                     taskQueue.QueueBackgroundWorkItem(async token =>
                     {
-                        await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, nameOfFileWithoutExtension, 5);
+                        progressTracker.SetProgress(nameOfFileWithoutExtension, 0);
+
+                        await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, nameOfFileWithoutExtension, 5, progress =>
+                        {
+                            progressTracker.SetProgress(nameOfFileWithoutExtension, progress);
+                        });
+
+                        progressTracker.SetProgress(nameOfFileWithoutExtension, 100);
                     });
+
+                    return Ok(new { message = "Upload complete, thumbnail generation started." });
                 }
+
 
                 return Ok();
             }
@@ -85,6 +95,12 @@ namespace ShakaPlayerThumbnail.Controllers
             var returnedVideoPath = $"/data/video/{videoName}";
             var model = new Tuple<string, string>(returnedVideoPath, returnedVttFilePath);
             return View((object)model);
+        }
+        [HttpGet("thumbnail/progress")]
+        public IActionResult GetThumbnailGenerationProgress(string fileName)
+        {
+            var progress = progressTracker.GetProgress(fileName);
+            return Ok(new { progress });
         }
 
         private string GetFileNameWithoutExtension(string fileName)

@@ -12,7 +12,6 @@ ViewData["Title"] = "Upload Video";
                 <label for="VideoTitle" class="form-label">Video Title</label>
                 @Html.TextBoxFor(m => m.Name, new { @class = "form-control", placeholder = "Enter video title" })
             </div>
-
             <div class="mb-3">
                 <label for="VideoFile" class="form-label">Select Video</label>
                 <input type="file" id="VideoFile" class="form-control" accept="video/*" required />
@@ -25,12 +24,19 @@ ViewData["Title"] = "Upload Video";
     </div>
 
     <div class="mt-4">
-        <div id="uploadProgress" class="progress mt-2" style="display:none;">
-            <div class="progress-bar" role="progressbar" style="width: 0%;"></div>
+        <div id="uploadProgress" class="progress mt-2" style="height: 20px; width: 100%; display:none;">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%; min-width: 2%;"></div>
         </div>
         <div class="alert alert-success" style="display:none;" id="successMessage"></div>
         <div class="alert alert-danger" style="display:none;" id="errorMessage"></div>
     </div>
+    <div id="thumbnailProgressContainer" class="mt-4" style="display:none;">
+        <label>Thumbnail Generation Progress</label>
+        <div id="thumbnailProgress" class="progress mt-2">
+            <div class="progress-bar" role="progressbar" style="width: 0%;"></div>
+        </div>
+    </div>
+
 </div>
 
 <script>
@@ -116,5 +122,33 @@ ViewData["Title"] = "Upload Video";
             abortController.abort();
         }
     });
+    const thumbnailProgressBar = document.querySelector('#thumbnailProgress .progress-bar');
+    const thumbnailProgressContainer = document.getElementById('thumbnailProgressContainer');
+
+    async function checkThumbnailProgress(videoFileName) {
+        try {
+            const response = await fetch(`/video/thumbnail/progress?videoFileName=${videoFileName}`);
+            const data = await response.json();
+
+            const progress = data.progress;
+            thumbnailProgressBar.style.width = progress + '%';
+            thumbnailProgressBar.setAttribute('aria-valuenow', progress);
+
+            // Check if thumbnail generation is complete
+            if (progress < 100) {
+                setTimeout(() => checkThumbnailProgress(videoFileName), 2000); // Poll every 2 seconds
+            } else {
+                console.log('Thumbnail generation complete');
+            }
+        } catch (error) {
+            console.error('Error checking thumbnail generation progress:', error);
+        }
+    }
+
+
+    function startThumbnailProgressPolling(videoFileName) {
+        thumbnailProgressContainer.style.display = 'block';
+        checkThumbnailProgress(videoFileName);
+    }
 
 </script>

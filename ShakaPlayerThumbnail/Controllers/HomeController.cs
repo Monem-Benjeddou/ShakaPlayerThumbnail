@@ -18,32 +18,7 @@ namespace ShakaPlayerThumbnail.Controllers
 
         public async Task<IActionResult> Index()
         {
-            const string videoName = "video";
-            var videoUrl = GetVideoUrl();
-
-            EnsureFolderExists(VideoFolderPath); 
-            var videoPath = Path.Combine(VideoFolderPath, $"{videoName}.mp4");
-
-            EnsureFolderExists(PreviewsFolderPath); 
-            var outputImagePath = Path.Combine(PreviewsFolderPath, videoName);
-            var returnedVttFilePath = $"/data/previews/{videoName}.vtt";
-            var returnedVideoPath = $"/data/video/{videoName}.mp4";
-
-            var model = new Tuple<string, string>(returnedVideoPath, returnedVttFilePath);
-
-            if (await TryDownloadVideoIfNecessary(videoUrl, videoPath))
-            {
-                if (System.IO.File.Exists(videoPath))
-                {
-                    await GenerateSpritePreviewIfNecessary(videoPath, outputImagePath, videoName);
-                }
-                else
-                {
-                    _logger.LogError("Video not found at {videoPath} after download.", videoPath);
-                }
-            }
-
-            return View((object)model);
+            return Ok();
         }
 
         private string GetVideoUrl() =>
@@ -129,7 +104,7 @@ namespace ShakaPlayerThumbnail.Controllers
             }
 
             _logger.LogInformation("Generating sprite preview for video at {videoPath}", videoPath);
-            await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, videoName, 5);
+            //await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, videoName, 5);
         }
 
         public IActionResult Privacy() => View();

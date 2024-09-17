@@ -6,7 +6,12 @@ namespace ShakaPlayerThumbnail.Tools
 {
     public static class FfmpegTool
     {
-        public static async Task GenerateSpritePreview(string videoPath, string outputImagePath, string videoName, int intervalSeconds = 12)
+        public static async Task GenerateSpritePreview(
+            string videoPath,
+            string outputImagePath,
+            string videoName,
+            int intervalSeconds,
+            Action<int> reportProgress)
         {
             var videoDuration = GetVideoDuration(videoPath);
             var totalFrames = (int)Math.Ceiling(videoDuration / intervalSeconds);
@@ -22,20 +27,23 @@ namespace ShakaPlayerThumbnail.Tools
                 double endTime = Math.Min(startTime + framesPerTile * intervalSeconds, videoDuration);
                 int framesInThisSection = Math.Min(totalFrames - (i - 1) * framesPerTile, framesPerTile);
 
-                var arguments = BuildFfmpegArguments(videoPath, startTime, endTime, outputImagePath, i, intervalSeconds,videoName);
+                var arguments = BuildFfmpegArguments(videoPath, startTime, endTime, outputImagePath, i, intervalSeconds);
                 await RunFFmpeg(arguments);
 
                 thumbnailInfo.Add(new ThumbnailInfo(i, startTime, endTime, framesInThisSection));
+
+                // Report progress after each tile is generated
+                int progress = (i * 100) / numberOfTiles;
+                reportProgress(progress); // Call the progress reporting callback
             }
 
             GenerateVttFile(videoName, thumbnailInfo, intervalSeconds, tileWidth, tileHeight);
         }
 
-        private static string BuildFfmpegArguments(string videoPath, double startTime, double endTime, string outputImagePath, int tileIndex, int intervalSeconds, string videoName) =>
-            $"-i \"{videoPath}\" -ss {startTime} -frames:v {(endTime - startTime) / intervalSeconds} " +
-            $"-vf \"fps=1/{intervalSeconds},scale=120:-1,tile=10x10\" " +
-            $"-quality 50 -compression_level 6 -y \"{outputImagePath}/{videoName}{tileIndex}.webp\"";
-
+        private static string BuildFfmpegArguments(string videoPath, double startTime, double endTime, string outputImagePath, int tileIndex, int intervalSeconds) =>
+            $"-i \"{videoPath}\" -ss {startTime} -t {endTime - startTime} " +
+            $"-vf \"select=not(mod(t\\,{intervalSeconds})),scale=120:-1,tile=10x10\" " +
+            $"-quality 50 -compression_level 6 -threads 0 -y \"{outputImagePath}{tileIndex}.webp\"";
 
         private static double GetVideoDuration(string videoPath)
         {

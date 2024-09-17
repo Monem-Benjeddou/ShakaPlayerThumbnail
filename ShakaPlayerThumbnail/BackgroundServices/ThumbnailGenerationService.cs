@@ -2,24 +2,16 @@ using System.Threading.Channels;
 
 namespace ShakaPlayerThumbnail.BackgroundServices;
 
-public class ThumbnailGenerationService : BackgroundService
+public class ThumbnailGenerationService(IBackgroundTaskQueue taskQueue, ILogger<ThumbnailGenerationService> logger)
+    : BackgroundService
 {
-    private readonly IBackgroundTaskQueue _taskQueue;
-    private readonly ILogger<ThumbnailGenerationService> _logger;
-
-    public ThumbnailGenerationService(IBackgroundTaskQueue taskQueue, ILogger<ThumbnailGenerationService> logger)
-    {
-        _taskQueue = taskQueue;
-        _logger = logger;
-    }
-
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Thumbnail Generation Service is starting.");
+        logger.LogInformation("Thumbnail Generation Service is starting.");
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            var workItem = await _taskQueue.DequeueAsync(stoppingToken);
+            var workItem = await taskQueue.DequeueAsync(stoppingToken);
 
             try
             {
@@ -27,11 +19,11 @@ public class ThumbnailGenerationService : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred executing thumbnail generation task.");
+                logger.LogError(ex, "Error occurred executing thumbnail generation task.");
             }
         }
 
-        _logger.LogInformation("Thumbnail Generation Service is stopping.");
+        logger.LogInformation("Thumbnail Generation Service is stopping.");
     }
 }
 public interface IBackgroundTaskQueue
@@ -60,5 +52,25 @@ public class BackgroundTaskQueue : IBackgroundTaskQueue
     public async Task<Func<CancellationToken, Task>> DequeueAsync(CancellationToken cancellationToken)
     {
         return await _queue.Reader.ReadAsync(cancellationToken);
+    }
+}
+public interface IProgressTracker
+{
+    void SetProgress(string taskId, int progress);
+    int GetProgress(string taskId);
+}
+
+public class InMemoryProgressTracker : IProgressTracker
+{
+    private readonly Dictionary<string, int> _progressStore = new();
+
+    public void SetProgress(string taskId, int progress)
+    {
+        _progressStore[taskId] = progress;
+    }
+
+    public int GetProgress(string taskId)
+    {
+        return _progressStore.TryGetValue(taskId, out var progress) ? progress : 0;
     }
 }
