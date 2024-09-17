@@ -127,10 +127,9 @@
     async function checkThumbnailProgress(videoFileName) {
         try {
             const fileNameWithoutExtension = videoFileName.substring(0, videoFileName.lastIndexOf('.')) || videoFileName;
-            await fetch('@Url.Action("GetThumbnailGenerationProgress", "Video")'
             const progressUrl = '@Url.Action("GetThumbnailGenerationProgress", "Video")' + `?fileName=${encodeURIComponent(fileNameWithoutExtension)}`;
+            const response = await fetch(progressUrl);
             const data = await response.json();
-
             const progress = data.progress;
             thumbnailProgressBar.style.width = progress + '%';
             thumbnailProgressBar.setAttribute('aria-valuenow', progress);
