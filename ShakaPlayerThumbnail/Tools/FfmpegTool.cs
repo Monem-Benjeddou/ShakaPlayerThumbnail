@@ -31,23 +31,27 @@ namespace ShakaPlayerThumbnail.Tools
                 double duration = Math.Min(framesPerTile * intervalSeconds, videoDuration - startTime);
                 int framesInThisSection = Math.Min(totalFrames - (i - 1) * framesPerTile, framesPerTile);
 
-                var arguments = BuildFfmpegArguments(videoPath, startTime, duration, outputImagePath, i, intervalSeconds,videoName);
+                // Adjusting FFmpeg arguments to ensure correct tile generation
+                var arguments = BuildFfmpegArguments(videoPath, startTime, duration, outputImagePath, i, intervalSeconds, videoName);
                 await RunFFmpeg(arguments);
 
                 thumbnailInfo.Add(new ThumbnailInfo(i, startTime, startTime + duration, framesInThisSection));
 
                 int progress = (i * 100) / numberOfTiles;
-                reportProgress(progress); 
+                reportProgress(progress);
             }
 
+            // Ensure the VTT file is properly created
             GenerateVttFile(videoName, thumbnailInfo, intervalSeconds, tileWidth, tileHeight);
         }
 
-        private static string BuildFfmpegArguments(string videoPath, double startTime, double duration, string outputImagePath, int tileIndex, int intervalSeconds,string videoName) =>
-            $"-ss {startTime} -i \"{videoPath}\" -t {duration} " +
-            $"-vf \"select=not(mod(t\\,{intervalSeconds})),scale=120:-1,tile=10x10\" " +
-            $"-quality 50 -compression_level 6 -threads 0 -y \"{Path.Combine(outputImagePath, $"{tileIndex}.webp")}\"";
-
+        private static string BuildFfmpegArguments(string videoPath, double startTime, double duration, string outputImagePath, int tileIndex, int intervalSeconds, string videoName)
+        {
+            // Ensuring the scaling and tiling command is correctly applied
+            return $"-ss {startTime} -i \"{videoPath}\" -t {duration} " +
+                   $"-vf \"select=not(mod(t\\,{intervalSeconds})),scale=120:-1,tile=10x10\" " +
+                   $"-q:v 2 -y \"{Path.Combine(outputImagePath, $"{tileIndex}.webp")}\"";
+        }
         private static double GetVideoDuration(string videoPath)
         {
             string arguments = $"-v error -show_entries format=duration -of csv=p=0 \"{videoPath}\"";
@@ -63,6 +67,7 @@ namespace ShakaPlayerThumbnail.Tools
         {
             await ExecuteProcessAsync("ffmpeg", arguments);
         }
+
 
         private static double ExecuteProcess(string fileName, string arguments)
         {
