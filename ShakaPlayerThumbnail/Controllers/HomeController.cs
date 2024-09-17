@@ -16,9 +16,9 @@ namespace ShakaPlayerThumbnail.Controllers
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<IActionResult> Index()
+        public  IActionResult Index()
         {
-            return Ok();
+            return View();
         }
 
         private string GetVideoUrl() =>

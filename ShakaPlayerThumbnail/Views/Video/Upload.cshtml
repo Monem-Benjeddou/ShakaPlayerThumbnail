@@ -25,7 +25,7 @@ ViewData["Title"] = "Upload Video";
 
     <div class="mt-4">
         <div id="uploadProgress" class="progress mt-2" style="height: 20px; width: 100%; display:none;">
-            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%; min-width: 2%;"></div>
+            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%; min-width: 2%;height: 100%;"></div>
         </div>
         <div class="alert alert-success" style="display:none;" id="successMessage"></div>
         <div class="alert alert-danger" style="display:none;" id="errorMessage"></div>
@@ -127,10 +127,10 @@ ViewData["Title"] = "Upload Video";
 
     async function checkThumbnailProgress(videoFileName) {
         try {
-            const response = await fetch(`/video/thumbnail/progress?videoFileName=${videoFileName}`);
+            const response = await fetch(`/video/thumbnail/progress?videoFileName=${encodeURIComponent(videoFileName)}`);
             const data = await response.json();
 
-            const progress = data.progress;
+            const progress = data.progress; // Assume the response contains a 'progress' field as a percentage
             thumbnailProgressBar.style.width = progress + '%';
             thumbnailProgressBar.setAttribute('aria-valuenow', progress);
 
@@ -139,16 +139,18 @@ ViewData["Title"] = "Upload Video";
                 setTimeout(() => checkThumbnailProgress(videoFileName), 2000); // Poll every 2 seconds
             } else {
                 console.log('Thumbnail generation complete');
+                thumbnailProgressContainer.style.display = 'none';
             }
         } catch (error) {
             console.error('Error checking thumbnail generation progress:', error);
+            setTimeout(() => checkThumbnailProgress(videoFileName), 2000); // Retry polling in case of error
         }
     }
 
-
     function startThumbnailProgressPolling(videoFileName) {
         thumbnailProgressContainer.style.display = 'block';
-        checkThumbnailProgress(videoFileName);
+        thumbnailProgressBar.style.width = '0%'; 
+        checkThumbnailProgress(videoFileName);   
     }
 
 </script>
