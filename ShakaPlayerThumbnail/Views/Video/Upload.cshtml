@@ -51,11 +51,18 @@ ViewData["Title"] = "Upload Video";
         cancelBtn.style.display = 'block';
         abortController = new AbortController();
 
-        const chunkSize = 512 * 1024; 
+        const chunkSize = 512 * 1024; // 512KB per chunk
         const totalChunks = Math.ceil(file.size / chunkSize);
         const progressBar = document.querySelector('.progress-bar');
         const progress = document.getElementById('uploadProgress');
+        const successMessage = document.getElementById('successMessage');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // Reset progress and messages
         progress.style.display = 'block';
+        progressBar.style.width = '0%';
+        successMessage.style.display = 'none';
+        errorMessage.style.display = 'none';
 
         try {
             for (let i = 0; i < totalChunks; i++) {
@@ -69,25 +76,34 @@ ViewData["Title"] = "Upload Video";
                 formData.append('totalChunks', totalChunks);
                 formData.append('fileName', file.name);
 
-                await fetch('@Url.Action("UploadVideoChunk", "Video")', {
+                // Send the chunk to the server
+                const response = await fetch('@Url.Action("UploadVideoChunk", "Video")', {
                     method: 'POST',
                     body: formData,
                     signal: abortController.signal // Attach the signal for cancellation
                 });
 
+                if (!response.ok) {
+                    throw new Error('Failed to upload chunk ' + i);
+                }
+
+                // Update the progress bar
                 const percentage = ((i + 1) / totalChunks) * 100;
                 progressBar.style.width = percentage + '%';
+                progressBar.setAttribute('aria-valuenow', percentage);
+
+                console.log(`Chunk ${i + 1} of ${totalChunks} uploaded (${percentage.toFixed(2)}%)`);
             }
 
-            document.getElementById('successMessage').style.display = 'block';
-            document.getElementById('successMessage').innerText = 'Video uploaded successfully!';
+            successMessage.style.display = 'block';
+            successMessage.innerText = 'Video uploaded successfully!';
         } catch (error) {
             if (error.name === 'AbortError') {
-                document.getElementById('errorMessage').style.display = 'block';
-                document.getElementById('errorMessage').innerText = 'Upload cancelled.';
+                errorMessage.style.display = 'block';
+                errorMessage.innerText = 'Upload cancelled.';
             } else {
-                document.getElementById('errorMessage').style.display = 'block';
-                document.getElementById('errorMessage').innerText = 'An error occurred during the upload.';
+                errorMessage.style.display = 'block';
+                errorMessage.innerText = 'An error occurred during the upload: ' + error.message;
             }
         } finally {
             cancelBtn.style.display = 'none';
@@ -100,4 +116,5 @@ ViewData["Title"] = "Upload Video";
             abortController.abort();
         }
     });
+
 </script>
