@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.StaticFiles;
+using ShakaPlayerThumbnail.BackgroundServices;
 using ShakaPlayerThumbnail.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-
+builder.Services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
+builder.Services.AddHostedService<ThumbnailGenerationService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
