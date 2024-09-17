@@ -84,7 +84,7 @@ namespace ShakaPlayerThumbnail.Tools
             return double.TryParse(output.Trim(), out double result) ? result : throw new InvalidOperationException("Could not determine video duration.");
         }
 
-        private static async Task ExecuteProcessAsync(string fileName, string arguments)
+        private static double ExecuteProcess(string fileName, string arguments)
         {
             using var process = new Process
             {
@@ -93,22 +93,24 @@ namespace ShakaPlayerThumbnail.Tools
                     FileName = fileName,
                     Arguments = arguments,
                     RedirectStandardOutput = true,
-                    RedirectStandardError = true,
+                    RedirectStandardError = true, // Redirecting the error output
                     UseShellExecute = false,
                     CreateNoWindow = true
                 }
             };
 
-            process.OutputDataReceived += (sender, args) => Console.WriteLine("Output: " + args.Data);
-            process.ErrorDataReceived += (sender, args) => Console.WriteLine("Error: " + args.Data);
-
             process.Start();
-            process.BeginOutputReadLine();
-            process.BeginErrorReadLine();
 
-            await process.WaitForExitAsync();
+            // Read standard output and error output
+            string output = process.StandardOutput.ReadToEnd();
+            string errorOutput = process.StandardError.ReadToEnd();
+            process.WaitForExit();
+
+            Console.WriteLine("Output: " + output);
+            Console.WriteLine("Error: " + errorOutput);
+
+            return double.TryParse(output.Trim(), out double result) ? result : throw new InvalidOperationException("Could not determine video duration.");
         }
-
         private static void GenerateVttFile(string videoName, List<ThumbnailInfo> thumbnailInfo, int intervalSeconds, int tileWidth, int tileHeight)
         {
             var previewDirectory = $"/etc/data/previews/{videoName}";
@@ -126,7 +128,7 @@ namespace ShakaPlayerThumbnail.Tools
                     var (startTime, endTime, xOffset, yOffset) = CalculateOffsets(info, i, intervalSeconds, tileWidth, tileHeight);
 
                     writer.WriteLine($"{TimeSpan.FromSeconds(startTime):hh\\:mm\\:ss\\.fff} --> {TimeSpan.FromSeconds(endTime):hh\\:mm\\:ss\\.fff}");
-                    writer.WriteLine($"/data/previews/{videoName}/{info.TileIndex}.webp#xywh={xOffset},{yOffset},120,68");
+                    writer.WriteLine($"/data/previews/{videoName}/{videoName}{info.TileIndex}.webp#xywh={xOffset},{yOffset},120,68");
                     writer.WriteLine();
                 }
             }
