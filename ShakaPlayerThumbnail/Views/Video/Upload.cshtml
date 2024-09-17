@@ -99,7 +99,7 @@
             successMessage.style.display = 'block';
             successMessage.innerText = 'Video uploaded successfully!';
 
-            startThumbnailGeneration(file.name);
+            await checkThumbnailProgress(file.name);
         } catch (error) {
             if (error.name === 'AbortError') {
                 errorMessage.style.display = 'block';
@@ -122,22 +122,7 @@
 
     const thumbnailProgressBar = document.querySelector('#thumbnailProgress .progress-bar');
     const thumbnailProgressContainer = document.getElementById('thumbnailProgressContainer');
-
-    async function startThumbnailGeneration(videoFileName) {
-        try {
-            const response = await fetch(`/video/generate-thumbnails?fileName=${encodeURIComponent(videoFileName)}`, {
-                method: 'POST'
-            });
-
-            if (response.ok) {
-                startThumbnailProgressPolling(videoFileName);
-            } else {
-                console.error('Failed to start thumbnail generation.');
-            }
-        } catch (error) {
-            console.error('Error initiating thumbnail generation:', error);
-        }
-    }
+    
 
     async function checkThumbnailProgress(videoFileName) {
         try {
