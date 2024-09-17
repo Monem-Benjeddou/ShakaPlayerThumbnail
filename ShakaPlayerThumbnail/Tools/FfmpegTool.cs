@@ -20,7 +20,6 @@ namespace ShakaPlayerThumbnail.Tools
             int framesPerTile = tileWidth * tileHeight;
             int numberOfTiles = (int)Math.Ceiling((double)totalFrames / framesPerTile);
             var thumbnailInfo = new List<ThumbnailInfo>();
-
             // Ensure output path exists
             if (!Directory.Exists(outputImagePath))
                 Directory.CreateDirectory(outputImagePath);
@@ -28,39 +27,28 @@ namespace ShakaPlayerThumbnail.Tools
             for (int i = 1; i <= numberOfTiles; i++)
             {
                 double startTime = (i - 1) * framesPerTile * intervalSeconds;
-                double duration = Math.Min(framesPerTile * intervalSeconds, videoDuration - startTime);
+                double endTime = Math.Min(startTime + framesPerTile * intervalSeconds, videoDuration);
                 int framesInThisSection = Math.Min(totalFrames - (i - 1) * framesPerTile, framesPerTile);
 
-                // Adjusting FFmpeg arguments to ensure correct tile generation
-                var arguments = BuildFfmpegArguments(videoPath, startTime, duration, outputImagePath, i, intervalSeconds, videoName);
+                var arguments = BuildFfmpegArguments(videoPath, startTime, endTime, outputImagePath, i, intervalSeconds,videoName);
                 await RunFFmpeg(arguments);
 
-                thumbnailInfo.Add(new ThumbnailInfo(i, startTime, startTime + duration, framesInThisSection));
-
+                thumbnailInfo.Add(new ThumbnailInfo(i, startTime, endTime, framesInThisSection));
                 int progress = (i * 100) / numberOfTiles;
                 reportProgress(progress);
             }
 
-            // Ensure the VTT file is properly created
             GenerateVttFile(videoName, thumbnailInfo, intervalSeconds, tileWidth, tileHeight);
         }
 
-        private static string BuildFfmpegArguments(string videoPath, double startTime, double duration, string outputImagePath, int tileIndex, int intervalSeconds, string videoName)
-        {
-            // Ensuring the scaling and tiling command is correctly applied
-            return $"-ss {startTime} -i \"{videoPath}\" -t {duration} " +
-                   $"-vf \"select=not(mod(t\\,{intervalSeconds})),scale=120:-1,tile=10x10\" " +
-                   $"-q:v 2 -y \"{Path.Combine(outputImagePath, $"{tileIndex}.webp")}\"";
-        }
+        private static string BuildFfmpegArguments(string videoPath, double startTime, double endTime, string outputImagePath, int tileIndex, int intervalSeconds,string videoName) =>
+            $"-i \"{videoPath}\" -ss {startTime} -t {endTime - startTime} " +
+            $"-vf \"select=not(mod(t\\,{intervalSeconds})),scale=120:-1,tile=10x10\" " +
+            $"-quality 50 -compression_level 6 -threads 0 -y \"{outputImagePath}/{videoName}{tileIndex}.webp\"";
         private static double GetVideoDuration(string videoPath)
         {
-            string arguments = $"-v error -show_entries format=duration -of csv=p=0 \"{videoPath}\"";
-            double duration = ExecuteProcess("ffprobe", arguments);
-            if (duration <= 0)
-            {
-                throw new InvalidOperationException("Could not determine video duration.");
-            }
-            return duration;
+            string arguments = $"-v error -select_streams v:0 -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{videoPath}\"";
+            return ExecuteProcess("ffprobe", arguments);
         }
 
         private static async Task RunFFmpeg(string arguments)
@@ -78,7 +66,7 @@ namespace ShakaPlayerThumbnail.Tools
                     FileName = fileName,
                     Arguments = arguments,
                     RedirectStandardOutput = true,
-                    RedirectStandardError = true, // Redirecting the error output
+                    RedirectStandardError = true, 
                     UseShellExecute = false,
                     CreateNoWindow = true
                 }
@@ -86,7 +74,6 @@ namespace ShakaPlayerThumbnail.Tools
 
             process.Start();
 
-            // Read standard output and error output
             string output = process.StandardOutput.ReadToEnd();
             string errorOutput = process.StandardError.ReadToEnd();
             process.WaitForExit();
@@ -153,6 +140,7 @@ namespace ShakaPlayerThumbnail.Tools
             var columnIndex = frameIndex % tileWidth;
             var xOffset = columnIndex * 120;
             var yOffset = rowIndex * 68;
+
             return (startTime, endTime, xOffset, yOffset);
         }
     }
