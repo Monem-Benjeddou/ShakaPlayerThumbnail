@@ -46,7 +46,7 @@ namespace ShakaPlayerThumbnail.Tools
         private static string BuildFfmpegArguments(string videoPath, double startTime, double duration, string outputImagePath, int tileIndex, int intervalSeconds,string videoName) =>
             $"-ss {startTime} -i \"{videoPath}\" -t {duration} " +
             $"-vf \"select=not(mod(t\\,{intervalSeconds})),scale=120:-1,tile=10x10\" " +
-            $"-quality 50 -compression_level 6 -threads 0 -y \"{Path.Combine(outputImagePath,videoName, $"{tileIndex}.webp")}\"";
+            $"-quality 50 -compression_level 6 -threads 0 -y \"{Path.Combine(outputImagePath, $"{tileIndex}.webp")}\"";
 
         private static double GetVideoDuration(string videoPath)
         {
