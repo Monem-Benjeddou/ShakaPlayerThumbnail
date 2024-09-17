@@ -62,15 +62,21 @@ public interface IProgressTracker
 
 public class InMemoryProgressTracker : IProgressTracker
 {
-    private readonly Dictionary<string, int> _progressStore = new();
+    private readonly Dictionary<string, int> _progress = new Dictionary<string, int>();
 
-    public void SetProgress(string taskId, int progress)
+    public void SetProgress(string videoFileName, int progress)
     {
-        _progressStore[taskId] = progress;
+        lock (_progress)
+        {
+            _progress[videoFileName] = progress;
+        }
     }
 
-    public int GetProgress(string taskId)
+    public int GetProgress(string videoFileName)
     {
-        return _progressStore.TryGetValue(taskId, out var progress) ? progress : 0;
+        lock (_progress)
+        {
+            return _progress.ContainsKey(videoFileName) ? _progress[videoFileName] : 0;
+        }
     }
 }
