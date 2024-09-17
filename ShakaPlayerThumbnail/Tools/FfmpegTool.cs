@@ -66,33 +66,6 @@ namespace ShakaPlayerThumbnail.Tools
                     FileName = fileName,
                     Arguments = arguments,
                     RedirectStandardOutput = true,
-                    RedirectStandardError = true, 
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                }
-            };
-
-            process.Start();
-
-            string output = process.StandardOutput.ReadToEnd();
-            string errorOutput = process.StandardError.ReadToEnd();
-            process.WaitForExit();
-
-            Console.WriteLine("Output: " + output);
-            Console.WriteLine("Error: " + errorOutput);
-
-            return double.TryParse(output.Trim(), out double result) ? result : throw new InvalidOperationException("Could not determine video duration.");
-        }
-
-        private static double ExecuteProcess(string fileName, string arguments)
-        {
-            using var process = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = fileName,
-                    Arguments = arguments,
-                    RedirectStandardOutput = true,
                     RedirectStandardError = true, // Redirecting the error output
                     UseShellExecute = false,
                     CreateNoWindow = true
@@ -101,16 +74,39 @@ namespace ShakaPlayerThumbnail.Tools
 
             process.Start();
 
-            // Read standard output and error output
             string output = process.StandardOutput.ReadToEnd();
             string errorOutput = process.StandardError.ReadToEnd();
             process.WaitForExit();
 
-            Console.WriteLine("Output: " + output);
-            Console.WriteLine("Error: " + errorOutput);
+            Console.WriteLine(errorOutput);
 
             return double.TryParse(output.Trim(), out double result) ? result : throw new InvalidOperationException("Could not determine video duration.");
         }
+        private static async Task ExecuteProcessAsync(string fileName, string arguments)
+        {
+            using var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = fileName,
+                    Arguments = arguments,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
+
+            process.OutputDataReceived += (sender, args) => Console.WriteLine("Output: " + args.Data);
+            process.ErrorDataReceived += (sender, args) => Console.WriteLine("Error: " + args.Data);
+
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            await process.WaitForExitAsync();
+        }
+
         private static void GenerateVttFile(string videoName, List<ThumbnailInfo> thumbnailInfo, int intervalSeconds, int tileWidth, int tileHeight)
         {
             var previewDirectory = $"/etc/data/previews/{videoName}";
