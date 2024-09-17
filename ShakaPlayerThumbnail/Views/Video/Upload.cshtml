@@ -99,7 +99,7 @@
             successMessage.style.display = 'block';
             successMessage.innerText = 'Video uploaded successfully!';
 
-            await checkThumbnailProgress(file.name);
+            await startThumbnailProgressPolling(file.name);
         } catch (error) {
             if (error.name === 'AbortError') {
                 errorMessage.style.display = 'block';
