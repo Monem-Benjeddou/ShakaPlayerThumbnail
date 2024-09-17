@@ -127,8 +127,8 @@
     async function checkThumbnailProgress(videoFileName) {
         try {
             const fileNameWithoutExtension = videoFileName.substring(0, videoFileName.lastIndexOf('.')) || videoFileName;
-
-            const response = await fetch(`/video/thumbnail/progress?videoFileName=${encodeURIComponent(fileNameWithoutExtension)}`);
+            await fetch('@Url.Action("GetThumbnailGenerationProgress", "Video")'
+            const progressUrl = '@Url.Action("GetThumbnailGenerationProgress", "Video")' + `?fileName=${encodeURIComponent(fileNameWithoutExtension)}`;
             const data = await response.json();
 
             const progress = data.progress;
