@@ -130,20 +130,22 @@ ViewData["Title"] = "Upload Video";
             const response = await fetch(`/video/thumbnail/progress?videoFileName=${encodeURIComponent(videoFileName)}`);
             const data = await response.json();
 
-            const progress = data.progress; // Assume the response contains a 'progress' field as a percentage
+            console.log('Thumbnail progress data:', data);  // Log the entire response
+
+            const progress = data.progress;
             thumbnailProgressBar.style.width = progress + '%';
             thumbnailProgressBar.setAttribute('aria-valuenow', progress);
 
             // Check if thumbnail generation is complete
             if (progress < 100) {
-                setTimeout(() => checkThumbnailProgress(videoFileName), 2000); // Poll every 2 seconds
+                setTimeout(() => checkThumbnailProgress(videoFileName), 2000);
             } else {
                 console.log('Thumbnail generation complete');
                 thumbnailProgressContainer.style.display = 'none';
             }
         } catch (error) {
             console.error('Error checking thumbnail generation progress:', error);
-            setTimeout(() => checkThumbnailProgress(videoFileName), 2000); // Retry polling in case of error
+            setTimeout(() => checkThumbnailProgress(videoFileName), 2000);
         }
     }
 
