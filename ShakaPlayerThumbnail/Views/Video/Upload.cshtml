@@ -38,7 +38,7 @@
     </div>
 </div>
 
-<script>
+    <script>
     const uploadBtn = document.getElementById('uploadBtn');
     const cancelBtn = document.getElementById('cancelBtn');
     let abortController = null;
@@ -126,7 +126,9 @@
 
     async function checkThumbnailProgress(videoFileName) {
         try {
-            const response = await fetch(`/video/thumbnail/progress?videoFileName=${encodeURIComponent(videoFileName)}`);
+            const fileNameWithoutExtension = videoFileName.substring(0, videoFileName.lastIndexOf('.')) || videoFileName;
+
+            const response = await fetch(`/video/thumbnail/progress?videoFileName=${encodeURIComponent(fileNameWithoutExtension)}`);
             const data = await response.json();
 
             const progress = data.progress;
