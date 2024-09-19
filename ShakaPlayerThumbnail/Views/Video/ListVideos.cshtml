@@ -15,6 +15,7 @@
                 <th scope="col">Video Title</th>
                 <th scope="col">File Name</th>
                 <th scope="col">Upload Date</th>
+                <th scope="col">Status</th>
                 <th scope="col">Actions</th>
             </tr>
             </thead>
@@ -26,7 +27,17 @@
                     <td>@video.FileName</td>
                     <td>@video.UploadDate.ToString("yyyy-MM-dd HH:mm")</td>
                     <td>
-                        <a href="@Url.Action("DisplayVideo", "Video", new { videoName = video.FileName })" class="btn btn-secondary mt-3">Display Video</a>
+                        @if (video.IsProcessing)
+                        {
+                            <span>Processing... @video.Progress%</span>
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width: @video.Progress%;" aria-valuenow="@video.Progress" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        }
+                        else
+                        {
+                            <a href="@Url.Action("DisplayVideo", "Video", new { videoName = video.FileName })" class="btn btn-secondary mt-3">Display Video</a>
+                        }
                     </td>
                 </tr>
             }
@@ -37,6 +48,29 @@
     {
         <div class="alert alert-info">No videos uploaded yet.</div>
         <a href="@Url.Action("Upload", "Video")" class="btn btn-secondary mt-3">Upload Your First Video</a>
-
     }
 </div>
+
+<script>
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/thumbnailProgressHub")
+        .build();
+
+    connection.on("ReceiveProgressUpdate", (videoName, progress) => {
+        const progressBar = document.querySelector(`#progress-${videoName}`);
+        if (progressBar) {
+            progressBar.style.width = progress + '%';
+            progressBar.setAttribute('aria-valuenow', progress);
+            progressBar.textContent = progress + '%';
+
+            if (progress == 100) {
+                const displayButton = document.querySelector(`#btn-display-${videoName}`);
+                if (displayButton) {
+                    displayButton.classList.remove('disabled');
+                }
+            }
+        }
+    });
+
+    connection.start().catch(err => console.error(err.toString()));
+</script>

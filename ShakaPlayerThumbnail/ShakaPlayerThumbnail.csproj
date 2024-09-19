@@ -9,6 +9,8 @@
 
     <ItemGroup>
       <PackageReference Include="AWSSDK.S3" Version="3.7.400.5" />
+      <PackageReference Include="Microsoft.AspNetCore.SignalR.Common" Version="8.0.8" />
+      <PackageReference Include="Microsoft.Owin" Version="4.2.2" />
     </ItemGroup>
 
     <ItemGroup>

@@ -2,15 +2,20 @@ using Microsoft.AspNetCore.Mvc;
 using ShakaPlayerThumbnail.Data;
 using ShakaPlayerThumbnail.Tools;
 using System.IO;
+using Microsoft.AspNetCore.SignalR;
 using ShakaPlayerThumbnail.BackgroundServices;
+using ShakaPlayerThumbnail.Hubs;
 
 namespace ShakaPlayerThumbnail.Controllers
 {
-    public class VideoController(IBackgroundTaskQueue taskQueue,IProgressTracker progressTracker) : Controller
+    public class VideoController(IBackgroundTaskQueue taskQueue,
+        IProgressTracker progressTracker,
+        IHubContext<UploadProgressHub> hubContext,
+        IProgressTracker _progressTracker) : Controller
     {
         private readonly string PreviewsFolderPath = "/etc/data/previews";
         private readonly string VideoFolderPath = "/etc/data/video";
-
+        private static IHubContext<UploadProgressHub> _hubContext;
         public ActionResult Upload()
         {
             return View(new Video());
@@ -46,15 +51,19 @@ namespace ShakaPlayerThumbnail.Controllers
 
                     taskQueue.QueueBackgroundWorkItem(async token =>
                     {
-                        progressTracker.SetProgress(nameOfFileWithoutExtension, 0);
+                        progressTracker.SetProcessingStatus(nameOfFileWithoutExtension, true); // Mark processing as started
+                        progressTracker.SetProgress(nameOfFileWithoutExtension, 0); // Initial progress
 
-                        await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, nameOfFileWithoutExtension, 1, progress =>
+                        await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, nameOfFileWithoutExtension, 1, async progress =>
                         {
                             progressTracker.SetProgress(nameOfFileWithoutExtension, progress);
+
+                            await _hubContext.Clients.All.SendAsync("ReceiveProgressUpdate", nameOfFileWithoutExtension, progress);
                         });
 
-                        progressTracker.SetProgress(nameOfFileWithoutExtension, 100);
+                        progressTracker.SetProgress(nameOfFileWithoutExtension, 100); // Mark as completed
                     });
+
 
                     return Ok(new { message = "Upload complete, thumbnail generation started." });
                 }
@@ -78,11 +87,17 @@ namespace ShakaPlayerThumbnail.Controllers
             if (!Directory.Exists(VideoFolderPath))
                 Directory.CreateDirectory(VideoFolderPath);
 
-            var videoFiles = Directory.GetFiles(VideoFolderPath).Select(file => new Video
+            var videoFiles = Directory.GetFiles(VideoFolderPath).Select(file =>
             {
-                Name = Path.GetFileNameWithoutExtension(file),
-                FileName = Path.GetFileName(file),
-                UploadDate = System.IO.File.GetCreationTime(file)
+                var fileName = Path.GetFileName(file); 
+                return new Video
+                {
+                    Name = Path.GetFileNameWithoutExtension(file),
+                    FileName = fileName,  
+                    UploadDate = System.IO.File.GetCreationTime(file),
+                    IsProcessing = _progressTracker.IsProcessing(fileName),  
+                    Progress = _progressTracker.GetProgress(fileName)  
+                };
             }).ToList();
 
             return View(videoFiles);

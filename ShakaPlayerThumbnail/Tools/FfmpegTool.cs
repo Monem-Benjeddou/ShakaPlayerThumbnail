@@ -1,84 +1,88 @@
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR;
+using ShakaPlayerThumbnail.Hubs;
 
 namespace ShakaPlayerThumbnail.Tools
 {
     public static class FfmpegTool
     {
-public static async Task GenerateSpritePreview(
-    string videoPath,
-    string outputImagePath,
-    string videoName,
-    int intervalSeconds,
-    Action<int> reportProgress)
-{
-    var videoDuration = GetVideoDuration(videoPath);
-    var isLongVideo = videoDuration > 30 * 60; // 30 minutes in seconds
-    var totalFrames = (int)Math.Ceiling(videoDuration / intervalSeconds);
-    
-    const int tileWidth = 10;
-    const int tileHeight = 10;
-    int framesPerTile = tileWidth * tileHeight;
-    int numberOfTiles = (int)Math.Ceiling((double)totalFrames / framesPerTile);
-    
-    var thumbnailInfo = new List<ThumbnailInfo>();
 
-    // Ensure output path exists
-    if (!Directory.Exists(outputImagePath))
-        Directory.CreateDirectory(outputImagePath);
-
-    // Handle small frame counts and ensure valid division of tiles
-    if (totalFrames < framesPerTile)
-    {
-        framesPerTile = totalFrames; // Adjust to the actual frame count for small videos
-        numberOfTiles = 1; // All frames fit into one tile
-    }
-
-    for (int i = 1; i <= numberOfTiles; i++)
-    {
-        double startTime = (i - 1) * framesPerTile * intervalSeconds;
-        double endTime = Math.Min(startTime + framesPerTile * intervalSeconds, videoDuration); // Adjust end time
-
-        int framesInThisSection = Math.Min(totalFrames - (i - 1) * framesPerTile, framesPerTile);
-
-        string arguments;
-        if (isLongVideo)
+        public static async Task GenerateSpritePreview(
+            string videoPath,
+            string outputImagePath,
+            string videoName,
+            int intervalSeconds,
+            Action<int> reportProgress)
         {
-            // Original FFmpeg command for videos longer than 30 minutes
-            arguments = BuildFfmpegArguments(videoPath, startTime, endTime, outputImagePath, i, intervalSeconds, videoName);
+            var videoDuration = GetVideoDuration(videoPath);
+            var isLongVideo = videoDuration > 30 * 60; 
+            var totalFrames = (int)Math.Ceiling(videoDuration / intervalSeconds);
+
+            const int tileWidth = 10;
+            const int tileHeight = 10;
+            int framesPerTile = tileWidth * tileHeight;
+            int numberOfTiles = (int)Math.Ceiling((double)totalFrames / framesPerTile);
+
+            var thumbnailInfo = new List<ThumbnailInfo>();
+
+            if (!Directory.Exists(outputImagePath))
+                Directory.CreateDirectory(outputImagePath);
+
+            if (totalFrames < framesPerTile)
+            {
+                framesPerTile = totalFrames;
+                numberOfTiles = 1;
+            }
+
+            for (int i = 1; i <= numberOfTiles; i++)
+            {
+                double startTime = (i - 1) * framesPerTile * intervalSeconds;
+                double endTime = Math.Min(startTime + framesPerTile * intervalSeconds, videoDuration);
+
+                int framesInThisSection = Math.Min(totalFrames - (i - 1) * framesPerTile, framesPerTile);
+
+                string arguments;
+                if (isLongVideo)
+                {
+                    arguments = BuildFfmpegArguments(videoPath, startTime, endTime, outputImagePath, i, intervalSeconds,
+                        videoName);
+                }
+                else
+                {
+                    arguments = BuildSimplifiedFfmpegArguments(videoPath, outputImagePath, i, videoName);
+                }
+
+                await RunFFmpeg(arguments);
+
+                thumbnailInfo.Add(new ThumbnailInfo(i, startTime, endTime, framesInThisSection));
+                int progress = (i * 100) / numberOfTiles;
+                reportProgress(progress);
+            }
+
+            GenerateVttFile(videoName, thumbnailInfo, intervalSeconds, tileWidth, tileHeight);
         }
-        else
-        {
-            // Simplified FFmpeg command for shorter videos
-            arguments = BuildSimplifiedFfmpegArguments(videoPath, outputImagePath, i, videoName);
-        }
 
-        await RunFFmpeg(arguments);
-
-        thumbnailInfo.Add(new ThumbnailInfo(i, startTime, endTime, framesInThisSection));
-        int progress = (i * 100) / numberOfTiles;
-        reportProgress(progress);
-    }
-
-    GenerateVttFile(videoName, thumbnailInfo, intervalSeconds, tileWidth, tileHeight);
-}
-
-        private static string BuildSimplifiedFfmpegArguments(string videoPath, string outputImagePath, int tileIndex, string videoName)
+        private static string BuildSimplifiedFfmpegArguments(string videoPath, string outputImagePath, int tileIndex,
+            string videoName)
         {
             return $"-i \"{videoPath}\" -vf \"fps=1,scale=120:-1,tile=10x10\" " +
                    $"-quality 50 -compression_level 6 -threads 0 -y \"{outputImagePath}/{videoName}{tileIndex}.webp\"";
         }
 
-        private static string BuildFfmpegArguments(string videoPath, double startTime, double endTime, string outputImagePath, int tileIndex, int intervalSeconds, string videoName)
+        private static string BuildFfmpegArguments(string videoPath, double startTime, double endTime,
+            string outputImagePath, int tileIndex, int intervalSeconds, string videoName)
         {
             return $"-i \"{videoPath}\" -ss {startTime} -t {endTime - startTime} " +
                    $"-vf \"select=not(mod(t\\,{intervalSeconds})),scale=120:-1,tile=10x10\" " +
                    $"-quality 50 -compression_level 6 -threads 0 -y \"{outputImagePath}/{videoName}{tileIndex}.webp\"";
         }
+
         private static double GetVideoDuration(string videoPath)
         {
-            string arguments = $"-v error -select_streams v:0 -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{videoPath}\"";
+            string arguments =
+                $"-v error -select_streams v:0 -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{videoPath}\"";
             return ExecuteProcess("ffprobe", arguments);
         }
 
@@ -111,8 +115,11 @@ public static async Task GenerateSpritePreview(
 
             Console.WriteLine(errorOutput);
 
-            return double.TryParse(output.Trim(), out double result) ? result : throw new InvalidOperationException("Could not determine video duration.");
+            return double.TryParse(output.Trim(), out double result)
+                ? result
+                : throw new InvalidOperationException("Could not determine video duration.");
         }
+
         private static async Task ExecuteProcessAsync(string fileName, string arguments)
         {
             using var process = new Process
@@ -138,7 +145,8 @@ public static async Task GenerateSpritePreview(
             await process.WaitForExitAsync();
         }
 
-        private static void GenerateVttFile(string videoName, List<ThumbnailInfo> thumbnailInfo, int intervalSeconds, int tileWidth, int tileHeight)
+        private static void GenerateVttFile(string videoName, List<ThumbnailInfo> thumbnailInfo, int intervalSeconds,
+            int tileWidth, int tileHeight)
         {
             var previewDirectory = $"/etc/data/previews/{videoName}";
             if (!Directory.Exists(previewDirectory))
@@ -152,16 +160,20 @@ public static async Task GenerateSpritePreview(
             {
                 for (int i = 0; i < info.FrameCount; i++)
                 {
-                    var (startTime, endTime, xOffset, yOffset) = CalculateOffsets(info, i, intervalSeconds, tileWidth, tileHeight);
+                    var (startTime, endTime, xOffset, yOffset) =
+                        CalculateOffsets(info, i, intervalSeconds, tileWidth, tileHeight);
 
-                    writer.WriteLine($"{TimeSpan.FromSeconds(startTime):hh\\:mm\\:ss\\.fff} --> {TimeSpan.FromSeconds(endTime):hh\\:mm\\:ss\\.fff}");
-                    writer.WriteLine($"/data/previews/{videoName}/{videoName}{info.TileIndex}.webp#xywh={xOffset},{yOffset},120,68");
+                    writer.WriteLine(
+                        $"{TimeSpan.FromSeconds(startTime):hh\\:mm\\:ss\\.fff} --> {TimeSpan.FromSeconds(endTime):hh\\:mm\\:ss\\.fff}");
+                    writer.WriteLine(
+                        $"/data/previews/{videoName}/{videoName}{info.TileIndex}.webp#xywh={xOffset},{yOffset},120,68");
                     writer.WriteLine();
                 }
             }
         }
 
-        private static (double startTime, double endTime, int xOffset, int yOffset) CalculateOffsets(ThumbnailInfo info, int frameIndex, int intervalSeconds, int tileWidth, int tileHeight)
+        private static (double startTime, double endTime, int xOffset, int yOffset) CalculateOffsets(ThumbnailInfo info,
+            int frameIndex, int intervalSeconds, int tileWidth, int tileHeight)
         {
             var startTime = info.StartTime + frameIndex * intervalSeconds;
             var endTime = startTime + intervalSeconds;

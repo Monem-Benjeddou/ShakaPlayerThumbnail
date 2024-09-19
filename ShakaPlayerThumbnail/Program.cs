@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.StaticFiles;
 using ShakaPlayerThumbnail.BackgroundServices;
-using ShakaPlayerThumbnail.Data;
+using Microsoft.AspNetCore.SignalR;
+using Owin;
+using ShakaPlayerThumbnail.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +11,8 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
 builder.Services.AddSingleton<IProgressTracker, InMemoryProgressTracker>();
 builder.Services.AddHostedService<ThumbnailGenerationService>();
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -20,7 +24,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
+    
 var provider = new FileExtensionContentTypeProvider();
 provider.Mappings[".vtt"] = "text/vtt";
 provider.Mappings[".mp4"] = "video/mp4";
@@ -34,7 +38,7 @@ app.UseStaticFiles(new StaticFileOptions
 app.UseRouting();
 
 app.UseAuthorization();
-
+app.MapHub<UploadProgressHub>("/uploadProgressHub");
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Video}/{action=ListVideos}/{id?}");

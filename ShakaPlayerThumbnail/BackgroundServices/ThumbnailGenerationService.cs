@@ -58,25 +58,48 @@ public interface IProgressTracker
 {
     void SetProgress(string taskId, int progress);
     int GetProgress(string taskId);
+    bool IsProcessing(string taskId); // New method to check if processing has started
+    void SetProcessingStatus(string taskId, bool isProcessing); // New method to set the processing status
 }
 
 public class InMemoryProgressTracker : IProgressTracker
 {
     private readonly Dictionary<string, int> _progress = new Dictionary<string, int>();
+    private readonly Dictionary<string, bool> _processingStatus = new Dictionary<string, bool>(); // Store processing status
 
-    public void SetProgress(string videoFileName, int progress)
+    public void SetProgress(string taskId, int progress)
     {
         lock (_progress)
         {
-            _progress[videoFileName] = progress;
+            _progress[taskId] = progress;
+            if (progress == 100)
+            {
+                SetProcessingStatus(taskId, false); // Mark as not processing when progress reaches 100%
+            }
         }
     }
 
-    public int GetProgress(string videoFileName)
+    public int GetProgress(string taskId)
     {
         lock (_progress)
         {
-            return _progress.ContainsKey(videoFileName) ? _progress[videoFileName] : 0;
+            return _progress.ContainsKey(taskId) ? _progress[taskId] : 0;
+        }
+    }
+
+    public bool IsProcessing(string taskId)
+    {
+        lock (_processingStatus)
+        {
+            return _processingStatus.ContainsKey(taskId) && _processingStatus[taskId];
+        }
+    }
+
+    public void SetProcessingStatus(string taskId, bool isProcessing)
+    {
+        lock (_processingStatus)
+        {
+            _processingStatus[taskId] = isProcessing;
         }
     }
 }
