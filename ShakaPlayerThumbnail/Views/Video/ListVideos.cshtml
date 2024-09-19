@@ -53,7 +53,7 @@
 
 <script>
     const connection = new signalR.HubConnectionBuilder()
-        .withUrl("/thumbnailProgressHub")
+        .withUrl("/ReceiveProgress")
         .build();
 
     connection.on("ReceiveProgressUpdate", (videoName, progress) => {
