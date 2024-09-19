@@ -10,12 +10,11 @@ namespace ShakaPlayerThumbnail.Controllers
 {
     public class VideoController(IBackgroundTaskQueue taskQueue,
         IProgressTracker progressTracker,
-        IHubContext<UploadProgressHub> hubContext,
+        IHubContext<UploadProgressHub> _hubContext,
         IProgressTracker _progressTracker) : Controller
     {
         private readonly string PreviewsFolderPath = "/etc/data/previews";
         private readonly string VideoFolderPath = "/etc/data/video";
-        private static IHubContext<UploadProgressHub> _hubContext;
         public ActionResult Upload()
         {
             return View(new Video());
@@ -51,8 +50,8 @@ namespace ShakaPlayerThumbnail.Controllers
 
                     taskQueue.QueueBackgroundWorkItem(async token =>
                     {
-                        progressTracker.SetProcessingStatus(nameOfFileWithoutExtension, true); // Mark processing as started
-                        progressTracker.SetProgress(nameOfFileWithoutExtension, 0); // Initial progress
+                        progressTracker.SetProcessingStatus(nameOfFileWithoutExtension, true); 
+                        progressTracker.SetProgress(nameOfFileWithoutExtension, 0);
 
                         await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, nameOfFileWithoutExtension, 1, async progress =>
                         {
@@ -61,7 +60,7 @@ namespace ShakaPlayerThumbnail.Controllers
                             await _hubContext.Clients.All.SendAsync("ReceiveProgressUpdate", nameOfFileWithoutExtension, progress);
                         });
 
-                        progressTracker.SetProgress(nameOfFileWithoutExtension, 100); // Mark as completed
+                        progressTracker.SetProgress(nameOfFileWithoutExtension, 100); 
                     });
 
 
