@@ -54,8 +54,8 @@
 <script>
     const connection = new signalR.HubConnectionBuilder()
         .withUrl("/uploadProgressHub")
+        .configureLogging(signalR.LogLevel.Information)
         .build();
-
     connection.on("ReceiveProgress", (videoName, progress) => {
         const progressBar = document.querySelector(`#progress-${videoName}`);
         if (progressBar) {
