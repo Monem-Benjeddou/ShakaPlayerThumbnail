@@ -57,7 +57,7 @@ namespace ShakaPlayerThumbnail.Controllers
                         {
                             progressTracker.SetProgress(nameOfFileWithoutExtension, progress);
 
-                            await _hubContext.Clients.All.SendAsync("ReceiveProgressUpdate", nameOfFileWithoutExtension, progress);
+                            await _hubContext.Clients.All.SendAsync("ReceiveProgress", nameOfFileWithoutExtension, progress);
                         });
 
                         progressTracker.SetProgress(nameOfFileWithoutExtension, 100); 

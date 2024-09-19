@@ -53,10 +53,10 @@
 
 <script>
     const connection = new signalR.HubConnectionBuilder()
-        .withUrl("/ReceiveProgress")
+        .withUrl("/uploadProgressHub")
         .build();
 
-    connection.on("ReceiveProgressUpdate", (videoName, progress) => {
+    connection.on("ReceiveProgress", (videoName, progress) => {
         const progressBar = document.querySelector(`#progress-${videoName}`);
         if (progressBar) {
             progressBar.style.width = progress + '%';

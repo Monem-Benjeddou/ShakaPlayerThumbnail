@@ -4,8 +4,8 @@ namespace ShakaPlayerThumbnail.Hubs;
 
 public class UploadProgressHub : Hub
 {
-    public async Task ReceiveProgressUpdate(int percentage)
+    public async Task ReceiveProgress(string videoName, int progress)
     {
-        await Clients.All.SendAsync("ReceiveProgress", percentage);
+        await Clients.All.SendAsync("ReceiveProgress", videoName, progress);
     }
 }
