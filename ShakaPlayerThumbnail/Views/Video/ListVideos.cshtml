@@ -41,11 +41,15 @@
                         }
                     </td>
                     <td>
-                        <!-- The display button is always visible, but disabled during processing -->
                         <a href="@Url.Action("DisplayVideo", "Video", new { videoName = video.FileName })"
                            class="btn btn-secondary mt-3 @(!video.IsProcessing ? "" : "disabled")"
                            id="btn-display-@HttpUtility.UrlPathEncode(video.FileName)">
-                           Display Video
+                            Display Video
+                        </a>
+                        <a href="@Url.Action("DisplayVideo", "Video", new { videoName = video.FileName })"
+                           class="btn btn-secondary mt-3 @(!video.IsProcessing ? "" : "disabled")"
+                           id="btn-display-@HttpUtility.UrlPathEncode(video.FileName)">
+                            Display Video
                         </a>
                     </td>
                 </tr>
