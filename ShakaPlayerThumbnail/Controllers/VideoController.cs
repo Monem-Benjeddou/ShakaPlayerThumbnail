@@ -91,7 +91,7 @@ namespace ShakaPlayerThumbnail.Controllers
                 var fileName = GetFileNameWithoutExtension(Path.GetFileName(file)); 
                 return new Video
                 {
-                    Name = Path.GetFileNameWithoutExtension(file),
+                    Name = Path.GetFileName(file),
                     FileName = fileName,  
                     UploadDate = System.IO.File.GetCreationTime(file),
                     IsProcessing = _progressTracker.IsProcessing(fileName),  
