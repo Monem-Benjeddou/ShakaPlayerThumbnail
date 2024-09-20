@@ -1,40 +1,34 @@
-    @model ShakaPlayerThumbnail.Data.Video
-    @{
-    ViewData["Title"] = "Upload Video";
-    }
+@model ShakaPlayerThumbnail.Data.Video
+@{
+ViewData["Title"] = "Upload Video";
+}
 
-    <div class="container mt-5">
-        <h2 class="mb-4">Upload Your Video</h2>
+<div class="container mt-5">
+    <h2 class="mb-4">Upload Your Video</h2>
 
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <div class="mb-3">
-                    <label for="VideoFile" class="form-label">Select Video</label>
-                    <input type="file" id="VideoFile" class="form-control" accept="video/*" required />
-                    <small class="text-muted">Only video files are allowed (e.g., MP4, AVI, MOV).</small>
-                </div>
-
-                <button id="uploadBtn" class="btn btn-primary w-100">Upload Video</button>
-                <button id="cancelBtn" class="btn btn-danger w-100 mt-2" style="display:none;">Cancel Upload</button>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="VideoFile" class="form-label">Select Video</label>
+                <input type="file" id="VideoFile" class="form-control" accept="video/*" required />
+                <small class="text-muted">Only video files are allowed (e.g., MP4, AVI, MOV).</small>
             </div>
-        </div>
 
-        <div class="mt-4">
-            <div id="uploadProgress" class="progress mt-2" style="height: 20px; width: 100%; display:none;">
-                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%; min-width: 2%;height: 100%;"></div>
-            </div>
-            <div class="alert alert-success" style="display:none;" id="successMessage"></div>
-            <div class="alert alert-danger" style="display:none;" id="errorMessage"></div>
+            <button id="uploadBtn" class="btn btn-primary w-100">Upload Video</button>
+            <button id="cancelBtn" class="btn btn-danger w-100 mt-2" style="display:none;">Cancel Upload</button>
         </div>
-    <div id="thumbnailProgressContainer" class="mt-4" style="display:none;">
-        <label>Thumbnail Generation Progress</label>
-        <div id="thumbnailProgress" class="progress mt-2">
-            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;height: 100%;"></div>
+    </div>
+
+    <div class="mt-4">
+        <div id="uploadProgress" class="progress mt-2" style="height: 20px; width: 100%; display:none;">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%; min-width: 2%;height: 100%;"></div>
         </div>
+        <div class="alert alert-success" style="display:none;" id="successMessage"></div>
+        <div class="alert alert-danger" style="display:none;" id="errorMessage"></div>
     </div>
 </div>
 
-    <script>
+<script>
     const uploadBtn = document.getElementById('uploadBtn');
     const cancelBtn = document.getElementById('cancelBtn');
     let abortController = null;
@@ -51,7 +45,7 @@
         cancelBtn.style.display = 'block';
         abortController = new AbortController();
 
-        const chunkSize = 512 * 1024; 
+        const chunkSize = 512 * 1024;
         const totalChunks = Math.ceil(file.size / chunkSize);
         const progressBar = document.querySelector('.progress-bar');
         const progress = document.getElementById('uploadProgress');
@@ -94,8 +88,6 @@
 
             successMessage.style.display = 'block';
             successMessage.innerText = 'Video uploaded successfully!';
-
-            await startThumbnailProgressPolling(file.name);
         } catch (error) {
             if (error.name === 'AbortError') {
                 errorMessage.style.display = 'block';
@@ -115,36 +107,4 @@
             abortController.abort();
         }
     });
-
-    const thumbnailProgressBar = document.querySelector('#thumbnailProgress .progress-bar');
-    const thumbnailProgressContainer = document.getElementById('thumbnailProgressContainer');
-    
-
-    async function checkThumbnailProgress(videoFileName) {
-        try {
-            const fileNameWithoutExtension = videoFileName.substring(0, videoFileName.lastIndexOf('.')) || videoFileName;
-            const progressUrl = '@Url.Action("GetThumbnailGenerationProgress", "Video")' + `?fileName=${encodeURIComponent(fileNameWithoutExtension)}`;
-            const response = await fetch(progressUrl);
-            const data = await response.json();
-            const progress = data.progress;
-            thumbnailProgressBar.style.width = progress + '%';
-            thumbnailProgressBar.setAttribute('aria-valuenow', progress);
-
-            if (progress < 100) {
-                setTimeout(() => checkThumbnailProgress(videoFileName), 2000);
-            } else {
-                thumbnailProgressContainer.style.display = 'none';
-                console.log('Thumbnail generation complete');
-            }
-        } catch (error) {
-            console.error('Error checking thumbnail generation progress:', error);
-            setTimeout(() => checkThumbnailProgress(videoFileName), 2000);
-        }
-    }
-
-    function startThumbnailProgressPolling(videoFileName) {
-        thumbnailProgressContainer.style.display = 'block';
-        thumbnailProgressBar.style.width = '0%';
-        checkThumbnailProgress(videoFileName);
-    }
 </script>
