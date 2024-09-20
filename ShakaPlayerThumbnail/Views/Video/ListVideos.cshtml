@@ -46,7 +46,7 @@
                            id="btn-display-@HttpUtility.UrlPathEncode(video.FileName)">
                             Display Video
                         </a>
-                        <a href="@Url.Action("DisplayVideo", "Video", new { videoName = video.FileName })"
+                        <a href="@Url.Action("DisplayVideo", "Video", new { videoName = video.Name })"
                            class="btn btn-secondary mt-3 @(!video.IsProcessing ? "" : "disabled")"
                            id="btn-display-@HttpUtility.UrlPathEncode(video.FileName)">
                             Display Video
