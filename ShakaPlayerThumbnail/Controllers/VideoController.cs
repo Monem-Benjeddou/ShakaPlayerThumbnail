@@ -88,7 +88,7 @@ namespace ShakaPlayerThumbnail.Controllers
 
             var videoFiles = Directory.GetFiles(VideoFolderPath).Select(file =>
             {
-                var fileName = Path.GetFileName(file); 
+                var fileName = GetFileNameWithoutExtension(Path.GetFileName(file)); 
                 return new Video
                 {
                     Name = Path.GetFileNameWithoutExtension(file),
