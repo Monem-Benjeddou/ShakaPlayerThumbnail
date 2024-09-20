@@ -14,7 +14,6 @@
             <thead>
             <tr>
                 <th scope="col">Video Title</th>
-                <th scope="col">File Name</th>
                 <th scope="col">Upload Date</th>
                 <th scope="col">Status</th>
                 <th scope="col">Actions</th>
@@ -25,7 +24,6 @@
             {
                 <tr>
                     <td>@video.Name</td>
-                    <td>@video.FileName</td>
                     <td>@video.UploadDate.ToString("yyyy-MM-dd HH:mm")</td>
                     <td>
                         @if (video.IsProcessing)
@@ -41,9 +39,8 @@
                         }
                     </td>
                     <td>
-
                         <a href="@Url.Action("DisplayVideo", "Video", new { videoName = video.Name })"
-                           class="btn btn-secondary mt-3 @(!video.IsProcessing ? "" : "disabled")"
+                           class="btn btn-secondary mt-1 @(!video.IsProcessing ? "" : "disabled")"
                            id="btn-display-@HttpUtility.UrlPathEncode(video.FileName)">
                             Display Video
                         </a>
