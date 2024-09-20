@@ -5,7 +5,16 @@ using Owin;
 using ShakaPlayerThumbnail.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigins", builder =>
+    {
+        builder.WithOrigins("https://thumbnail.john-group.org")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials(); 
+    });
+});
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
@@ -36,6 +45,7 @@ app.UseStaticFiles(new StaticFileOptions
 
 
 app.UseRouting();
+app.UseCors("AllowSpecificOrigins");
 
 app.UseAuthorization();
 app.MapHub<UploadProgressHub>("/uploadProgressHub");

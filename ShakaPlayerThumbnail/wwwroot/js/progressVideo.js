@@ -1,7 +1,8 @@
 const connection = new signalR.HubConnectionBuilder()
-    .withUrl("https://thumbnail.john-group.org/uploadProgressHub")
+    .withUrl("/uploadProgressHub", { transport: signalR.HttpTransportType.WebSockets })
     .configureLogging(signalR.LogLevel.Information)
     .build();
+
 
 connection.on("ReceiveProgress", (videoName, progress) => {
     let encodedVideoName = encodeURIComponent(videoName);
