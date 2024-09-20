@@ -1,5 +1,5 @@
 const connection = new signalR.HubConnectionBuilder()
-    .withUrl("/uploadProgressHub")
+    .withUrl("https://thumbnail.john-group.org/uploadProgressHub")
     .configureLogging(signalR.LogLevel.Information)
     .build();
 
