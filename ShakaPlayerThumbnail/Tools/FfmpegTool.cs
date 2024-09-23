@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using ShakaPlayerThumbnail.Hubs;
+using SixLabors.ImageSharp;
 
 namespace ShakaPlayerThumbnail.Tools
 {
@@ -59,35 +60,12 @@ namespace ShakaPlayerThumbnail.Tools
             return $"-i \"{videoPath}\" -vf \"fps=1,scale=-1:68,tile=10x10\" " +
                    $"-quality 50 -compression_level 6 -threads 0 -y \"{outputImagePath}/{videoName}{tileIndex}.webp\"";
         }
-        private static (int width, int height) GetWebpDimensions(string webpFilePath)
+
+        private static (int Width, int Height) GetWebpDimensions(string webpFilePath)
         {
-            try
-            {
-                string arguments = $"-v error -select_streams v:0 -show_entries stream=width,height -of csv=p=0 \"{webpFilePath}\"";
-                string output = ExecuteDimensionProcess("ffprobe", arguments);
-
-                if (string.IsNullOrWhiteSpace(output))
-                {
-                    throw new InvalidOperationException("FFprobe did not return any output.");
-                }
-
-                var dimensions = output.Trim().Split(',');
-
-                if (dimensions.Length == 2 &&
-                    int.TryParse(dimensions[0], out int width) &&
-                    int.TryParse(dimensions[1], out int height))
-                {
-                    return (width, height);
-                }
-
-                throw new InvalidOperationException($"Unable to parse the dimensions from FFprobe output: {output}");
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException($"Failed to get dimensions of {webpFilePath}: {ex.Message}", ex);
-            }
+            using Image image = Image.Load(webpFilePath);
+            return (image.Width, image.Height);
         }
-
         private static string BuildFfmpegArguments(string videoPath, double startTime, double endTime,
             string outputImagePath, int tileIndex, int intervalSeconds, string videoName)
         {
@@ -136,43 +114,6 @@ namespace ShakaPlayerThumbnail.Tools
                 ? result
                 : throw new InvalidOperationException("Could not determine video duration.");
         }
-        private static string ExecuteDimensionProcess(string fileName, string arguments)
-        {
-            try
-            {
-                using var process = new Process
-                {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = fileName,
-                        Arguments = arguments,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    }
-                };
-
-                process.Start();
-
-                // Read the output and error streams asynchronously to avoid deadlocks
-                string output = process.StandardOutput.ReadToEnd();
-                string errorOutput = process.StandardError.ReadToEnd();
-                process.WaitForExit();
-
-                if (process.ExitCode != 0)
-                {
-                    // Log or throw if ffprobe returned an error
-                    throw new InvalidOperationException($"FFprobe error: {errorOutput}");
-                }
-
-                return output;
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException($"Error executing {fileName}: {ex.Message}", ex);
-            }
-        }
 
         private static async Task ExecuteProcessAsync(string fileName, string arguments)
         {
@@ -209,22 +150,21 @@ namespace ShakaPlayerThumbnail.Tools
 
             using var writer = new StreamWriter(vttFilePath);
             writer.WriteLine("WEBVTT");
+            string webpFilePath = Path.Combine(outputImagePath, $"{videoName}1.webp");
+            var (frameWidth, frameHeight) = GetWebpDimensions(webpFilePath);  
 
             foreach (var info in thumbnailInfo)
             {
-                string webpFilePath = Path.Combine(outputImagePath, $"{videoName}{info.TileIndex}.webp");
-                var (frameWidth, frameHeight) = GetWebpDimensions(webpFilePath);  
 
                 for (int i = 0; i < info.FrameCount; i++)
                 {
                     var (startTime, endTime, xOffset, yOffset) =
                         CalculateOffsets(info, i, intervalSeconds, tileWidth, tileHeight, frameWidth, frameHeight);
 
-                    // Write VTT entry
                     writer.WriteLine(
                         $"{TimeSpan.FromSeconds(startTime):hh\\:mm\\:ss\\.fff} --> {TimeSpan.FromSeconds(endTime):hh\\:mm\\:ss\\.fff}");
                     writer.WriteLine(
-                        $"/data/previews/{videoName}/{videoName}{info.TileIndex}.webp#xywh={xOffset},{yOffset},{frameWidth},{frameHeight}");
+                        $"/data/previews/{videoName}/{videoName}{info.TileIndex}.webp#xywh={xOffset/10},{yOffset/10},{frameWidth},{frameHeight}");
                     writer.WriteLine();
                 }
             }
