@@ -24,9 +24,9 @@ namespace ShakaPlayerThumbnail.Controllers
         public async Task<IActionResult> UploadVideoChunk(IFormFile videoChunk, int chunkIndex, int totalChunks, string fileName, CancellationToken cancellationToken)
         {
             int fileExtPos = fileName.LastIndexOf(".");
-            var nameOfFileWithoutExtension = string.Empty;
+            var nameOfVideoWithoutExtension = string.Empty;
             if (fileExtPos >= 0)
-                nameOfFileWithoutExtension = fileName.Substring(0, fileExtPos);
+                nameOfVideoWithoutExtension = fileName.Substring(0, fileExtPos);
 
             var videoPath = Path.Combine(VideoFolderPath, fileName);
 
@@ -43,23 +43,23 @@ namespace ShakaPlayerThumbnail.Controllers
                 }
 
                 if (chunkIndex + 1 != totalChunks) return Ok();
-                var outputImagePath = Path.Combine(PreviewsFolderPath, nameOfFileWithoutExtension);
+                var outputImagePath = Path.Combine(PreviewsFolderPath, nameOfVideoWithoutExtension);
                 if (!Directory.Exists(outputImagePath))
                     Directory.CreateDirectory(outputImagePath);
 
                 taskQueue.QueueBackgroundWorkItem(async token =>
                 {
-                    progressTracker.SetProcessingStatus(nameOfFileWithoutExtension, true); 
-                    progressTracker.SetProgress(nameOfFileWithoutExtension, 0);
+                    progressTracker.SetProcessingStatus(nameOfVideoWithoutExtension, true); 
+                    progressTracker.SetProgress(nameOfVideoWithoutExtension, 0);
 
-                    await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, nameOfFileWithoutExtension, 1, async progress =>
+                    await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, nameOfVideoWithoutExtension, 1, async progress =>
                     {
-                        progressTracker.SetProgress(nameOfFileWithoutExtension, progress);
+                        progressTracker.SetProgress(nameOfVideoWithoutExtension, progress);
 
-                        await _hubContext.Clients.All.SendAsync("ReceiveProgress", nameOfFileWithoutExtension, progress);
+                        await _hubContext.Clients.All.SendAsync("ReceiveProgress", nameOfVideoWithoutExtension, progress);
                     });
 
-                    progressTracker.SetProgress(nameOfFileWithoutExtension, 100); 
+                    progressTracker.SetProgress(nameOfVideoWithoutExtension, 100); 
                 });
 
 

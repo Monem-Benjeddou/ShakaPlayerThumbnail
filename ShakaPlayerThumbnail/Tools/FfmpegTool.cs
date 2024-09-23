@@ -52,9 +52,8 @@ namespace ShakaPlayerThumbnail.Tools
                 reportProgress(progress);
             }
 
-            GenerateVttFile(videoName, thumbnailInfo, intervalSeconds, tileWidth, tileHeight,outputImagePath);
+            GenerateVttFile(videoName, thumbnailInfo, intervalSeconds, tileWidth, tileHeight, outputImagePath);
         }
-
         private static string BuildSimplifiedFfmpegArguments(string videoPath, string outputImagePath, int tileIndex, string videoName)
         {
             return $"-i \"{videoPath}\" -vf \"fps=1,scale=-1:68,tile=10x10\" " +
@@ -62,16 +61,31 @@ namespace ShakaPlayerThumbnail.Tools
         }
         private static (int width, int height) GetWebpDimensions(string webpFilePath)
         {
-            string arguments = $"-v error -select_streams v:0 -show_entries stream=width,height -of csv=p=0 \"{webpFilePath}\"";
-            string output = ExecuteProcessToString("ffprobe", arguments);
-
-            var dimensions = output.Trim().Split(',');
-            if (dimensions.Length == 2 && int.TryParse(dimensions[0], out int width) && int.TryParse(dimensions[1], out int height))
+            try
             {
-                return (width, height);
-            }
+                string arguments = $"-v error -select_streams v:0 -show_entries stream=width,height -of csv=p=0 \"{webpFilePath}\"";
+                string output = ExecuteDimensionProcess("ffprobe", arguments);
 
-            throw new InvalidOperationException("Could not determine the dimensions of the WebP sprite.");
+                if (string.IsNullOrWhiteSpace(output))
+                {
+                    throw new InvalidOperationException("FFprobe did not return any output.");
+                }
+
+                var dimensions = output.Trim().Split(',');
+
+                if (dimensions.Length == 2 &&
+                    int.TryParse(dimensions[0], out int width) &&
+                    int.TryParse(dimensions[1], out int height))
+                {
+                    return (width, height);
+                }
+
+                throw new InvalidOperationException($"Unable to parse the dimensions from FFprobe output: {output}");
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to get dimensions of {webpFilePath}: {ex.Message}", ex);
+            }
         }
 
         private static string BuildFfmpegArguments(string videoPath, double startTime, double endTime,
@@ -122,31 +136,44 @@ namespace ShakaPlayerThumbnail.Tools
                 ? result
                 : throw new InvalidOperationException("Could not determine video duration.");
         }
-        private static string ExecuteProcessToString(string fileName, string arguments)
+        private static string ExecuteDimensionProcess(string fileName, string arguments)
         {
-            using var process = new Process
+            try
             {
-                StartInfo = new ProcessStartInfo
+                using var process = new Process
                 {
-                    FileName = fileName,
-                    Arguments = arguments,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = fileName,
+                        Arguments = arguments,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
+
+                process.Start();
+
+                // Read the output and error streams asynchronously to avoid deadlocks
+                string output = process.StandardOutput.ReadToEnd();
+                string errorOutput = process.StandardError.ReadToEnd();
+                process.WaitForExit();
+
+                if (process.ExitCode != 0)
+                {
+                    // Log or throw if ffprobe returned an error
+                    throw new InvalidOperationException($"FFprobe error: {errorOutput}");
                 }
-            };
 
-            process.Start();
-
-            string output = process.StandardOutput.ReadToEnd();
-            string errorOutput = process.StandardError.ReadToEnd();
-            process.WaitForExit();
-
-            Console.WriteLine(errorOutput);
-
-            return output;
+                return output;
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Error executing {fileName}: {ex.Message}", ex);
+            }
         }
+
         private static async Task ExecuteProcessAsync(string fileName, string arguments)
         {
             using var process = new Process
@@ -186,7 +213,7 @@ namespace ShakaPlayerThumbnail.Tools
             foreach (var info in thumbnailInfo)
             {
                 string webpFilePath = Path.Combine(outputImagePath, $"{videoName}{info.TileIndex}.webp");
-                var (frameWidth, frameHeight) = GetWebpDimensions(webpFilePath);  // Extract actual dimensions
+                var (frameWidth, frameHeight) = GetWebpDimensions(webpFilePath);  
 
                 for (int i = 0; i < info.FrameCount; i++)
                 {
