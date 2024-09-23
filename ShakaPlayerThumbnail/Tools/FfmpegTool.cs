@@ -64,7 +64,7 @@ namespace ShakaPlayerThumbnail.Tools
         private static (int Width, int Height) GetWebpDimensions(string webpFilePath)
         {
             using Image image = Image.Load(webpFilePath);
-            return (image.Width, image.Height);
+            return (image.Width/10, image.Height/10);
         }
         private static string BuildFfmpegArguments(string videoPath, double startTime, double endTime,
             string outputImagePath, int tileIndex, int intervalSeconds, string videoName)
@@ -164,7 +164,7 @@ namespace ShakaPlayerThumbnail.Tools
                     writer.WriteLine(
                         $"{TimeSpan.FromSeconds(startTime):hh\\:mm\\:ss\\.fff} --> {TimeSpan.FromSeconds(endTime):hh\\:mm\\:ss\\.fff}");
                     writer.WriteLine(
-                        $"/data/previews/{videoName}/{videoName}{info.TileIndex}.webp#xywh={xOffset/10},{yOffset/10},{frameWidth},{frameHeight}");
+                        $"/data/previews/{videoName}/{videoName}{info.TileIndex}.webp#xywh={xOffset},{yOffset},{frameWidth},{frameHeight}");
                     writer.WriteLine();
                 }
             }
