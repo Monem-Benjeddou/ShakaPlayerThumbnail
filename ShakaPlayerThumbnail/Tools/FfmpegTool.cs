@@ -22,8 +22,8 @@ namespace ShakaPlayerThumbnail.Tools
 
             const int tileWidth = 10;
             const int tileHeight = 10;
-            int framesPerTile = tileWidth * tileHeight;
-            int numberOfTiles = (int)Math.Ceiling((double)totalFrames / framesPerTile);
+            var framesPerTile = tileWidth * tileHeight;
+            var numberOfTiles = (int)Math.Ceiling((double)totalFrames / framesPerTile);
 
             var thumbnailInfo = new List<ThumbnailInfo>();
 
@@ -36,23 +36,14 @@ namespace ShakaPlayerThumbnail.Tools
                 numberOfTiles = 1;
             }
 
-            for (int i = 1; i <= numberOfTiles; i++)
+            for (var i = 1; i <= numberOfTiles; i++)
             {
                 double startTime = (i - 1) * framesPerTile * intervalSeconds;
-                double endTime = Math.Min(startTime + framesPerTile * intervalSeconds, videoDuration);
+                var endTime = Math.Min(startTime + framesPerTile * intervalSeconds, videoDuration);
 
-                int framesInThisSection = Math.Min(totalFrames - (i - 1) * framesPerTile, framesPerTile);
+                var framesInThisSection = Math.Min(totalFrames - (i - 1) * framesPerTile, framesPerTile);
 
-                string arguments;
-                if (isLongVideo)
-                {
-                    arguments = BuildFfmpegArguments(videoPath, startTime, endTime, outputImagePath, i, intervalSeconds,
-                        videoName);
-                }
-                else
-                {
-                    arguments = BuildSimplifiedFfmpegArguments(videoPath, outputImagePath, i, videoName);
-                }
+                var arguments = isLongVideo ? BuildFfmpegArguments(videoPath, startTime, endTime, outputImagePath, i, intervalSeconds, videoName) : BuildSimplifiedFfmpegArguments(videoPath, outputImagePath, i, videoName);
 
                 await RunFFmpeg(arguments);
 
@@ -61,14 +52,26 @@ namespace ShakaPlayerThumbnail.Tools
                 reportProgress(progress);
             }
 
-            GenerateVttFile(videoName, thumbnailInfo, intervalSeconds, tileWidth, tileHeight);
+            GenerateVttFile(videoName, thumbnailInfo, intervalSeconds, tileWidth, tileHeight,outputImagePath);
         }
 
-        private static string BuildSimplifiedFfmpegArguments(string videoPath, string outputImagePath, int tileIndex,
-            string videoName)
+        private static string BuildSimplifiedFfmpegArguments(string videoPath, string outputImagePath, int tileIndex, string videoName)
         {
-            return $"-i \"{videoPath}\" -vf \"fps=1,scale=120:-1,tile=10x10\" " +
+            return $"-i \"{videoPath}\" -vf \"fps=1,scale=-1:68,tile=10x10\" " +
                    $"-quality 50 -compression_level 6 -threads 0 -y \"{outputImagePath}/{videoName}{tileIndex}.webp\"";
+        }
+        private static (int width, int height) GetWebpDimensions(string webpFilePath)
+        {
+            string arguments = $"-v error -select_streams v:0 -show_entries stream=width,height -of csv=p=0 \"{webpFilePath}\"";
+            string output = ExecuteProcessToString("ffprobe", arguments);
+
+            var dimensions = output.Trim().Split(',');
+            if (dimensions.Length == 2 && int.TryParse(dimensions[0], out int width) && int.TryParse(dimensions[1], out int height))
+            {
+                return (width, height);
+            }
+
+            throw new InvalidOperationException("Could not determine the dimensions of the WebP sprite.");
         }
 
         private static string BuildFfmpegArguments(string videoPath, double startTime, double endTime,
@@ -101,7 +104,7 @@ namespace ShakaPlayerThumbnail.Tools
                     FileName = fileName,
                     Arguments = arguments,
                     RedirectStandardOutput = true,
-                    RedirectStandardError = true, // Redirecting the error output
+                    RedirectStandardError = true,
                     UseShellExecute = false,
                     CreateNoWindow = true
                 }
@@ -119,7 +122,31 @@ namespace ShakaPlayerThumbnail.Tools
                 ? result
                 : throw new InvalidOperationException("Could not determine video duration.");
         }
+        private static string ExecuteProcessToString(string fileName, string arguments)
+        {
+            using var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = fileName,
+                    Arguments = arguments,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
 
+            process.Start();
+
+            string output = process.StandardOutput.ReadToEnd();
+            string errorOutput = process.StandardError.ReadToEnd();
+            process.WaitForExit();
+
+            Console.WriteLine(errorOutput);
+
+            return output;
+        }
         private static async Task ExecuteProcessAsync(string fileName, string arguments)
         {
             using var process = new Process
@@ -146,7 +173,7 @@ namespace ShakaPlayerThumbnail.Tools
         }
 
         private static void GenerateVttFile(string videoName, List<ThumbnailInfo> thumbnailInfo, int intervalSeconds,
-            int tileWidth, int tileHeight)
+            int tileWidth, int tileHeight, string outputImagePath)
         {
             var previewDirectory = $"/etc/data/previews/{videoName}";
             if (!Directory.Exists(previewDirectory))
@@ -158,32 +185,39 @@ namespace ShakaPlayerThumbnail.Tools
 
             foreach (var info in thumbnailInfo)
             {
+                string webpFilePath = Path.Combine(outputImagePath, $"{videoName}{info.TileIndex}.webp");
+                var (frameWidth, frameHeight) = GetWebpDimensions(webpFilePath);  // Extract actual dimensions
+
                 for (int i = 0; i < info.FrameCount; i++)
                 {
                     var (startTime, endTime, xOffset, yOffset) =
-                        CalculateOffsets(info, i, intervalSeconds, tileWidth, tileHeight);
+                        CalculateOffsets(info, i, intervalSeconds, tileWidth, tileHeight, frameWidth, frameHeight);
 
+                    // Write VTT entry
                     writer.WriteLine(
                         $"{TimeSpan.FromSeconds(startTime):hh\\:mm\\:ss\\.fff} --> {TimeSpan.FromSeconds(endTime):hh\\:mm\\:ss\\.fff}");
                     writer.WriteLine(
-                        $"/data/previews/{videoName}/{videoName}{info.TileIndex}.webp#xywh={xOffset},{yOffset},120,68");
+                        $"/data/previews/{videoName}/{videoName}{info.TileIndex}.webp#xywh={xOffset},{yOffset},{frameWidth},{frameHeight}");
                     writer.WriteLine();
                 }
             }
         }
 
         private static (double startTime, double endTime, int xOffset, int yOffset) CalculateOffsets(ThumbnailInfo info,
-            int frameIndex, int intervalSeconds, int tileWidth, int tileHeight)
+            int frameIndex, int intervalSeconds, int tileWidth, int tileHeight, int frameWidth, int frameHeight)
         {
             var startTime = info.StartTime + frameIndex * intervalSeconds;
             var endTime = startTime + intervalSeconds;
+
             var rowIndex = frameIndex / tileWidth;
             var columnIndex = frameIndex % tileWidth;
-            var xOffset = columnIndex * 120;
-            var yOffset = rowIndex * 68;
+
+            var xOffset = columnIndex * frameWidth;
+            var yOffset = rowIndex * frameHeight;
 
             return (startTime, endTime, xOffset, yOffset);
         }
+        
     }
 
     public class ThumbnailInfo
