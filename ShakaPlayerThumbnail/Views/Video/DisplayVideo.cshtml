@@ -47,7 +47,10 @@
       const vttUrl = "@Html.Raw(Model.Item2)";
       await player.load(videoUrl);
       console.log('Video loaded successfully!');
-      thumbnailTrack = await setupThumbnails(player, thumbElement, vttUrl);
+      const videoWidth = video.videoWidth;
+      const videoHeight = video.videoHeight;
+      const aspectRatio = videoWidth / videoHeight;
+      thumbnailTrack = await setupThumbnails(player, thumbElement, vttUrl,aspectRatio);
 
       simulateVideoClick();
 
@@ -59,10 +62,11 @@
       handleError('Player error', event.detail);
     });
 
-    async function setupThumbnails(player, thumbElement, vttUrl) {
+    async function setupThumbnails(player, thumbElement, vttUrl,aspectRatio) {
       try {
         const thumbnailTrack = await player.addThumbnailsTrack(vttUrl);
         if (!thumbnailTrack) throw new Error('Thumbnail track could not be added.');
+        thumbElement.style.aspectRatio = `${aspectRatio}`;
 
         const showThumbnail = debounce(handleThumbnailPreview, 5);
 
@@ -222,4 +226,3 @@
   });
 
 </script>
-

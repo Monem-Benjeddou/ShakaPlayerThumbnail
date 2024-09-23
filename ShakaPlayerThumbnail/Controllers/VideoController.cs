@@ -42,33 +42,30 @@ namespace ShakaPlayerThumbnail.Controllers
                     await videoChunk.CopyToAsync(stream, cancellationToken);
                 }
 
-                if (chunkIndex + 1 == totalChunks)
+                if (chunkIndex + 1 != totalChunks) return Ok();
+                var outputImagePath = Path.Combine(PreviewsFolderPath, nameOfFileWithoutExtension);
+                if (!Directory.Exists(outputImagePath))
+                    Directory.CreateDirectory(outputImagePath);
+
+                taskQueue.QueueBackgroundWorkItem(async token =>
                 {
-                    var outputImagePath = Path.Combine(PreviewsFolderPath, nameOfFileWithoutExtension);
-                    if (!Directory.Exists(outputImagePath))
-                        Directory.CreateDirectory(outputImagePath);
+                    progressTracker.SetProcessingStatus(nameOfFileWithoutExtension, true); 
+                    progressTracker.SetProgress(nameOfFileWithoutExtension, 0);
 
-                    taskQueue.QueueBackgroundWorkItem(async token =>
+                    await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, nameOfFileWithoutExtension, 1, async progress =>
                     {
-                        progressTracker.SetProcessingStatus(nameOfFileWithoutExtension, true); 
-                        progressTracker.SetProgress(nameOfFileWithoutExtension, 0);
+                        progressTracker.SetProgress(nameOfFileWithoutExtension, progress);
 
-                        await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, nameOfFileWithoutExtension, 1, async progress =>
-                        {
-                            progressTracker.SetProgress(nameOfFileWithoutExtension, progress);
-
-                            await _hubContext.Clients.All.SendAsync("ReceiveProgress", nameOfFileWithoutExtension, progress);
-                        });
-
-                        progressTracker.SetProgress(nameOfFileWithoutExtension, 100); 
+                        await _hubContext.Clients.All.SendAsync("ReceiveProgress", nameOfFileWithoutExtension, progress);
                     });
 
+                    progressTracker.SetProgress(nameOfFileWithoutExtension, 100); 
+                });
 
-                    return Ok(new { message = "Upload complete, thumbnail generation started." });
-                }
+
+                return Ok(new { message = "Upload complete, thumbnail generation started." });
 
 
-                return Ok();
             }
             catch (OperationCanceledException)
             {
