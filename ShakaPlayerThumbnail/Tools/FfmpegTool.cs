@@ -123,6 +123,7 @@ namespace ShakaPlayerThumbnail.Tools
                 numberOfTiles = 1;
             }
 
+            var (frameWidth, frameHeight) = (0, 0);
             for (var i = 1; i <= numberOfTiles; i++)
             {
                 double startTime = (i - 1) * framesPerTile * intervalSeconds;
@@ -134,8 +135,9 @@ namespace ShakaPlayerThumbnail.Tools
 
                 await RunFFmpeg(arguments);
 
-                // Upload to Cloudflare after each WebP generation
                 string imagePath = $"{outputImagePath}/{videoName}{i}.webp";
+                (frameWidth, frameHeight) = GetWebpDimensions(imagePath);  
+
                 string cloudflareUrl = await UploadToCloudflareImages(imagePath);
 
                 thumbnailInfo.Add(new ThumbnailInfo(i, startTime, endTime, framesInThisSection, cloudflareUrl));
@@ -143,7 +145,7 @@ namespace ShakaPlayerThumbnail.Tools
                 reportProgress(progress);
             }
 
-            GenerateVttFile(videoName, thumbnailInfo, intervalSeconds, tileWidth, tileHeight, outputImagePath);
+            GenerateVttFile(videoName, thumbnailInfo, intervalSeconds, tileWidth, tileHeight, outputImagePath,frameWidth,frameHeight);
         }
 
 
@@ -165,11 +167,10 @@ namespace ShakaPlayerThumbnail.Tools
         {
             using var client = new HttpClient();
 
-            // Add the necessary headers
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
 
             using var content = new MultipartFormDataContent();
-            using var fileStream = new FileStream(imagePath, FileMode.Open, FileAccess.Read);
+            await using var fileStream = new FileStream(imagePath, FileMode.Open, FileAccess.Read);
             content.Add(new StreamContent(fileStream), "file", Path.GetFileName(imagePath));
 
             var response = await client.PostAsync(uploadUrl, content);
@@ -186,7 +187,7 @@ namespace ShakaPlayerThumbnail.Tools
             return imageUrl ?? throw new InvalidOperationException("Failed to retrieve Cloudflare image URL");
         }
         private static void GenerateVttFile(string videoName, List<ThumbnailInfo> thumbnailInfo, int intervalSeconds,
-            int tileWidth, int tileHeight, string outputImagePath)
+            int tileWidth, int tileHeight, string outputImagePath, int frameWidth, int frameHeight) 
         {
             var previewDirectory = $"/etc/data/previews/{videoName}";
             if (!Directory.Exists(previewDirectory))
@@ -195,9 +196,6 @@ namespace ShakaPlayerThumbnail.Tools
 
             using var writer = new StreamWriter(vttFilePath);
             writer.WriteLine("WEBVTT");
-            string webpFilePath = Path.Combine(outputImagePath, $"{videoName}1.webp");
-            var (frameWidth, frameHeight) = GetWebpDimensions(webpFilePath);  
-
             foreach (var info in thumbnailInfo)
             {
 
