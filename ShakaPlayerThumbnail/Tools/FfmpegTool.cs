@@ -22,7 +22,7 @@ namespace ShakaPlayerThumbnail.Tools
         private static (int Width, int Height) GetWebpDimensions(string webpFilePath)
         {
             using Image image = Image.Load(webpFilePath);
-            return (image.Width-10 / 10, image.Height / 10);
+            return ((image.Width-10) / 10, image.Height / 10);
         }
 
         private static string BuildFfmpegArguments(string videoPath, double startTime, double endTime,
