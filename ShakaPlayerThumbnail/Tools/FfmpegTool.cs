@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using Newtonsoft.Json.Linq;
+using shortid;
 using SixLabors.ImageSharp;
 
 namespace ShakaPlayerThumbnail.Tools
@@ -112,7 +113,7 @@ namespace ShakaPlayerThumbnail.Tools
             var framesPerTile = tileWidth * tileHeight;
             var numberOfTiles = (int)Math.Ceiling((double)totalFrames / framesPerTile);
 
-            var thumbnailInfo = new List<ThumbnailInfo>();
+            ThumbnailInfo[] thumbnailInfo = new ThumbnailInfo[numberOfTiles];
 
             if (!Directory.Exists(outputImagePath))
                 Directory.CreateDirectory(outputImagePath);
@@ -137,10 +138,11 @@ namespace ShakaPlayerThumbnail.Tools
 
                 string imagePath = $"{outputImagePath}/{videoName}{i}.webp";
                 (frameWidth, frameHeight) = GetWebpDimensions(imagePath);  
+                string id = $"{ShortId.Generate()}.webp";
 
-                string cloudflareUrl = await UploadToCloudflareImages(imagePath);
+                string cloudflareUrl = await UploadToCloudflareImages(imagePath ,id);
 
-                thumbnailInfo.Add(new ThumbnailInfo(i, startTime, endTime, framesInThisSection, cloudflareUrl));
+                thumbnailInfo[i - 1] = new ThumbnailInfo(i, startTime, endTime, framesInThisSection, cloudflareUrl, id);
                 int progress = (i * 100) / numberOfTiles;
                 reportProgress(progress);
             }
@@ -163,15 +165,15 @@ namespace ShakaPlayerThumbnail.Tools
 
             return (startTime, endTime, xOffset, yOffset);
         }
-        private static async Task<string> UploadToCloudflareImages(string imagePath)
+        private static async Task<string> UploadToCloudflareImages(string imagePath, string id)
         {
             using var client = new HttpClient();
-
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
 
             using var content = new MultipartFormDataContent();
             await using var fileStream = new FileStream(imagePath, FileMode.Open, FileAccess.Read);
-            content.Add(new StreamContent(fileStream), "file", Path.GetFileName(imagePath));
+    
+            content.Add(new StreamContent(fileStream), "file", id); 
 
             var response = await client.PostAsync(uploadUrl, content);
             var responseContent = await response.Content.ReadAsStringAsync();
@@ -186,7 +188,7 @@ namespace ShakaPlayerThumbnail.Tools
 
             return imageUrl ?? throw new InvalidOperationException("Failed to retrieve Cloudflare image URL");
         }
-        private static void GenerateVttFile(string videoName, List<ThumbnailInfo> thumbnailInfo, int intervalSeconds,
+        private static void GenerateVttFile(string videoName, ThumbnailInfo[] thumbnailInfo, int intervalSeconds,
             int tileWidth, int tileHeight, string outputImagePath, int frameWidth, int frameHeight) 
         {
             var previewDirectory = $"/etc/data/previews/{videoName}";
@@ -207,7 +209,7 @@ namespace ShakaPlayerThumbnail.Tools
                     writer.WriteLine(
                         $"{TimeSpan.FromSeconds(startTime):hh\\:mm\\:ss\\.fff} --> {TimeSpan.FromSeconds(endTime):hh\\:mm\\:ss\\.fff}");
                     writer.WriteLine(
-                        $"/data/previews/{videoName}/{videoName}{info.TileIndex}.webp#xywh={xOffset},{yOffset},{frameWidth},{frameHeight}");
+                        $"{info.Id}#xywh={xOffset},{yOffset},{frameWidth},{frameHeight}");
                     writer.WriteLine();
                 }
             }
@@ -221,12 +223,14 @@ namespace ShakaPlayerThumbnail.Tools
         double startTime,
         double endTime,
         int frameCount,
-        string cloudflareImageUrl)
+        string cloudflareImageUrl,
+        string id)
     {
         public int TileIndex { get; } = tileIndex;
         public double StartTime { get; } = startTime;
         public double EndTime { get; } = endTime;
         public int FrameCount { get; } = frameCount;
         public string CloudflareImageUrl { get; } = cloudflareImageUrl;
+        public string Id { get; } = id;
     }
 }
