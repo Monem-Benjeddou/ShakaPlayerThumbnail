@@ -209,7 +209,7 @@ namespace ShakaPlayerThumbnail.Tools
                     writer.WriteLine(
                         $"{TimeSpan.FromSeconds(startTime):hh\\:mm\\:ss\\.fff} --> {TimeSpan.FromSeconds(endTime):hh\\:mm\\:ss\\.fff}");
                     writer.WriteLine(
-                        $"{info.Id}#xywh={xOffset},{yOffset},{frameWidth},{frameHeight}");
+                        $"{uploadUrl}/{info.Id}#xywh={xOffset},{yOffset},{frameWidth},{frameHeight}");
                     writer.WriteLine();
                 }
             }
