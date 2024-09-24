@@ -1,11 +1,11 @@
 ﻿<div id="video-container" class="video-container">
-  <video id="video" controls></video>
-  <div id="seekbar-container">
-    <div id="seek-bar"></div>
-    <div id="thumb" class="thumbnail"></div>
-  </div>
-  <button id="fullscreen-toggle-btn"></button>
-  <div id="error" class="error-message"></div>
+    <video id="video" controls></video>
+    <div id="seekbar-container">
+        <div id="seek-bar"></div>
+        <div id="thumb" class="thumbnail"></div>
+    </div>
+    <button id="fullscreen-toggle-btn"></button>
+    <div id="error" class="error-message"></div>
 </div>
 
 <script>
@@ -182,8 +182,9 @@
       // Use Fetch API to request the image with authorization
       fetch(imageUrl, {
         headers: {
-          "Authorization": `Bearer ${apiKey}`
-        }
+          "Authorization": `Bearer ${apiKey}`,
+        "header": "Content-Type: application/json"  
+      }
       })
         .then(response => {
           if (!response.ok) {

@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Net.Http;
 using System.Net.Http.Headers;
 using Newtonsoft.Json.Linq;
 using shortid;
@@ -9,10 +8,12 @@ namespace ShakaPlayerThumbnail.Tools
 {
     public static class FfmpegTool
     {
-        private const string apiKey = "fCqVJMv6IYrJS3F8eH3iDTGo2Dh57kQRRAL4aARL"; 
+        private const string apiKey = "fCqVJMv6IYrJS3F8eH3iDTGo2Dh57kQRRAL4aARL";
         private const string accountId = "68f8f060e3f2d742fdf6a28eb9239fff";
         private const string uploadUrl = $"https://api.cloudflare.com/client/v4/accounts/{accountId}/images/v1";
-        private static string BuildSimplifiedFfmpegArguments(string videoPath, string outputImagePath, int tileIndex, string videoName)
+
+        private static string BuildSimplifiedFfmpegArguments(string videoPath, string outputImagePath, int tileIndex,
+            string videoName)
         {
             return $"-i \"{videoPath}\" -vf \"fps=1,scale=-1:68,tile=10x10\" " +
                    $"-quality 50 -compression_level 6 -threads 0 -y \"{outputImagePath}/{videoName}{tileIndex}.webp\"";
@@ -21,8 +22,9 @@ namespace ShakaPlayerThumbnail.Tools
         private static (int Width, int Height) GetWebpDimensions(string webpFilePath)
         {
             using Image image = Image.Load(webpFilePath);
-            return (image.Width/10, image.Height/10);
+            return (image.Width / 10, image.Height / 10);
         }
+
         private static string BuildFfmpegArguments(string videoPath, double startTime, double endTime,
             string outputImagePath, int tileIndex, int intervalSeconds, string videoName)
         {
@@ -105,9 +107,13 @@ namespace ShakaPlayerThumbnail.Tools
             Action<int> reportProgress)
         {
             var videoDuration = GetVideoDuration(videoPath);
-            var isLongVideo = videoDuration > 30 * 60; 
-            var totalFrames = (int)Math.Ceiling(videoDuration / intervalSeconds);
+            if (videoDuration <= 0)
+            {
+                throw new InvalidOperationException("Invalid video duration.");
+            }
 
+            var isLongVideo = videoDuration > 30 * 60;
+            var totalFrames = (int)Math.Ceiling(videoDuration / intervalSeconds);
             const int tileWidth = 10;
             const int tileHeight = 10;
             var framesPerTile = tileWidth * tileHeight;
@@ -118,13 +124,8 @@ namespace ShakaPlayerThumbnail.Tools
             if (!Directory.Exists(outputImagePath))
                 Directory.CreateDirectory(outputImagePath);
 
-            if (totalFrames < framesPerTile)
-            {
-                framesPerTile = totalFrames;
-                numberOfTiles = 1;
-            }
-
             var (frameWidth, frameHeight) = (0, 0);
+
             for (var i = 1; i <= numberOfTiles; i++)
             {
                 double startTime = (i - 1) * framesPerTile * intervalSeconds;
@@ -132,22 +133,35 @@ namespace ShakaPlayerThumbnail.Tools
 
                 var framesInThisSection = Math.Min(totalFrames - (i - 1) * framesPerTile, framesPerTile);
 
-                var arguments = isLongVideo ? BuildFfmpegArguments(videoPath, startTime, endTime, outputImagePath, i, intervalSeconds, videoName) : BuildSimplifiedFfmpegArguments(videoPath, outputImagePath, i, videoName);
+                var arguments = isLongVideo
+                    ? BuildFfmpegArguments(videoPath, startTime, endTime, outputImagePath, i, intervalSeconds,
+                        videoName)
+                    : BuildSimplifiedFfmpegArguments(videoPath, outputImagePath, i, videoName);
 
                 await RunFFmpeg(arguments);
 
                 string imagePath = $"{outputImagePath}/{videoName}{i}.webp";
-                (frameWidth, frameHeight) = GetWebpDimensions(imagePath);  
+                (frameWidth, frameHeight) = GetWebpDimensions(imagePath);
                 string id = $"{ShortId.Generate()}.webp";
 
-                string cloudflareUrl = await UploadToCloudflareImages(imagePath ,id);
+                try
+                {
+                    string cloudflareUrl = await UploadToCloudflareImages(imagePath, id);
+                    thumbnailInfo[i - 1] =
+                        new ThumbnailInfo(i, startTime, endTime, framesInThisSection, cloudflareUrl, id);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error uploading tile {i}: {ex.Message}");
+                    continue; 
+                }
 
-                thumbnailInfo[i - 1] = new ThumbnailInfo(i, startTime, endTime, framesInThisSection, cloudflareUrl, id);
                 int progress = (i * 100) / numberOfTiles;
                 reportProgress(progress);
             }
 
-            GenerateVttFile(videoName, thumbnailInfo, intervalSeconds, tileWidth, tileHeight, outputImagePath,frameWidth,frameHeight);
+            GenerateVttFile(videoName, thumbnailInfo, intervalSeconds, tileWidth, tileHeight, outputImagePath,
+                frameWidth, frameHeight);
         }
 
 
@@ -165,6 +179,7 @@ namespace ShakaPlayerThumbnail.Tools
 
             return (startTime, endTime, xOffset, yOffset);
         }
+
         private static async Task<string> UploadToCloudflareImages(string imagePath, string id)
         {
             using var client = new HttpClient();
@@ -172,8 +187,8 @@ namespace ShakaPlayerThumbnail.Tools
 
             using var content = new MultipartFormDataContent();
             await using var fileStream = new FileStream(imagePath, FileMode.Open, FileAccess.Read);
-    
-            content.Add(new StreamContent(fileStream), "file", id); 
+
+            content.Add(new StreamContent(fileStream), "file", id);
 
             var response = await client.PostAsync(uploadUrl, content);
             var responseContent = await response.Content.ReadAsStringAsync();
@@ -188,19 +203,20 @@ namespace ShakaPlayerThumbnail.Tools
 
             return imageUrl ?? throw new InvalidOperationException("Failed to retrieve Cloudflare image URL");
         }
+
         private static void GenerateVttFile(string videoName, ThumbnailInfo[] thumbnailInfo, int intervalSeconds,
-            int tileWidth, int tileHeight, string outputImagePath, int frameWidth, int frameHeight) 
+            int tileWidth, int tileHeight, string outputImagePath, int frameWidth, int frameHeight)
         {
             var previewDirectory = $"/etc/data/previews/{videoName}";
             if (!Directory.Exists(previewDirectory))
                 Directory.CreateDirectory(previewDirectory);
+
             var vttFilePath = Path.Combine(previewDirectory, $"{videoName}.vtt");
 
             using var writer = new StreamWriter(vttFilePath);
             writer.WriteLine("WEBVTT");
             foreach (var info in thumbnailInfo)
             {
-
                 for (int i = 0; i < info.FrameCount; i++)
                 {
                     var (startTime, endTime, xOffset, yOffset) =
@@ -209,28 +225,27 @@ namespace ShakaPlayerThumbnail.Tools
                     writer.WriteLine(
                         $"{TimeSpan.FromSeconds(startTime):hh\\:mm\\:ss\\.fff} --> {TimeSpan.FromSeconds(endTime):hh\\:mm\\:ss\\.fff}");
                     writer.WriteLine(
-                        $"{uploadUrl}/{info.Id}#xywh={xOffset},{yOffset},{frameWidth},{frameHeight}");
+                        $"{info.CloudflareImageUrl}#xywh={xOffset},{yOffset},{frameWidth},{frameHeight}");
                     writer.WriteLine();
                 }
             }
         }
 
-        
-    }
 
-    public class ThumbnailInfo(
-        int tileIndex,
-        double startTime,
-        double endTime,
-        int frameCount,
-        string cloudflareImageUrl,
-        string id)
-    {
-        public int TileIndex { get; } = tileIndex;
-        public double StartTime { get; } = startTime;
-        public double EndTime { get; } = endTime;
-        public int FrameCount { get; } = frameCount;
-        public string CloudflareImageUrl { get; } = cloudflareImageUrl;
-        public string Id { get; } = id;
+        public class ThumbnailInfo(
+            int tileIndex,
+            double startTime,
+            double endTime,
+            int frameCount,
+            string cloudflareImageUrl,
+            string id)
+        {
+            public int TileIndex { get; } = tileIndex;
+            public double StartTime { get; } = startTime;
+            public double EndTime { get; } = endTime;
+            public int FrameCount { get; } = frameCount;
+            public string CloudflareImageUrl { get; } = cloudflareImageUrl;
+            public string Id { get; } = id;
+        }
     }
 }
