@@ -1,11 +1,11 @@
 ﻿<div id="video-container" class="video-container">
-    <video id="video" controls></video>
-    <div id="seekbar-container">
-        <div id="seek-bar"></div>
-        <div id="thumb" class="thumbnail"></div>
-    </div>
-    <button id="fullscreen-toggle-btn"></button>
-    <div id="error" class="error-message"></div>
+  <video id="video" controls></video>
+  <div id="seekbar-container">
+    <div id="seek-bar"></div>
+    <div id="thumb" class="thumbnail"></div>
+  </div>
+  <button id="fullscreen-toggle-btn"></button>
+  <div id="error" class="error-message"></div>
 </div>
 
 <script>
@@ -176,40 +176,15 @@
     }
 
     function displayThumbnail(thumbElement, imageUrl, x, y, width, height, offsetX) {
-      // Define the Cloudflare API key
-      const apiKey = "fCqVJMv6IYrJS3F8eH3iDTGo2Dh57kQRRAL4aARL";
-
-      // Use Fetch API to request the image with authorization
-      fetch(imageUrl, {
-        headers: {
-          "Authorization": `Bearer ${apiKey}`,
-        "header": "Content-Type: application/json"  
-      }
-      })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.blob();
-        })
-        .then(blob => {
-          const objectURL = URL.createObjectURL(blob);
-          thumbElement.style.backgroundImage = `url(${objectURL})`; // Set the fetched image as background
-          thumbElement.style.backgroundPosition = `-${x}px -${y}px`;
-          thumbElement.style.width = `${width}px`;
-          thumbElement.style.height = `${height}px`;
-
-          // Position the thumbnail correctly on the seek bar
-          const thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(seekBar.clientWidth - thumbElement.clientWidth / 2, offsetX));
-          thumbElement.style.left = `${thumbX}px`;
-          thumbElement.style.top = `-80px`;
-          thumbElement.style.display = 'block';
-
-          video.focus(); // Ensure the video remains in focus
-        })
-        .catch(error => {
-          console.error('Error fetching thumbnail:', error);
-        });
+      thumbElement.style.backgroundImage = `url(${imageUrl})`;
+      thumbElement.style.backgroundPosition = `-${x}px -${y}px`;
+      thumbElement.style.width = `${width}px`;
+      thumbElement.style.height = `${height}px`;
+      const thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(seekBar.clientWidth - thumbElement.clientWidth / 2, offsetX));
+      thumbElement.style.left = `${thumbX}px`;
+      thumbElement.style.top = `-80px`;
+      thumbElement.style.display = 'block';
+      video.focus();
     }
 
     function hideThumbnail() {
