@@ -2,7 +2,9 @@
   <video id="video" controls></video>
   <div id="seekbar-container">
     <div id="seek-bar"></div>
-    <div id="thumb" class="thumbnail"></div>
+    <div id="thumb" class="thumbnail">
+      <img id="img" />
+    </div>
   </div>
   <button id="fullscreen-toggle-btn"></button>
   <div id="error" class="error-message"></div>
@@ -15,8 +17,10 @@
     const seekBar = document.getElementById('seek-bar');
     const thumbElement = document.getElementById('thumb');
     const errorDisplay = document.getElementById('error');
+    const imageElement = document.getElementById('thumbImage');
     const videoContainer = document.getElementById('video-container');
     const player = new shaka.Player(video);
+    
     let lastPreviewPosition = 0, thumbnailTrack, isHovering = false;
     let hideTimeout, isDraggingSeekbar = false;
 
@@ -123,7 +127,7 @@
       player.getThumbnails(thumbnailTrack.id, position).then((thumbnail) => {
         if (thumbnail?.uris.length) {
           const [imageUrl, { x, y, width, height }] = parseThumbnailData(thumbnail);
-          displayThumbnail(thumbElement, imageUrl, x, y, width, height, offsetX);
+          displayThumbnail(thumbElement, imageElement, imageUrl, x, y, width, height, offsetX);
         }
       }).catch((error) => handleError('Error getting thumbnail', error));
     }
@@ -175,14 +179,21 @@
       return [imageUrl, { x, y, width, height }];
     }
 
-    function displayThumbnail(thumbElement, imageUrl, x, y, width, height, offsetX) {
-      thumbElement.style.backgroundImage = `url(${imageUrl})`;
-      thumbElement.style.backgroundPosition = `-${x}px -${y}px`;
-      thumbElement.style.width = `${width}px`;
-      thumbElement.style.height = `${height}px`;
+    function displayThumbnail(thumbElement, imageElement, imageUrl, x, y, width, height, offsetX) {
+      // Update the image source to the new thumbnail image
+      imageElement.src = imageUrl;
+
+      // Adjust the size of the thumbnail container to maintain 120x68 aspect ratio
+      thumbElement.style.width = '120px';
+      thumbElement.style.height = '68px';
+
+      // Optional: If you need to handle coordinates from a sprite sheet (cropping a part of an image)
+      imageElement.style.objectPosition = `-${x}px -${y}px`;
+
+      // Adjust the position of the thumbnail container relative to the seek bar
       const thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(seekBar.clientWidth - thumbElement.clientWidth / 2, offsetX));
       thumbElement.style.left = `${thumbX}px`;
-      thumbElement.style.top = `-80px`;
+      thumbElement.style.top = `-80px`;  // Adjust this as necessary
       thumbElement.style.display = 'block';
       video.focus();
     }

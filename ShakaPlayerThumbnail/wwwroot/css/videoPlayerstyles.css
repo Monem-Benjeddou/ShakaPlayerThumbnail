@@ -41,18 +41,21 @@
 .thumbnail {
     position: absolute;
     display: none;
-    background-color: black; /* Black background for borders */
-    background-size: contain; /* Ensures the image is fully contained */
-    background-position: center center; /* Centers the image */
-    background-repeat: no-repeat; /* No repetition for the background */
     width: 120px;
     height: 68px;
-    pointer-events: none;
-    z-index: 1000;
+    background-color: rgba(0, 0, 0, 0.7); /* Black background */
     border: 2px solid #fff;
     border-radius: 4px;
+    pointer-events: none;
+    z-index: 1000;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     transform: translateX(-50%);
+}
+
+.thumbnail img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain; /* Ensures the image fits within the thumbnail container */
 }
 
 .video-container.fullscreen .thumbnail {
