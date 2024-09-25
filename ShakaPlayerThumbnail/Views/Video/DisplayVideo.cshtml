@@ -3,7 +3,7 @@
   <div id="seekbar-container">
     <div id="seek-bar"></div>
     <div id="thumb" class="thumbnail">
-      <img id="img" />
+      <img id="thumbImage" />
     </div>
   </div>
   <button id="fullscreen-toggle-btn"></button>
@@ -180,7 +180,6 @@
     }
 
     function displayThumbnail(thumbElement, imageElement, imageUrl, x, y, width, height, offsetX) {
-      // Update the image source to the new thumbnail image
       imageElement.src = imageUrl;
 
       // Adjust the size of the thumbnail container to maintain 120x68 aspect ratio
