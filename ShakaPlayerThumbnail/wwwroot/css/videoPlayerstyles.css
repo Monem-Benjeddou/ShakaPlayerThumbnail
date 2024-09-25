@@ -51,13 +51,11 @@
     border-radius: 4px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     transform: translateX(-50%);
-    background-position: center; /* Always centers the image */
 }
 
 .video-container.fullscreen .thumbnail {
     width: 200px;
     height: 112px;
-    background-size: contain; /* Keep the aspect ratio of the image */
 }
 
 /* Mobile responsiveness */
@@ -70,8 +68,6 @@
     .thumbnail {
         width: 100px;
         height: 56px;
-        background-size: contain; /* Adjust for smaller screens */
-
     }
 }
 
