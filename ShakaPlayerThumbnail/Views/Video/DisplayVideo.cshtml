@@ -183,17 +183,24 @@
       imageElement.src = imageUrl;
 
       // Adjust the size of the thumbnail container to maintain 120x68 aspect ratio
-      thumbElement.style.width = '120px';
-      thumbElement.style.height = '68px';
+      thumbElement.style.width = '120px';  // Adjust size for larger/smaller images dynamically if needed
+      thumbElement.style.height = '68px';  // Set the thumbnail height
 
       // Optional: If you need to handle coordinates from a sprite sheet (cropping a part of an image)
       imageElement.style.objectPosition = `-${x}px -${y}px`;
 
-      // Adjust the position of the thumbnail container relative to the seek bar
-      const thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(seekBar.clientWidth - thumbElement.clientWidth / 2, offsetX));
+      // Calculate the maximum left position the thumbnail can have
+      const seekBarRect = seekBar.getBoundingClientRect();
+      const thumbWidth = thumbElement.clientWidth;
+
+      // Prevent thumbnail from overflowing to the left or right of the seek bar
+      let thumbX = offsetX - (thumbWidth / 2); // Center the thumbnail on the pointer position
+      thumbX = Math.max(0, Math.min(seekBarRect.width - thumbWidth, thumbX)); // Clamp the position within the seek bar width
+
       thumbElement.style.left = `${thumbX}px`;
       thumbElement.style.top = `-80px`;  // Adjust this as necessary
-      thumbElement.style.display = 'block';
+
+      thumbElement.style.display = 'block';  // Show the thumbnail
       video.focus();
     }
 
