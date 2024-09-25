@@ -121,22 +121,11 @@
       lastPreviewPosition = position;
       player.getThumbnails(thumbnailTrack.id, position).then((thumbnail) => {
         if (thumbnail?.uris.length) {
-          const [imageUrl, { x, y, width, height }] = parseThumbnailData(thumbnail);
+          const [spriteSheetUrl, tileInfo] = parseThumbnailData(thumbnail);
+          const { x, y, width, height } = tileInfo;
 
-          // Calculate the centering of the thumbnail image inside the fixed 120x68px container
-          const aspectRatio = width / height;
-          let backgroundPositionX = 0, backgroundPositionY = 0;
-
-          // If the video is in portrait mode (height > width), center by adjusting Y-axis
-          if (height > width) {
-            backgroundPositionY = (height - width) / 2;
-          } else {
-            // If the video is in landscape mode, center by adjusting X-axis
-            backgroundPositionX = (width - height) / 2;
-          }
-
-          // Display thumbnail with centered image
-          displayThumbnail(thumbElement, imageUrl, backgroundPositionX, backgroundPositionY, width, height, offsetX);
+          // Display the thumbnail tile from the sprite sheet
+          displayThumbnail(thumbElement, spriteSheetUrl, x, y, width, height, offsetX);
         }
       }).catch((error) => handleError('Error getting thumbnail', error));
     }
@@ -187,15 +176,21 @@
       return [imageUrl, { x, y, width, height }];
     }
 
-    function displayThumbnail(thumbElement, imageUrl, x, y, width, height, offsetX) {
-      thumbElement.style.backgroundImage = `url(${imageUrl})`;
+    function displayThumbnail(thumbElement, spriteSheetUrl, tileX, tileY, tileWidth, tileHeight, offsetX) {
+      // Set the sprite sheet as the background image
+      thumbElement.style.backgroundImage = `url(${spriteSheetUrl})`;
 
-      // Adjusting background position to ensure image is centered
-      thumbElement.style.backgroundPosition = `center`;
+      // Set the size of the thumbnail container
+      thumbElement.style.width = '120px';
+      thumbElement.style.height = '68px';
 
-      thumbElement.style.width = `120px`; // Fixed width
-      thumbElement.style.height = `68px`; // Fixed height
+      // Calculate the background size based on the sprite sheet tile dimensions
+      thumbElement.style.backgroundSize = `${tileWidth}px ${tileHeight}px`;
 
+      // Position the correct tile in the container by adjusting the background position
+      thumbElement.style.backgroundPosition = `-${tileX}px -${tileY}px`;
+
+      // Place the thumbnail at the correct location on the seek bar
       const thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(seekBar.clientWidth - thumbElement.clientWidth / 2, offsetX));
       thumbElement.style.left = `${thumbX}px`;
       thumbElement.style.top = `-80px`;
