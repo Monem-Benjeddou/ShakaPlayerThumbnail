@@ -41,10 +41,12 @@
 .thumbnail {
     position: absolute;
     display: none;
-    background-color: rgba(0, 0, 0, 0.7);
-    background-size: 1200px 680px; 
-    width: 160px;
-    height: 90px;
+    background-color: black; /* Black background for borders */
+    background-size: contain; /* Ensures the image is fully contained */
+    background-position: center center; /* Centers the image */
+    background-repeat: no-repeat; /* No repetition for the background */
+    width: 120px;
+    height: 68px;
     pointer-events: none;
     z-index: 1000;
     border: 2px solid #fff;
