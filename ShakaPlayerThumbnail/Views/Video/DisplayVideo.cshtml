@@ -176,33 +176,16 @@
     }
 
     function displayThumbnail(thumbElement, imageUrl, x, y, width, height, offsetX) {
-      // Ensure the thumbnail maintains the 120x68 dimensions
-      const thumbWidth = 120;
-      const thumbHeight = 68;
-
       thumbElement.style.backgroundImage = `url(${imageUrl})`;
-
-      // Check if the image is smaller than the thumbnail size
-      if (width < thumbWidth || height < thumbHeight) {
-        // Use background-size contain and center it
-        thumbElement.style.backgroundSize = 'contain';
-        thumbElement.style.backgroundPosition = 'center';
-      } else {
-        // Use the default behavior for larger images
-        thumbElement.style.backgroundPosition = `-${x}px -${y}px`;
-        thumbElement.style.backgroundSize = '1200px 680px'; // Adjust based on sprite size
-      }
-
-      thumbElement.style.width = `${thumbWidth}px`;
-      thumbElement.style.height = `${thumbHeight}px`;
-
+      thumbElement.style.backgroundPosition = `-${x}px -${y}px`;
+      thumbElement.style.width = `${width}px`;
+      thumbElement.style.height = `${height}px`;
       const thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(seekBar.clientWidth - thumbElement.clientWidth / 2, offsetX));
       thumbElement.style.left = `${thumbX}px`;
       thumbElement.style.top = `-80px`;
       thumbElement.style.display = 'block';
       video.focus();
     }
-
 
     function hideThumbnail() {
       thumbElement.style.display = 'none';
