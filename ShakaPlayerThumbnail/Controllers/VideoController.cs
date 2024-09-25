@@ -102,8 +102,8 @@ namespace ShakaPlayerThumbnail.Controllers
         public ActionResult DisplayVideo([FromQuery] string videoName)
         {
             var fileNameWithoutExtension = GetFileNameWithoutExtension(videoName);
-            var returnedVttFilePath = $"/etc/data/previews/{fileNameWithoutExtension}/{fileNameWithoutExtension}.vtt";
-            var returnedVideoPath = $"/etc/data/video/{videoName}";
+            var returnedVttFilePath = $"/data/previews/{fileNameWithoutExtension}/{fileNameWithoutExtension}.vtt";
+            var returnedVideoPath = $"/data/video/{videoName}";
             var model = new Tuple<string, string>(returnedVideoPath, returnedVttFilePath);
             return View((object)model);
         }
