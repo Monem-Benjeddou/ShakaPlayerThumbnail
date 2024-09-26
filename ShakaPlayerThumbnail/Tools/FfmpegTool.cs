@@ -22,7 +22,13 @@ namespace ShakaPlayerThumbnail.Tools
         private static (int Width, int Height) GetWebpDimensions(string webpFilePath)
         {
             using Image image = Image.Load(webpFilePath);
-            return ((image.Width-10) / 10, image.Height / 10);
+            var width = image.Width;
+            var height = image.Height;
+            if (image.Width > image.Height)
+                width = -10;
+            else
+                height = -10;
+            return (width / 10, height / 10);
         }
 
         private static string BuildFfmpegArguments(string videoPath, double startTime, double endTime,
@@ -69,24 +75,22 @@ namespace ShakaPlayerThumbnail.Tools
 
             Console.WriteLine(errorOutput);
 
-            return double.TryParse(output.Trim(), out double result)
+            return double.TryParse(output.Trim(), out var result)
                 ? result
                 : throw new InvalidOperationException("Could not determine video duration.");
         }
 
         private static async Task ExecuteProcessAsync(string fileName, string arguments)
         {
-            using var process = new Process
+            using var process = new Process();
+            process.StartInfo = new ProcessStartInfo
             {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = fileName,
-                    Arguments = arguments,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                }
+                FileName = fileName,
+                Arguments = arguments,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
             };
 
             process.OutputDataReceived += (sender, args) => Console.WriteLine("Output: " + args.Data);
