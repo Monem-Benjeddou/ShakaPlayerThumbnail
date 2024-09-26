@@ -182,24 +182,21 @@
     function displayThumbnail(thumbElement, imageElement, imageUrl, x, y, width, height, offsetX) {
       imageElement.src = imageUrl;
 
-      const thumbnailWidth = 120;  
-      const thumbnailHeight = 68; 
-      thumbElement.style.width = `${thumbnailWidth}px`;
-      thumbElement.style.height = `${thumbnailHeight}px`;
+      thumbElement.style.width = '120px';  
+      thumbElement.style.height = '68px';  
 
-      imageElement.style.width = `${width}px`;
-      imageElement.style.height = `${height}px`;
-
-      imageElement.style.objectPosition = `center center`;
+      imageElement.style.objectPosition = `-${x}px -${y}px`;
 
       const seekBarRect = seekBar.getBoundingClientRect();
-      const thumbX = Math.max(0, Math.min(seekBarRect.width - thumbnailWidth, offsetX - (thumbnailWidth / 2)));
+      const thumbWidth = thumbElement.clientWidth;
+
+      let thumbX = offsetX - (thumbWidth / 2); 
+      thumbX = Math.max(0, Math.min(seekBarRect.width - thumbWidth, thumbX)); 
 
       thumbElement.style.left = `${thumbX}px`;
-      thumbElement.style.top = `-80px`;
+      thumbElement.style.top = `-80px`;  
 
-      // Display the thumbnail
-      thumbElement.style.display = 'block';
+      thumbElement.style.display = 'block'; 
       video.focus();
     }
 
