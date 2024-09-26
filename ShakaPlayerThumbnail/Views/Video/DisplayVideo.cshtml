@@ -165,7 +165,7 @@
     function parseThumbnailData(thumbnail) {
       const imageUrl = thumbnail.uris[0].split('#')[0];
       const fragment = thumbnail.uris[0].split('#')[1];
-      let x = 0, y = 0, width = 120, height = 68;
+      let x = 0, y = 0, width = 122, height = 70;
 
       if (fragment && fragment.startsWith("xywh=")) {
         const [, coords] = fragment.split("=");
@@ -184,8 +184,8 @@
         imageElement.src = imageUrl;
       }
 
-      thumbElement.style.width = '120px';
-      thumbElement.style.height = '68px';
+      thumbElement.style.width = '122px';
+      thumbElement.style.height = '70px';
 
       imageElement.style.objectPosition = `-${x}px -${y}px`;
 
