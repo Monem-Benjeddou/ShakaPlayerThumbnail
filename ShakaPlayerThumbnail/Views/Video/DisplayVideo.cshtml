@@ -77,37 +77,43 @@
         // Track when the user starts dragging
         ['mousedown', 'touchstart'].forEach((event) => {
           seekBar.addEventListener(event, () => {
-            isDraggingSeekbar = true;
+            isDraggingSeekbar = true; // Start dragging
           });
         });
 
-        // Handle hovering (show thumbnail)
+        // Handle hovering (show thumbnail) and dragging (update video time)
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
             clearTimeout(hideTimeout);
             isHovering = true;
 
-            const { position } = getSeekBarInfo(e);
-
-            // Show the thumbnail preview on hover
+            // Show the thumbnail preview
             showThumbnail(e);
 
-            // Only update video time if dragging
+            // If dragging, update the video time
             if (isDraggingSeekbar) {
+              const { position } = getSeekBarInfo(e);
               video.currentTime = position;
             }
           });
         });
 
         // Stop dragging and hide the thumbnail
-        ['mouseup', 'touchend', 'mouseleave'].forEach((event) => {
+        ['mouseup', 'touchend'].forEach((event) => {
           seekBar.addEventListener(event, () => {
-            if (isDraggingSeekbar) {
-              isDraggingSeekbar = false;
-            }
+            isDraggingSeekbar = false; // Stop dragging
             hideTimeout = setTimeout(() => {
               hideThumbnail();
-            }, 5);
+            }, 500);
+          });
+        });
+
+        // Hide the thumbnail when leaving the seek bar
+        ['mouseleave'].forEach((event) => {
+          seekBar.addEventListener(event, () => {
+            hideTimeout = setTimeout(() => {
+              hideThumbnail();
+            }, 500);
           });
         });
 
