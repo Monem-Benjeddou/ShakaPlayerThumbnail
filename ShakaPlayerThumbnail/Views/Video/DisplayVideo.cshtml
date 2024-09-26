@@ -74,15 +74,17 @@
 
         const showThumbnail = debounce(handleThumbnailPreview, 5);
 
+        // Event listeners for real-time updating
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
-            isDraggingSeekbar = true; 
+            isDraggingSeekbar = true;
             clearTimeout(hideTimeout);
             isHovering = true;
-            video.removeAttribute('controls');
-            video.setAttribute('controls', 'controls');
 
-            showThumbnail(e);
+            showThumbnail(e);  // Display the thumbnail preview
+
+            const { position } = getSeekBarInfo(e);
+            video.currentTime = position;  // Update video time in real-time
           });
         });
 
@@ -91,14 +93,7 @@
             hideTimeout = setTimeout(() => {
               hideThumbnail();
             }, 5);
-            isDraggingSeekbar = false
-          });
-        });
-
-        ['click', 'touchend'].forEach((event) => {
-          seekBar.addEventListener(event, (e) => {
-            const { position } = getSeekBarInfo(e);
-            video.currentTime = position;
+            isDraggingSeekbar = false;
           });
         });
 
