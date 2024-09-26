@@ -74,27 +74,28 @@
 
         const showThumbnail = debounce(handleThumbnailPreview, 5);
 
-        // Track when the user starts dragging (PC or Mobile)
+        // Track when the user starts dragging
         ['mousedown', 'touchstart'].forEach((event) => {
           seekBar.addEventListener(event, () => {
             isDraggingSeekbar = true;
           });
         });
 
-        // Update video time only while dragging
+        // Handle hovering (show thumbnail)
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
-            if (!isDraggingSeekbar) {
-              showThumbnail(e);  // Only show thumbnail when hovering
-              return;
-            }
-
             clearTimeout(hideTimeout);
             isHovering = true;
 
             const { position } = getSeekBarInfo(e);
-            video.currentTime = position;  // Update video time only when dragging
-            showThumbnail(e);  // Display the thumbnail preview
+
+            // Show the thumbnail preview on hover
+            showThumbnail(e);
+
+            // Only update video time if dragging
+            if (isDraggingSeekbar) {
+              video.currentTime = position;
+            }
           });
         });
 
@@ -103,10 +104,10 @@
           seekBar.addEventListener(event, () => {
             if (isDraggingSeekbar) {
               isDraggingSeekbar = false;
-              hideTimeout = setTimeout(() => {
-                hideThumbnail();
-              }, 5);
             }
+            hideTimeout = setTimeout(() => {
+              hideThumbnail();
+            }, 5);
           });
         });
 
