@@ -20,10 +20,9 @@
     const imageElement = document.getElementById('thumbImage');
     const videoContainer = document.getElementById('video-container');
     const player = new shaka.Player(video);
-
+    
     let lastPreviewPosition = 0, thumbnailTrack, isHovering = false;
     let hideTimeout, isDraggingSeekbar = false;
-    let thumbnailCache = {};
 
     fullscreenToggleBtn?.addEventListener('click', toggleFullscreen);
 
@@ -55,7 +54,7 @@
       const videoWidth = video.videoWidth;
       const videoHeight = video.videoHeight;
       const aspectRatio = videoWidth / videoHeight;
-      thumbnailTrack = await setupThumbnails(player, thumbElement, vttUrl, aspectRatio);
+      thumbnailTrack = await setupThumbnails(player, thumbElement, vttUrl,aspectRatio);
 
       simulateVideoClick();
 
@@ -67,7 +66,7 @@
       handleError('Player error', event.detail);
     });
 
-    async function setupThumbnails(player, thumbElement, vttUrl, aspectRatio) {
+    async function setupThumbnails(player, thumbElement, vttUrl,aspectRatio) {
       try {
         const thumbnailTrack = await player.addThumbnailsTrack(vttUrl);
         if (!thumbnailTrack) throw new Error('Thumbnail track could not be added.');
@@ -118,7 +117,7 @@
 
     function handleThumbnailPreview(event) {
       if (!isDraggingSeekbar) {
-        hideThumbnail();
+        hideThumbnail(); // Ensure thumbnail hides on simple click
         return;
       }
 
@@ -128,15 +127,7 @@
       player.getThumbnails(thumbnailTrack.id, position).then((thumbnail) => {
         if (thumbnail?.uris.length) {
           const [imageUrl, { x, y, width, height }] = parseThumbnailData(thumbnail);
-
-          // Check if the thumbnail is cached
-          if (thumbnailCache[imageUrl]) {
-            const { imageUrl: cachedUrl, x: cachedX, y: cachedY, width: cachedWidth, height: cachedHeight } = thumbnailCache[imageUrl];
-            displayThumbnail(thumbElement, imageElement, cachedUrl, cachedX, cachedY, cachedWidth, cachedHeight, offsetX);
-          } else {
-            thumbnailCache[imageUrl] = { imageUrl, x, y, width, height };
-            displayThumbnail(thumbElement, imageElement, imageUrl, x, y, width, height, offsetX);
-          }
+          displayThumbnail(thumbElement, imageElement, imageUrl, x, y, width, height, offsetX);
         }
       }).catch((error) => handleError('Error getting thumbnail', error));
     }
@@ -189,10 +180,13 @@
     }
 
     function displayThumbnail(thumbElement, imageElement, imageUrl, x, y, width, height, offsetX) {
-      imageElement.src = imageUrl;
+      if (imageElement.src !==  imageUrl){
+      {
+        imageElement.src = imageUrl
+      }
 
-      thumbElement.style.width = '120px';
-      thumbElement.style.height = '68px';
+      thumbElement.style.width = '120px';  
+      thumbElement.style.height = '68px';  
 
       imageElement.style.objectPosition = `-${x}px -${y}px`;
 
@@ -200,9 +194,9 @@
       imageElement.style.marginLeft = `${60 - width/2}px`;
 
       thumbElement.style.left = `${thumbX}px`;
-      thumbElement.style.top = `-80px`;
+      thumbElement.style.top = `-80px`;  
 
-      thumbElement.style.display = 'block';
+      thumbElement.style.display = 'block'; 
       video.focus();
     }
 
@@ -243,4 +237,5 @@
       errorDisplay.textContent = `${message}: ${error.message}`;
     }
   });
+
 </script>
