@@ -10,17 +10,19 @@
     <div id="error" class="error-message"></div>
 </div>
 
-<script>document.addEventListener('DOMContentLoaded', async () => {
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
     const fullscreenToggleBtn = document.getElementById('fullscreen-toggle-btn');
     const video = document.getElementById('video');
     const seekBar = document.getElementById('seek-bar');
     const thumbElement = document.getElementById('thumb');
+    const errorDisplay = document.getElementById('error');
     const imageElement = document.getElementById('thumbImage');
     const videoContainer = document.getElementById('video-container');
     const player = new shaka.Player(video);
 
-    let lastPreviewPosition = 0, thumbnailTrack;
-    let isDraggingSeekbar = false;
+    let lastPreviewPosition = 0, thumbnailTrack, isHovering = false;
+    let hideTimeout, isDraggingSeekbar = false;
 
     fullscreenToggleBtn?.addEventListener('click', toggleFullscreen);
 
@@ -41,81 +43,123 @@
 
     document.addEventListener('fullscreenchange', () => {
       videoContainer.classList.toggle('fullscreen', !!document.fullscreenElement);
+      adjustSeekbarPosition();
     });
 
     try {
       const videoUrl = "@Html.Raw(Model.Item1)";
       const vttUrl = "@Html.Raw(Model.Item2)";
       await player.load(videoUrl);
-      thumbnailTrack = await setupThumbnails(player, thumbElement, vttUrl);
+      console.log('Video loaded successfully!');
+      const videoWidth = video.videoWidth;
+      const videoHeight = video.videoHeight;
+      const aspectRatio = videoWidth / videoHeight;
+      thumbnailTrack = await setupThumbnails(player, thumbElement, vttUrl, aspectRatio);
+
+      simulateVideoClick();
+
     } catch (error) {
-      console.error('Error loading video:', error);
+      handleError('Error loading video', error);
     }
 
-    async function setupThumbnails(player, thumbElement, vttUrl) {
+    player.addEventListener('error', (event) => {
+      handleError('Player error', event.detail);
+    });
+
+    async function setupThumbnails(player, thumbElement, vttUrl, aspectRatio) {
       try {
         const thumbnailTrack = await player.addThumbnailsTrack(vttUrl);
         if (!thumbnailTrack) throw new Error('Thumbnail track could not be added.');
+        thumbElement.style.aspectRatio = `${aspectRatio}`;
 
-        // Handle mouse movement (hover)
-        seekBar.addEventListener('mousemove', (e) => {
-          if (!isDraggingSeekbar) {
-            const { offsetX, position } = getSeekBarInfo(e);
-            displayThumbnail(position, offsetX);
-          }
+        const showThumbnail = debounce(handleThumbnailPreview, 5);
+
+        ['mousemove', 'touchmove'].forEach((event) => {
+          seekBar.addEventListener(event, (e) => {
+            isDraggingSeekbar = true; 
+            clearTimeout(hideTimeout);
+            isHovering = true;
+            video.removeAttribute('controls');
+            video.setAttribute('controls', 'controls');
+
+            showThumbnail(e);
+          });
         });
 
-        // Handle dragging
-        seekBar.addEventListener('mousedown', () => {
-          isDraggingSeekbar = true;
-          video.removeAttribute('controls');
+        ['mouseleave', 'touchend', 'mouseup'].forEach((event) => {
+          seekBar.addEventListener(event, () => {
+            hideTimeout = setTimeout(() => {
+              hideThumbnail();
+            }, 5);
+            isDraggingSeekbar = false
+          });
         });
 
-        seekBar.addEventListener('mouseup', () => {
-          isDraggingSeekbar = false;
-          video.setAttribute('controls', 'controls');
-          hideThumbnail();
+        ['click', 'touchend'].forEach((event) => {
+          seekBar.addEventListener(event, (e) => {
+            const { position } = getSeekBarInfo(e);
+            video.currentTime = position;
+          });
         });
-
-        // Handle seeking
-        seekBar.addEventListener('click', (e) => {
-          const { position } = getSeekBarInfo(e);
-          video.currentTime = position;
-          displayThumbnail(position, e.offsetX);
-        });
-
-        // Hide thumbnail when mouse leaves seek bar
-        seekBar.addEventListener('mouseleave', hideThumbnail);
 
         return thumbnailTrack;
       } catch (error) {
-        console.error('Failed to set up thumbnails:', error);
+        handleError('Failed to set up thumbnails', error);
       }
+    }
+
+    function simulateVideoClick() {
+      document.body.addEventListener('click', () => {
+        video.focus();
+        video.dispatchEvent(new Event('click')); 
+      }, { once: true });
+    }
+
+    function handleThumbnailPreview(event) {
+      if (!isDraggingSeekbar) {
+        hideThumbnail();
+        return;
+      }
+
+      const { offsetX, position } = getSeekBarInfo(event);
+      lastPreviewPosition = position;
+
+      player.getThumbnails(thumbnailTrack.id, position).then((thumbnail) => {
+        if (thumbnail?.uris.length) {
+          const [imageUrl, { x, y, width, height }] = parseThumbnailData(thumbnail);
+          displayThumbnail(thumbElement, imageElement, imageUrl, x, y, width, height, offsetX);
+        }
+      }).catch((error) => handleError('Error getting thumbnail', error));
+    }
+
+    function adjustSeekbarPosition() {
+      const seekbarContainer = document.getElementById('seekbar-container');
+      seekbarContainer.classList.toggle('fullscreen', !!document.fullscreenElement);
+    }
+
+    function debounce(func, delay) {
+      let timer;
+      return function (...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => func.apply(this, args), delay);
+      };
     }
 
     function getSeekBarInfo(event) {
       const seekBarRect = seekBar.getBoundingClientRect();
       const duration = player.seekRange().end;
 
-      let offsetX = event.pageX - seekBarRect.left;
+      let offsetX;
+      if (event.touches && event.touches.length > 0) {
+        offsetX = event.touches[0].clientX - seekBarRect.left;
+      } else if (event.changedTouches && event.changedTouches.length > 0) {
+        offsetX = event.changedTouches[0].clientX - seekBarRect.left;
+      } else {
+        offsetX = event.pageX - seekBarRect.left;
+      }
+
       const position = (offsetX / seekBarRect.width) * duration;
       return { offsetX, position };
-    }
-
-    function displayThumbnail(position, offsetX) {
-      player.getThumbnails(thumbnailTrack.id, position).then((thumbnail) => {
-        if (thumbnail?.uris.length) {
-          const [imageUrl, { x, y, width, height }] = parseThumbnailData(thumbnail);
-
-          if (imageElement.src !== imageUrl) {
-            imageElement.src = imageUrl;
-          }
-
-          imageElement.style.objectPosition = `-${x}px -${y}px`;
-          thumbElement.style.left = `${offsetX - thumbElement.offsetWidth / 2}px`;
-          thumbElement.style.display = 'block';
-        }
-      }).catch((error) => console.error('Error getting thumbnail:', error));
     }
 
     function parseThumbnailData(thumbnail) {
@@ -135,8 +179,63 @@
       return [imageUrl, { x, y, width, height }];
     }
 
+    function displayThumbnail(thumbElement, imageElement, imageUrl, x, y, width, height, offsetX) {
+      if (imageElement.src !== imageUrl) {
+        imageElement.src = imageUrl;
+      }
+
+      thumbElement.style.width = '122px';
+      thumbElement.style.height = '70px';
+
+      imageElement.style.objectPosition = `-${x}px -${y}px`;
+
+      const thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(seekBar.clientWidth - thumbElement.clientWidth / 2, offsetX));
+      if (width < 120) {
+        imageElement.style.marginLeft = `${60 - width / 2}px`;
+      }
+
+      thumbElement.style.left = `${thumbX}px`;
+      thumbElement.style.top = `-80px`;
+
+      thumbElement.style.display = 'block';
+      video.focus();
+    }
+
     function hideThumbnail() {
       thumbElement.style.display = 'none';
+    }
+
+    videoContainer.addEventListener('click', () => {
+      video.setAttribute('controls', 'controls');
+    });
+
+    video.addEventListener('mouseover', () => {
+      video.setAttribute('controls', 'controls');
+    });
+
+    videoContainer.addEventListener('mouseleave', () => {
+      hideTimeout = setTimeout(() => {
+        if (!isHoveringSeekbar() && !video.paused) {
+          video.removeAttribute('controls');
+        }
+      }, 200);
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!videoContainer.contains(event.target) && !isHoveringSeekbar()) {
+        video.removeAttribute('controls');
+      }
+    });
+
+    function isHoveringSeekbar() {
+      return seekBar.matches(':hover');
+    }
+
+    function handleError(message, error) {
+      console.error(`${message}:`, error);
+      if (errorDisplay) {
+        errorDisplay.textContent = `${message}: ${error.message}`;
+      }
     }
   });
 </script>
