@@ -76,7 +76,7 @@
 
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
-            isDraggingSeekbar = true; // Set dragging flag
+            isDraggingSeekbar = true; 
             clearTimeout(hideTimeout);
             isHovering = true;
             video.removeAttribute('controls');
@@ -90,8 +90,8 @@
           seekBar.addEventListener(event, () => {
             hideTimeout = setTimeout(() => {
               hideThumbnail();
-            }, 100);
-            isDraggingSeekbar = false; // Reset dragging flag
+            }, 5);
+            isDraggingSeekbar = false
           });
         });
 
@@ -111,7 +111,7 @@
     function simulateVideoClick() {
       document.body.addEventListener('click', () => {
         video.focus();
-        video.dispatchEvent(new Event('click')); // Explicit click simulation
+        video.dispatchEvent(new Event('click')); 
       }, { once: true });
     }
 
