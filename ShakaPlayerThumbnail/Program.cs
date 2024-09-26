@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.StaticFiles;
 using ShakaPlayerThumbnail.BackgroundServices;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.FileProviders;
 using Owin;
 using ShakaPlayerThumbnail.Hubs;
 
@@ -52,5 +53,10 @@ app.MapHub<UploadProgressHub>("/uploadProgressHub");
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Video}/{action=ListVideos}/{id?}");
-
+//app.UseStaticFiles(new StaticFileOptions
+//{
+//  FileProvider = new PhysicalFileProvider("/etc/data"),
+//  RequestPath = "/data", // This will allow you to access the videos at /videos/videoname.mp4
+//  ContentTypeProvider = provider
+//});
 app.Run();

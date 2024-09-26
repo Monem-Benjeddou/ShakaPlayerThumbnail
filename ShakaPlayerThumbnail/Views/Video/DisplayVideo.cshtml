@@ -72,43 +72,41 @@
         if (!thumbnailTrack) throw new Error('Thumbnail track could not be added.');
         thumbElement.style.aspectRatio = `${aspectRatio}`;
 
-        let isDragging = false;
-
         const showThumbnail = debounce(handleThumbnailPreview, 5);
 
-        const handleMouseMove = (e) => {
-          clearTimeout(hideTimeout);
-          isHovering = true;
-          video.removeAttribute('controls');
-          video.setAttribute('controls', 'controls');
-          showThumbnail(e);
+        ['mousemove', 'touchmove'].forEach((event) => {
+          seekBar.addEventListener(event, (e) => {
+            clearTimeout(hideTimeout);
+            isHovering = true;
+            video.removeAttribute('controls');
+            video.setAttribute('controls', 'controls');
+            showThumbnail(e);
+          });
+        });
 
-          if (isDragging) {
-            const { position } = getSeekBarInfo(e);
-            video.currentTime = position;
-          }
-        };
+        ['mousedown', 'touchstart'].forEach((event) => {
+          seekBar.addEventListener(event, () => {
+            isDraggingSeekbar = true;
+            video.setAttribute('controls', 'controls');  
+          });
+        });
 
-        const handleDragStart = (e) => {
-          isDragging = true;
-          handleMouseMove(e);
-        };
+        ['mouseleave', 'touchend', 'mouseup'].forEach((event) => {
+          seekBar.addEventListener(event, () => {
+            hideTimeout = setTimeout(() => {
+              hideThumbnail();
+            }, 5);
+            isDraggingSeekbar = false; 
+          });
+        });
 
-        const handleDragEnd = () => {
-          isDragging = false;
-          hideTimeout = setTimeout(() => {
-            hideThumbnail();
-          }, 5);
-        };
-
-        seekBar.addEventListener('mousemove', handleMouseMove);
-        seekBar.addEventListener('touchmove', handleMouseMove);
-
-        seekBar.addEventListener('mousedown', handleDragStart);
-        seekBar.addEventListener('touchstart', handleDragStart);
-
-        ['mouseup', 'mouseleave', 'touchend'].forEach(event => {
-          seekBar.addEventListener(event, handleDragEnd);
+        ['mousemove', 'touchmove', 'mouseup'].forEach((event) => {
+          seekBar.addEventListener(event, (e) => {
+            if (isDraggingSeekbar) {
+              const { position } = getSeekBarInfo(e);
+              video.currentTime = position;  
+            }
+          });
         });
 
         return thumbnailTrack;
@@ -124,11 +122,6 @@
     }
 
     function handleThumbnailPreview(event) {
-      if (!isDraggingSeekbar) {
-        hideThumbnail();
-        return;
-      }
-
       const { offsetX, position } = getSeekBarInfo(event);
       lastPreviewPosition = position;
 
@@ -139,7 +132,6 @@
         }
       }).catch((error) => handleError('Error getting thumbnail', error));
     }
-
     function adjustSeekbarPosition() {
       const seekbarContainer = document.getElementById('seekbar-container');
       seekbarContainer.classList.toggle('fullscreen', !!document.fullscreenElement);
