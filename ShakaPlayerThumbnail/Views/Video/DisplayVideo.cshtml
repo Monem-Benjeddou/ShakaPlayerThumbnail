@@ -74,33 +74,39 @@
 
         const showThumbnail = debounce(handleThumbnailPreview, 5);
 
+        // Track when the user starts dragging (PC or Mobile)
+        ['mousedown', 'touchstart'].forEach((event) => {
+          seekBar.addEventListener(event, () => {
+            isDraggingSeekbar = true;
+          });
+        });
+
+        // Update video time only while dragging
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
-            isDraggingSeekbar = true; 
+            if (!isDraggingSeekbar) {
+              showThumbnail(e);  // Only show thumbnail when hovering
+              return;
+            }
+
             clearTimeout(hideTimeout);
             isHovering = true;
-            video.removeAttribute('controls');
-            video.setAttribute('controls', 'controls');
 
-            showThumbnail(e);
+            const { position } = getSeekBarInfo(e);
+            video.currentTime = position;  // Update video time only when dragging
+            showThumbnail(e);  // Display the thumbnail preview
           });
         });
 
-        ['mouseleave', 'touchend', 'mouseup'].forEach((event) => {
-          seekBar.addEventListener(event, (e) => {
-            hideTimeout = setTimeout(() => {
-              hideThumbnail();
-            }, 5);
-            const { position } = getSeekBarInfo(e);
-            video.currentTime = position;
-            isDraggingSeekbar = false
-          });
-        });
-
-        ['click', 'touchend'].forEach((event) => {
-          seekBar.addEventListener(event, (e) => {
-            const { position } = getSeekBarInfo(e);
-            video.currentTime = position;
+        // Stop dragging and hide the thumbnail
+        ['mouseup', 'touchend', 'mouseleave'].forEach((event) => {
+          seekBar.addEventListener(event, () => {
+            if (isDraggingSeekbar) {
+              isDraggingSeekbar = false;
+              hideTimeout = setTimeout(() => {
+                hideThumbnail();
+              }, 5);
+            }
           });
         });
 
