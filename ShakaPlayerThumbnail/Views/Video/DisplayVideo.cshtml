@@ -72,34 +72,43 @@
         if (!thumbnailTrack) throw new Error('Thumbnail track could not be added.');
         thumbElement.style.aspectRatio = `${aspectRatio}`;
 
+        let isDragging = false;
+
         const showThumbnail = debounce(handleThumbnailPreview, 5);
 
-        ['mousemove', 'touchmove'].forEach((event) => {
-          seekBar.addEventListener(event, (e) => {
-            isDraggingSeekbar = true; 
-            clearTimeout(hideTimeout);
-            isHovering = true;
-            video.removeAttribute('controls');
-            video.setAttribute('controls', 'controls');
+        const handleMouseMove = (e) => {
+          clearTimeout(hideTimeout);
+          isHovering = true;
+          video.removeAttribute('controls');
+          video.setAttribute('controls', 'controls');
+          showThumbnail(e);
 
-            showThumbnail(e);
-          });
-        });
-
-        ['mouseleave', 'touchend', 'mouseup'].forEach((event) => {
-          seekBar.addEventListener(event, () => {
-            hideTimeout = setTimeout(() => {
-              hideThumbnail();
-            }, 5);
-            isDraggingSeekbar = false
-          });
-        });
-
-        ['click', 'touchend'].forEach((event) => {
-          seekBar.addEventListener(event, (e) => {
+          if (isDragging) {
             const { position } = getSeekBarInfo(e);
             video.currentTime = position;
-          });
+          }
+        };
+
+        const handleDragStart = (e) => {
+          isDragging = true;
+          handleMouseMove(e);
+        };
+
+        const handleDragEnd = () => {
+          isDragging = false;
+          hideTimeout = setTimeout(() => {
+            hideThumbnail();
+          }, 5);
+        };
+
+        seekBar.addEventListener('mousemove', handleMouseMove);
+        seekBar.addEventListener('touchmove', handleMouseMove);
+
+        seekBar.addEventListener('mousedown', handleDragStart);
+        seekBar.addEventListener('touchstart', handleDragStart);
+
+        ['mouseup', 'mouseleave', 'touchend'].forEach(event => {
+          seekBar.addEventListener(event, handleDragEnd);
         });
 
         return thumbnailTrack;
@@ -107,7 +116,6 @@
         handleError('Failed to set up thumbnails', error);
       }
     }
-
     function simulateVideoClick() {
       document.body.addEventListener('click', () => {
         video.focus();
