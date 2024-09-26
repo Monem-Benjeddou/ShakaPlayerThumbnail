@@ -55,9 +55,7 @@
       const videoHeight = video.videoHeight;
       const aspectRatio = videoWidth / videoHeight;
       thumbnailTrack = await setupThumbnails(player, thumbElement, vttUrl, aspectRatio);
-
       simulateVideoClick();
-
     } catch (error) {
       handleError('Error loading video', error);
     }
@@ -74,31 +72,46 @@
 
         const showThumbnail = debounce(handleThumbnailPreview, 5);
 
+        // Event for showing thumbnail on hover
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
-            isDraggingSeekbar = true; 
-            clearTimeout(hideTimeout);
             isHovering = true;
-            video.removeAttribute('controls');
-            video.setAttribute('controls', 'controls');
-
             showThumbnail(e);
           });
         });
 
+        // Event for stopping thumbnail preview
         ['mouseleave', 'touchend', 'mouseup'].forEach((event) => {
           seekBar.addEventListener(event, () => {
             hideTimeout = setTimeout(() => {
               hideThumbnail();
+              isHovering = false;
             }, 5);
-            isDraggingSeekbar = false
           });
         });
 
-        ['click', 'touchend'].forEach((event) => {
+        // Event for dragging the seek bar to change the current time
+        ['mousedown', 'touchstart'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
-            const { position } = getSeekBarInfo(e);
-            video.currentTime = position;
+            isDraggingSeekbar = true;
+            updateVideoTime(e);
+          });
+        });
+
+        // Update video time while dragging
+        ['mousemove', 'touchmove'].forEach((event) => {
+          seekBar.addEventListener(event, (e) => {
+            if (isDraggingSeekbar) {
+              updateVideoTime(e);
+            }
+          });
+        });
+
+        // Stop dragging when mouse or touch ends
+        ['mouseleave', 'touchend', 'mouseup'].forEach((event) => {
+          seekBar.addEventListener(event, () => {
+            isDraggingSeekbar = false;
+            hideThumbnail();
           });
         });
 
@@ -108,10 +121,16 @@
       }
     }
 
+    function updateVideoTime(event) {
+      const { position } = getSeekBarInfo(event);
+      video.currentTime = position;
+      handleThumbnailPreview(event); // Also show the thumbnail while dragging
+    }
+
     function simulateVideoClick() {
       document.body.addEventListener('click', () => {
         video.focus();
-        video.dispatchEvent(new Event('click')); 
+        video.dispatchEvent(new Event('click'));
       }, { once: true });
     }
 
@@ -215,21 +234,17 @@
 
     videoContainer.addEventListener('mouseleave', () => {
       hideTimeout = setTimeout(() => {
-        if (!isHoveringSeekbar() && !video.paused) {
+        if (!isHovering && !video.paused) {
           video.removeAttribute('controls');
         }
       }, 200);
     });
 
     document.addEventListener('click', (event) => {
-      if (!videoContainer.contains(event.target) && !isHoveringSeekbar()) {
+      if (!videoContainer.contains(event.target) && !isHovering) {
         video.removeAttribute('controls');
       }
     });
-
-    function isHoveringSeekbar() {
-      return seekBar.matches(':hover');
-    }
 
     function handleError(message, error) {
       console.error(`${message}:`, error);
