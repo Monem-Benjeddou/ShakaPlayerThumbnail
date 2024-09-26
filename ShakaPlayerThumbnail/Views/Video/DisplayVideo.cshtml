@@ -187,11 +187,8 @@
 
       imageElement.style.objectPosition = `-${x}px -${y}px`;
 
-      const seekBarRect = seekBar.getBoundingClientRect();
-      const thumbWidth = thumbElement.clientWidth;
-
       const thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(seekBar.clientWidth - thumbElement.clientWidth / 2, offsetX));
-      imageElement.style.left = `${120 - imageElement.clientWidth}px`;
+      imageElement.style.marginLeft = `${120 - imageElement.clientWidth}px`;
 
       thumbElement.style.left = `${thumbX}px`;
       thumbElement.style.top = `-80px`;  
