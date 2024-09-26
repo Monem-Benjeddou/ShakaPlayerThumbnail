@@ -91,7 +91,7 @@
             hideTimeout = setTimeout(() => {
               hideThumbnail();
             }, 5);
-            const { position } = getSeekBarInfo(event);
+            const { position } = getSeekBarInfo(e);
             video.currentTime = position;
             isDraggingSeekbar = false
           });
