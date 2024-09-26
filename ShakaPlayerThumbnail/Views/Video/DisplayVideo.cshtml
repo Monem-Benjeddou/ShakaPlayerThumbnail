@@ -115,21 +115,40 @@
       }, { once: true });
     }
 
+    function saveThumbnailToLocalStorage(position, thumbnailData) {
+      localStorage.setItem(`thumbnail_${position}`, JSON.stringify(thumbnailData));
+    }
+
+    function loadThumbnailFromLocalStorage(position) {
+      const cachedThumbnail = localStorage.getItem(`thumbnail_${position}`);
+      return cachedThumbnail ? JSON.parse(cachedThumbnail) : null;
+    }
+
     function handleThumbnailPreview(event) {
       if (!isDraggingSeekbar) {
-        hideThumbnail(); // Ensure thumbnail hides on simple click
+        hideThumbnail();
         return;
       }
 
       const { offsetX, position } = getSeekBarInfo(event);
       lastPreviewPosition = position;
 
-      player.getThumbnails(thumbnailTrack.id, position).then((thumbnail) => {
-        if (thumbnail?.uris.length) {
-          const [imageUrl, { x, y, width, height }] = parseThumbnailData(thumbnail);
-          displayThumbnail(thumbElement, imageElement, imageUrl, x, y, width, height, offsetX);
-        }
-      }).catch((error) => handleError('Error getting thumbnail', error));
+      // Check localStorage first
+      const cachedThumbnail = loadThumbnailFromLocalStorage(position);
+      if (cachedThumbnail) {
+        displayThumbnail(thumbElement, imageElement, cachedThumbnail.imageUrl, cachedThumbnail.x, cachedThumbnail.y, cachedThumbnail.width, cachedThumbnail.height, offsetX);
+      } else {
+        player.getThumbnails(thumbnailTrack.id, position).then((thumbnail) => {
+          if (thumbnail?.uris.length) {
+            const [imageUrl, { x, y, width, height }] = parseThumbnailData(thumbnail);
+
+            // Save thumbnail data to localStorage
+            saveThumbnailToLocalStorage(position, { imageUrl, x, y, width, height });
+
+            displayThumbnail(thumbElement, imageElement, imageUrl, x, y, width, height, offsetX);
+          }
+        }).catch((error) => handleError('Error getting thumbnail', error));
+      }
     }
 
     function adjustSeekbarPosition() {
