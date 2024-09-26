@@ -1,13 +1,13 @@
 ﻿<div id="video-container" class="video-container">
-  <video id="video" controls></video>
-  <div id="seekbar-container">
-    <div id="seek-bar"></div>
-    <div id="thumb" class="thumbnail">
-      <img id="thumbImage" />
+    <video id="video" controls></video>
+    <div id="seekbar-container">
+        <div id="seek-bar"></div>
+        <div id="thumb" class="thumbnail">
+            <img id="thumbImage"/>
+        </div>
     </div>
-  </div>
-  <button id="fullscreen-toggle-btn"></button>
-  <div id="error" class="error-message"></div>
+    <button id="fullscreen-toggle-btn"></button>
+    <div id="error" class="error-message"></div>
 </div>
 
 <script>
@@ -20,7 +20,7 @@
     const imageElement = document.getElementById('thumbImage');
     const videoContainer = document.getElementById('video-container');
     const player = new shaka.Player(video);
-    
+
     let lastPreviewPosition = 0, thumbnailTrack, isHovering = false;
     let hideTimeout, isDraggingSeekbar = false;
 
@@ -54,7 +54,7 @@
       const videoWidth = video.videoWidth;
       const videoHeight = video.videoHeight;
       const aspectRatio = videoWidth / videoHeight;
-      thumbnailTrack = await setupThumbnails(player, thumbElement, vttUrl,aspectRatio);
+      thumbnailTrack = await setupThumbnails(player, thumbElement, vttUrl, aspectRatio);
 
       simulateVideoClick();
 
@@ -66,7 +66,7 @@
       handleError('Player error', event.detail);
     });
 
-    async function setupThumbnails(player, thumbElement, vttUrl,aspectRatio) {
+    async function setupThumbnails(player, thumbElement, vttUrl, aspectRatio) {
       try {
         const thumbnailTrack = await player.addThumbnailsTrack(vttUrl);
         if (!thumbnailTrack) throw new Error('Thumbnail track could not be added.');
@@ -106,6 +106,7 @@
       } catch (error) {
         handleError('Failed to set up thumbnails', error);
       }
+    }
 
     function simulateVideoClick() {
       document.body.addEventListener('click', () => {
@@ -116,7 +117,7 @@
 
     function handleThumbnailPreview(event) {
       if (!isDraggingSeekbar) {
-        hideThumbnail(); 
+        hideThumbnail();
         return;
       }
 
@@ -179,28 +180,25 @@
     }
 
     function displayThumbnail(thumbElement, imageElement, imageUrl, x, y, width, height, offsetX) {
-      if (imageElement.src !==  imageUrl){
-      {
-        imageElement.src = imageUrl
+      if (imageElement.src !== imageUrl) {
+        imageElement.src = imageUrl;
       }
 
-      thumbElement.style.width = '120px';  
-      thumbElement.style.height = '68px';  
+      thumbElement.style.width = '120px';
+      thumbElement.style.height = '68px';
 
       imageElement.style.objectPosition = `-${x}px -${y}px`;
 
       const thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(seekBar.clientWidth - thumbElement.clientWidth / 2, offsetX));
-      if (width < 120){
-        imageElement.style.marginLeft = `${60 - width/2}px`;
-
+      if (width < 120) {
+        imageElement.style.marginLeft = `${60 - width / 2}px`;
       }
 
       thumbElement.style.left = `${thumbX}px`;
-      thumbElement.style.top = `-80px`;  
+      thumbElement.style.top = `-80px`;
 
-      thumbElement.style.display = 'block'; 
+      thumbElement.style.display = 'block';
       video.focus();
-      }
     }
 
     function hideThumbnail() {
@@ -210,12 +208,10 @@
     videoContainer.addEventListener('click', () => {
       video.setAttribute('controls', 'controls');
     });
+
     video.addEventListener('mouseover', () => {
       video.setAttribute('controls', 'controls');
     });
-    function isHoveringVideo() {
-      return video.matches(':hover');
-    }
 
     videoContainer.addEventListener('mouseleave', () => {
       hideTimeout = setTimeout(() => {
@@ -236,9 +232,10 @@
     }
 
     function handleError(message, error) {
-      console.error(message, error);
-      errorDisplay.textContent = `${message}: ${error.message}`;
+      console.error(`${message}:`, error);
+      if (errorDisplay) {
+        errorDisplay.textContent = `${message}: ${error.message}`;
+      }
     }
-  }});
-
+  });
 </script>
