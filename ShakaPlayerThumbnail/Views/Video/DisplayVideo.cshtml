@@ -70,55 +70,53 @@
         if (!thumbnailTrack) throw new Error('Thumbnail track could not be added.');
         thumbElement.style.aspectRatio = `${aspectRatio}`;
 
-        const showThumbnail = debounce(handleThumbnailPreview, 5);
-
-        // Event for showing thumbnail on hover
-        ['mousemove', 'touchmove'].forEach((event) => {
-          seekBar.addEventListener(event, (e) => {
-            isHovering = true;
-            showThumbnail(e);
-          });
+        // Show thumbnail on mousemove and hide on mouseleave
+        seekBar.addEventListener('mousemove', (e) => {
+          const { offsetX, position } = getSeekBarInfo(e);
+          showThumbnail(position, offsetX);
         });
 
-        // Event for stopping thumbnail preview
-        ['mouseleave', 'touchend', 'mouseup'].forEach((event) => {
-          seekBar.addEventListener(event, () => {
-            hideTimeout = setTimeout(() => {
-              hideThumbnail();
-              isHovering = false;
-            }, 5);
-          });
-        });
+        seekBar.addEventListener('mouseleave', hideThumbnail);
 
-        // Event for dragging the seek bar to change the current time
-        ['mousedown', 'touchstart'].forEach((event) => {
-          seekBar.addEventListener(event, (e) => {
-            isDraggingSeekbar = true;
-            updateVideoTime(e);
-          });
-        });
-
-        // Update video time while dragging
-        ['mousemove', 'touchmove'].forEach((event) => {
-          seekBar.addEventListener(event, (e) => {
-            if (isDraggingSeekbar) {
-              updateVideoTime(e);
-            }
-          });
-        });
-
-        // Stop dragging when mouse or touch ends
-        ['mouseleave', 'touchend', 'mouseup'].forEach((event) => {
-          seekBar.addEventListener(event, () => {
-            isDraggingSeekbar = false;
-            hideThumbnail();
-          });
+        // Update video time on click
+        seekBar.addEventListener('click', (e) => {
+          const { position } = getSeekBarInfo(e);
+          video.currentTime = position; // Update video time only on click
         });
 
         return thumbnailTrack;
       } catch (error) {
         handleError('Failed to set up thumbnails', error);
       }
+    }
+
+    function showThumbnail(position, offsetX) {
+      player.getThumbnails(thumbnailTrack.id, position).then((thumbnail) => {
+        if (thumbnail?.uris.length) {
+          const [imageUrl, { x, y, width, height }] = parseThumbnailData(thumbnail);
+          displayThumbnail(thumbElement, imageElement, imageUrl, x, y, width, height, offsetX);
+        }
+      }).catch((error) => handleError('Error getting thumbnail', error));
+    }
+
+    function displayThumbnail(thumbElement, imageElement, imageUrl, x, y, width, height, offsetX) {
+      if (imageElement.src !== imageUrl) {
+        imageElement.src = imageUrl;
+      }
+
+      thumbElement.style.width = '122px'; // Set width for the thumbnail
+      thumbElement.style.height = '70px'; // Set height for the thumbnail
+      imageElement.style.objectPosition = `-${x}px -${y}px`;
+
+      const thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(seekBar.clientWidth - thumbElement.clientWidth / 2, offsetX));
+      thumbElement.style.left = `${thumbX}px`;
+      thumbElement.style.top = `-80px`; // Adjust for positioning above the seek bar
+
+      thumbElement.style.display = 'block'; // Show the thumbnail
+    }
+
+    function hideThumbnail() {
+      thumbElement.style.display = 'none'; // Hide the thumbnail
     }
 
     function updateVideoTime(event) {
