@@ -25,9 +25,10 @@ namespace ShakaPlayerThumbnail.Tools
             var width = image.Width;
             var height = image.Height;
             if (image.Width > image.Height)
-                width = -10;
+                width -= 10;
             else
-                height = -10;
+                height -= 10;
+            Console.WriteLine("width: "+width+"height: "+height);
             return (width / 10, height / 10);
         }
 
