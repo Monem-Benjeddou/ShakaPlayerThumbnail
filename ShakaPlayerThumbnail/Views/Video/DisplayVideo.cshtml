@@ -106,7 +106,6 @@
       } catch (error) {
         handleError('Failed to set up thumbnails', error);
       }
-    }
 
     function simulateVideoClick() {
       document.body.addEventListener('click', () => {
@@ -117,7 +116,7 @@
 
     function handleThumbnailPreview(event) {
       if (!isDraggingSeekbar) {
-        hideThumbnail(); // Ensure thumbnail hides on simple click
+        hideThumbnail(); 
         return;
       }
 
@@ -191,13 +190,17 @@
       imageElement.style.objectPosition = `-${x}px -${y}px`;
 
       const thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(seekBar.clientWidth - thumbElement.clientWidth / 2, offsetX));
-      imageElement.style.marginLeft = `${60 - width/2}px`;
+      if (width<120){
+        imageElement.style.marginLeft = `${60 - width/2}px`;
+
+      }
 
       thumbElement.style.left = `${thumbX}px`;
       thumbElement.style.top = `-80px`;  
 
       thumbElement.style.display = 'block'; 
       video.focus();
+      }
     }
 
     function hideThumbnail() {
