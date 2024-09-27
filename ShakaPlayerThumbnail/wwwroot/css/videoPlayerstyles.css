@@ -12,6 +12,12 @@
     display: block;
 }
 
+.video-container.fullscreen #video {
+    width: 100vw;
+    height: 100vh; /* In fullscreen, take up the full viewport height */
+    max-height: none; /* Remove max-height in fullscreen */
+}
+
 #seekbar-container {
     position: absolute;
     width: calc(100% - 30px);
