@@ -205,10 +205,10 @@
       thumbElement.style.display = 'none';
     }
 
-    videoContainer.addEventListener('click', () => {
-      video.setAttribute('controls', 'controls');
+    seekBar.addEventListener('click', (e) => {
+      const { position } = getSeekBarInfo(e);
+      video.currentTime = position;
     });
-
     video.addEventListener('mouseover', () => {
       video.setAttribute('controls', 'controls');
     });
