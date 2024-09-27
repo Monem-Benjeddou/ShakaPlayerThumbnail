@@ -56,7 +56,7 @@ app.MapControllerRoute(
 //app.UseStaticFiles(new StaticFileOptions
 //{
 //  FileProvider = new PhysicalFileProvider("/etc/data"),
-//  RequestPath = "/data", // This will allow you to access the videos at /videos/videoname.mp4
+//  RequestPath = "/data",
 //  ContentTypeProvider = provider
 //});
 app.Run();
