@@ -87,7 +87,7 @@
         ['mousedown', 'touchstart'].forEach((event) => {
           seekBar.addEventListener(event, () => {
             isDraggingSeekbar = true;
-            video.setAttribute('controls', 'controls');  
+            video.pause(); 
           });
         });
 
@@ -96,7 +96,10 @@
             hideTimeout = setTimeout(() => {
               hideThumbnail();
             }, 5);
-            isDraggingSeekbar = false; 
+            if (isDraggingSeekbar){
+              video.play();
+              isDraggingSeekbar = false;
+            }
           });
         });
 
