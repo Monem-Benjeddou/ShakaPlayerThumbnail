@@ -1,11 +1,12 @@
 ﻿<div id="video-container" class="video-container">
     <video id="video" controls></video>
-    <div id="seekbar-container">
-        <div id="seek-bar"></div>
-        <div id="thumb" class="thumbnail">
-            <img id="thumbImage"/>
-        </div>
+  <div id="seekbar-container" style="display: none;">
+    <div id="seek-bar"></div>
+    <div id="thumb" class="thumbnail">
+      <img id="thumbImage" />
     </div>
+  </div>
+
     <button id="fullscreen-toggle-btn"></button>
     <div id="error" class="error-message"></div>
 </div>
@@ -70,7 +71,12 @@
       try {
         const thumbnailTrack = await player.addThumbnailsTrack(vttUrl);
         if (!thumbnailTrack) throw new Error('Thumbnail track could not be added.');
+
         thumbElement.style.aspectRatio = `${aspectRatio}`;
+
+        // Show the seekbar container once the thumbnails are ready
+        const seekbarContainer = document.getElementById('seekbar-container');
+        seekbarContainer.style.display = 'block';
 
         const showThumbnail = debounce(handleThumbnailPreview, 5);
 
@@ -87,7 +93,7 @@
         ['mousedown', 'touchstart'].forEach((event) => {
           seekBar.addEventListener(event, () => {
             isDraggingSeekbar = true;
-            video.pause(); 
+            video.pause();
           });
         });
 
@@ -96,7 +102,7 @@
             hideTimeout = setTimeout(() => {
               hideThumbnail();
             }, 5);
-            if (isDraggingSeekbar){
+            if (isDraggingSeekbar) {
               video.play();
               isDraggingSeekbar = false;
             }
@@ -107,7 +113,7 @@
           seekBar.addEventListener(event, (e) => {
             if (isDraggingSeekbar) {
               const { position } = getSeekBarInfo(e);
-              video.currentTime = position;  
+              video.currentTime = position;
             }
           });
         });
