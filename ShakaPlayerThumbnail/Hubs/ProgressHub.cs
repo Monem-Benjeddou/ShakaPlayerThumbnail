@@ -1,11 +1,17 @@
 using Microsoft.AspNetCore.SignalR;
 
-namespace ShakaPlayerThumbnail.Hubs;
-
-public class UploadProgressHub : Hub
+namespace ShakaPlayerThumbnail.Hubs
 {
-    public async Task ReceiveProgress(string videoName, int progress)
+    public class UploadProgressHub : Hub
     {
-        await Clients.All.SendAsync("ReceiveProgress", videoName, progress);
+        public async Task ReceiveProgress(string videoName, int progress)
+        {
+            await Clients.All.SendAsync("ReceiveProgress", videoName, progress);
+        }
+
+        public async Task ReceiveTaskTime(string videoName, double taskTime)
+        {
+            await Clients.All.SendAsync("ReceiveTaskTime", videoName, taskTime);
+        }
     }
 }

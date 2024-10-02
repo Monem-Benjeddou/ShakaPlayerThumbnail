@@ -12,41 +12,58 @@
     {
         <table class="table table-striped">
             <thead>
-            <tr>
-                <th scope="col">Video Title</th>
-                <th scope="col">Upload Date</th>
-                <th scope="col">Status</th>
-                <th scope="col">Actions</th>
-            </tr>
+                <tr>
+                    <th scope="col">Video Title</th>
+                    <th scope="col">Upload Date</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Duration</th>
+                    <th scope="col">Actions</th>
+                </tr>
             </thead>
             <tbody>
-            @foreach (var video in Model)
-            {
-                <tr>
-                    <td>@video.Name</td>
-                    <td>@video.UploadDate.ToString("yyyy-MM-dd HH:mm")</td>
-                    <td>
-                        @if (video.IsProcessing)
-                        {
-                            <span>Processing...</span>
-                            <div class="progress">
-                                <div class="progress-bar" id="progress-@HttpUtility.UrlPathEncode(video.FileName)" role="progressbar" style="width: @video.Progress%;" aria-valuenow="@video.Progress" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                        }
-                        else
-                        {
-                            <span>Processing complete</span>
-                        }
-                    </td>
-                    <td>
-                        <a href="@Url.Action("DisplayVideo", "Video", new { videoName = video.Name })"
-                           class="btn btn-secondary mt-1 @(!video.IsProcessing ? "" : "disabled")"
-                           id="btn-display-@HttpUtility.UrlPathEncode(video.FileName)">
-                            Display Video
-                        </a>
-                    </td>
-                </tr>
-            }
+                @foreach (var video in Model)
+                {
+                    <tr>
+                        <td>@video.Name</td>
+                        <td>@video.UploadDate.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>
+                            @if (video.IsProcessing)
+                            {
+                                <span>Processing...</span>
+                                <div class="progress">
+                                    <div class="progress-bar" id="progress-@HttpUtility.UrlPathEncode(video.FileName)" 
+                                         role="progressbar" style="width: @video.Progress%;" 
+                                         aria-valuenow="@video.Progress" aria-valuemin="0" aria-valuemax="100">
+                                        @video.Progress%
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <span>Processing complete</span>
+                            }
+                        </td>
+                        <td>
+                            <span id="duration-@HttpUtility.UrlPathEncode(video.FileName)">
+                                @if (video.TaskDuration != 0)
+                                {
+                                    @TimeSpan.FromSeconds(video.TaskDuration).ToString(@"hh\:mm\:ss")
+                                }
+                                else
+                                {
+                                    <span>Duration not ready</span>
+                                }
+                            </span>
+                        </td>
+                        <td>
+                            <a href="@Url.Action("DisplayVideo", "Video", new { videoName = video.Name })"
+                               class="btn btn-secondary mt-1 @(video.IsProcessing ? "disabled" : "")"
+                               id="btn-display-@HttpUtility.UrlPathEncode(video.FileName)">
+                                Display Video
+                            </a>
+                        </td>
+                    </tr>
+                }
             </tbody>
         </table>
     }
@@ -56,3 +73,4 @@
         <a href="@Url.Action("Upload", "Video")" class="btn btn-secondary mt-3">Upload Your First Video</a>
     }
 </div>
+

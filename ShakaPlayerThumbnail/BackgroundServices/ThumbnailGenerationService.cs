@@ -1,8 +1,12 @@
+using System.Diagnostics;
 using System.Threading.Channels;
 
 namespace ShakaPlayerThumbnail.BackgroundServices;
 
-public class ThumbnailGenerationService(IBackgroundTaskQueue taskQueue, ILogger<ThumbnailGenerationService> logger)
+public class ThumbnailGenerationService(
+    IBackgroundTaskQueue taskQueue,
+    ILogger<ThumbnailGenerationService> logger,
+    IProgressTracker progressTracker)
     : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -12,6 +16,8 @@ public class ThumbnailGenerationService(IBackgroundTaskQueue taskQueue, ILogger<
         while (!stoppingToken.IsCancellationRequested)
         {
             var workItem = await taskQueue.DequeueAsync(stoppingToken);
+            var taskId = Guid.NewGuid().ToString(); 
+            progressTracker.SetProcessingStatus(taskId, true);
 
             try
             {
@@ -26,6 +32,7 @@ public class ThumbnailGenerationService(IBackgroundTaskQueue taskQueue, ILogger<
         logger.LogInformation("Thumbnail Generation Service is stopping.");
     }
 }
+
 public interface IBackgroundTaskQueue
 {
     void QueueBackgroundWorkItem(Func<CancellationToken, Task> workItem);
@@ -34,12 +41,7 @@ public interface IBackgroundTaskQueue
 
 public class BackgroundTaskQueue : IBackgroundTaskQueue
 {
-    private readonly Channel<Func<CancellationToken, Task>> _queue;
-
-    public BackgroundTaskQueue()
-    {
-        _queue = Channel.CreateUnbounded<Func<CancellationToken, Task>>();
-    }
+    private readonly Channel<Func<CancellationToken, Task>> _queue = Channel.CreateUnbounded<Func<CancellationToken, Task>>();
 
     public void QueueBackgroundWorkItem(Func<CancellationToken, Task> workItem)
     {
@@ -54,18 +56,22 @@ public class BackgroundTaskQueue : IBackgroundTaskQueue
         return await _queue.Reader.ReadAsync(cancellationToken);
     }
 }
+
 public interface IProgressTracker
 {
     void SetProgress(string taskId, int progress);
     int GetProgress(string taskId);
-    bool IsProcessing(string taskId); // New method to check if processing has started
-    void SetProcessingStatus(string taskId, bool isProcessing); // New method to set the processing status
+    bool IsProcessing(string taskId);
+    void SetProcessingStatus(string taskId, bool isProcessing);
+    void SetTaskTime(string taskId, double timeInSeconds); 
+    double GetTaskTime(string taskId);
 }
 
 public class InMemoryProgressTracker : IProgressTracker
 {
-    private readonly Dictionary<string, int> _progress = new Dictionary<string, int>();
-    private readonly Dictionary<string, bool> _processingStatus = new Dictionary<string, bool>(); // Store processing status
+    private readonly Dictionary<string, int> _progress = new();
+    private readonly Dictionary<string, bool> _processingStatus = new();
+    private readonly Dictionary<string, double> _taskTimes = new();
 
     public void SetProgress(string taskId, int progress)
     {
@@ -74,7 +80,7 @@ public class InMemoryProgressTracker : IProgressTracker
             _progress[taskId] = progress;
             if (progress == 100)
             {
-                SetProcessingStatus(taskId, false); // Mark as not processing when progress reaches 100%
+                SetProcessingStatus(taskId, false);
             }
         }
     }
@@ -83,7 +89,7 @@ public class InMemoryProgressTracker : IProgressTracker
     {
         lock (_progress)
         {
-            return _progress.ContainsKey(taskId) ? _progress[taskId] : 0;
+            return _progress.TryGetValue(taskId, out var value) ? value : 0;
         }
     }
 
@@ -100,6 +106,22 @@ public class InMemoryProgressTracker : IProgressTracker
         lock (_processingStatus)
         {
             _processingStatus[taskId] = isProcessing;
+        }
+    }
+
+    public void SetTaskTime(string taskId, double timeInSeconds)
+    {
+        lock (_taskTimes)
+        {
+            _taskTimes[taskId] = timeInSeconds;
+        }
+    }
+
+    public double GetTaskTime(string taskId)
+    {
+        lock (_taskTimes)
+        {
+            return _taskTimes.TryGetValue(taskId, out var time) ? time : 0;
         }
     }
 }

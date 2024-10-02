@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
 using ShakaPlayerThumbnail.BackgroundServices;
 using ShakaPlayerThumbnail.Hubs;
+using ShakaPlayerThumbnail.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddCors(options =>
@@ -17,6 +18,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
 builder.Services.AddSingleton<IProgressTracker, InMemoryProgressTracker>();
+builder.Services.AddSingleton<IVideoRepository, VideoRepository>();
 builder.Services.AddHostedService<ThumbnailGenerationService>();
 builder.Services.AddSignalR();
 

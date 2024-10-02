@@ -3,7 +3,6 @@ const connection = new signalR.HubConnectionBuilder()
     .configureLogging(signalR.LogLevel.Information)
     .build();
 
-
 connection.on("ReceiveProgress", (videoName, progress) => {
     let encodedVideoName = encodeURIComponent(videoName);
     const progressBar = document.getElementById(`progress-${encodedVideoName}`);
@@ -22,4 +21,12 @@ connection.on("ReceiveProgress", (videoName, progress) => {
     }
 });
 
+connection.on("ReceiveTaskTime", (videoName, taskTime) => {
+    let encodedVideoName = encodeURIComponent(videoName);
+    const progressBar = document.getElementById(`progress-${encodedVideoName}`);
+
+    if (progressBar) {
+        progressBar.textContent += ` - Time: ${taskTime.toFixed(2)} seconds`;
+    }
+});
 connection.start().catch(err => console.error(err.toString()));

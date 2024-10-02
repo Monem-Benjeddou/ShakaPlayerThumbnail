@@ -9,5 +9,6 @@ public class Video
     public DateTime UploadDate { get; set; }
     public bool IsProcessing { get; set; }
     public int Progress { get; set; }
+    public double TaskDuration { get; set; } 
 }
 

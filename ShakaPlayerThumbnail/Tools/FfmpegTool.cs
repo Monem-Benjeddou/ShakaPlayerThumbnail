@@ -11,7 +11,6 @@ namespace ShakaPlayerThumbnail.Tools
         private const string apiKey = "fCqVJMv6IYrJS3F8eH3iDTGo2Dh57kQRRAL4aARL";
         private const string accountId = "68f8f060e3f2d742fdf6a28eb9239fff";
         private const string uploadUrl = $"https://api.cloudflare.com/client/v4/accounts/{accountId}/images/v1";
-
         private static string BuildSimplifiedFfmpegArguments(string videoPath, string outputImagePath, int tileIndex,
             string videoName)
         {
@@ -104,7 +103,8 @@ namespace ShakaPlayerThumbnail.Tools
             string outputImagePath,
             string videoName,
             int intervalSeconds,
-            Action<int> reportProgress)
+            Func<int, Task> reportProgressToHub,
+            Func<double, Task> reportTimeToHub)
         {
             var videoDuration = GetVideoDuration(videoPath);
             if (videoDuration <= 0)
@@ -112,7 +112,7 @@ namespace ShakaPlayerThumbnail.Tools
                 throw new InvalidOperationException("Invalid video duration.");
             }
 
-            var isLongVideo = videoDuration > 30 * 60;
+            var isLongVideo = videoDuration > 30 * 60; // Longer than 30 minutes
             var totalFrames = (int)Math.Ceiling(videoDuration / intervalSeconds);
             const int tileWidth = 10;
             const int tileHeight = 10;
@@ -126,11 +126,12 @@ namespace ShakaPlayerThumbnail.Tools
 
             var (frameWidth, frameHeight) = (0, 0);
 
+            var stopwatch = Stopwatch.StartNew(); 
+
             for (var i = 1; i <= numberOfTiles; i++)
             {
                 double startTime = (i - 1) * framesPerTile * intervalSeconds;
                 var endTime = Math.Min(startTime + framesPerTile * intervalSeconds, videoDuration);
-
                 var framesInThisSection = Math.Min(totalFrames - (i - 1) * framesPerTile, framesPerTile);
 
                 var arguments = isLongVideo
@@ -153,12 +154,16 @@ namespace ShakaPlayerThumbnail.Tools
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Error uploading tile {i}: {ex.Message}");
-                    continue; 
+                    continue;
                 }
 
                 int progress = (i * 100) / numberOfTiles;
-                reportProgress(progress);
+                double elapsedTime = stopwatch.Elapsed.TotalSeconds;
+
+                await reportProgressToHub(progress); 
+                await reportTimeToHub(elapsedTime); 
             }
+            stopwatch.Stop(); 
 
             GenerateVttFile(videoName, thumbnailInfo, intervalSeconds, tileWidth, tileHeight, outputImagePath,
                 frameWidth, frameHeight);
