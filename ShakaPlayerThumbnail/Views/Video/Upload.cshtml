@@ -45,7 +45,7 @@
         cancelBtn.style.display = 'block';
         abortController = new AbortController();
 
-        const chunkSize = 512 * 1024;
+        const chunkSize = 1024 * 1024;
         const totalChunks = Math.ceil(file.size / chunkSize);
         const progressBar = document.querySelector('.progress-bar');
         const progress = document.getElementById('uploadProgress');
