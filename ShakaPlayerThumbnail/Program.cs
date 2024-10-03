@@ -57,4 +57,5 @@ app.UseStaticFiles(new StaticFileOptions
   RequestPath = "/data",
   ContentTypeProvider = provider
 });
+ThreadPool.SetMinThreads(200, 200);
 app.Run();

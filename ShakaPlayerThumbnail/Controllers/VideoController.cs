@@ -163,7 +163,7 @@ namespace ShakaPlayerThumbnail.Controllers
                         UploadDate = System.IO.File.GetCreationTime(file),
                         IsProcessing = _progressTracker.IsProcessing(fileName),
                         Progress = _progressTracker.GetProgress(fileName),
-                        TaskDuration = taskDuration
+                        TaskDuration = taskDuration == 0 ? _progressTracker.GetTaskTime(fileNameWithoutExtension) : taskDuration  
                     };
                 }).ToList();
 

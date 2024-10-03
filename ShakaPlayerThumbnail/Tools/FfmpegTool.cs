@@ -11,13 +11,6 @@ namespace ShakaPlayerThumbnail.Tools
         private const string apiKey = "fCqVJMv6IYrJS3F8eH3iDTGo2Dh57kQRRAL4aARL";
         private const string accountId = "68f8f060e3f2d742fdf6a28eb9239fff";
         private const string uploadUrl = $"https://api.cloudflare.com/client/v4/accounts/{accountId}/images/v1";
-        private static string BuildSimplifiedFfmpegArguments(string videoPath, string outputImagePath, int tileIndex,
-            string videoName)
-        {
-            return $"-i \"{videoPath}\" -vf \"fps=1,scale=-1:68,tile=10x10\" " +
-                   $"-quality 50 -compression_level 6 -threads 0 -y \"{outputImagePath}/{videoName}{tileIndex}.webp\"";
-        }
-
         private static (int Width, int Height) GetWebpDimensions(string webpFilePath)
         {
             using Image image = Image.Load(webpFilePath);
@@ -33,6 +26,15 @@ namespace ShakaPlayerThumbnail.Tools
                    $"-vf \"select=not(mod(t\\,{intervalSeconds})),scale=-1:68,tile=10x10\" " +
                    $"-quality 50 -compression_level 6 -threads 0 -y \"{outputImagePath}/{videoName}{tileIndex}.webp\"";
         }
+
+        private static string BuildSimplifiedFfmpegArguments(string videoPath, string outputImagePath, int tileIndex,
+            string videoName)
+        {
+            return $"-i \"{videoPath}\" -vf \"fps=1,scale=-1:68,tile=10x10\" " +
+                   $"-quality 50 -compression_level 4 -preset ultrafast -threads 0 " +
+                   $"-y \"{outputImagePath}/{videoName}{tileIndex}.webp\"";
+        }
+
 
         private static double GetVideoDuration(string videoPath)
         {

@@ -7,27 +7,23 @@
       - access_key=b8uGptYNhcPKikLNq7k1
       - secret_key=SrisPrHVFVbnaYK8xb3BJcSBGL14mB8IyvdiBwbU
       - service_url=https://minio.john-group.org
+      - ASPNETCORE_ENVIRONMENT=Production
+      - DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+      - COMPlus_ThreadPool_ForceMinWorkerThreads=200  
     networks:
       - thumbnail-network
     ports:
       - "5006:5006"
     volumes:
       - thumbnail-data:/etc/data
-  #  minio:
-  #    image: quay.io/minio/minio
-  #    container_name: minio
-  #    restart: unless-stopped
-  #    command: server /data --console-address ":2001" --address ":2000"
-  #    environment:
-  #      - MINIO_ROOT_USER=root
-  #      - MINIO_ROOT_PASSWORD=\AS60S;yD4cs4l`]3~|/8<xpY7VqJ4H
-  #    volumes:
-  #      - /home/monem/minio/data:/data
-  #    ports:
-  #      - "2000:2000"
-  #      - "2001:2001"
-  #    networks:
-  #      - thumbnail-network
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'  # Adjust based on available CPU cores (use 4 cores)
+          memory: 4g  # Limit memory usage to 4 GB
+        reservations:
+          cpus: '2.0'  # Reserve at least 2 CPU cores
+          memory: 2g  # Reserve 2 GB memory
 
   thumbnail-nginx:
     build:
@@ -35,16 +31,25 @@
       dockerfile: NginxDockerfile
     depends_on:
       - shakaplayerthumbnail
-    #      - minio
     ports:
       - "80:80"
     networks:
       - thumbnail-network
     volumes:
       - thumbnail-data:/etc/data
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'  # Assign 2 CPU cores
+          memory: 2g  # Limit memory usage to 2 GB
+        reservations:
+          cpus: '1.0'  # Reserve at least 1 CPU core
+          memory: 1g  # Reserve 1 GB memory
+
 networks:
   thumbnail-network:
     driver: bridge
+
 volumes:
   thumbnail-data:
     driver: local
