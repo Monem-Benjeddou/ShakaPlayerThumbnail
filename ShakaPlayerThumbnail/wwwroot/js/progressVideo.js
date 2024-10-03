@@ -27,7 +27,7 @@ connection.on("ReceiveTaskTime", (videoName, taskTime) => {
 
     if (durationBar) {
         durationBar.textContent = "";
-        durationBar.textContent += ` - Time: ${taskTime.toFixed(2)} seconds`;
+        durationBar.textContent += `${taskTime.toFixed(2)} s`;
     }
 });
 connection.start().catch(err => console.error(err.toString()));
