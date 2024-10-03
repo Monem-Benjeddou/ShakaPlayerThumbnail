@@ -23,10 +23,11 @@ connection.on("ReceiveProgress", (videoName, progress) => {
 
 connection.on("ReceiveTaskTime", (videoName, taskTime) => {
     let encodedVideoName = encodeURIComponent(videoName);
-    const progressBar = document.getElementById(`progress-${encodedVideoName}`);
+    const durationBar = document.getElementById(`duration-${encodedVideoName}`);
 
-    if (progressBar) {
-        progressBar.textContent += ` - Time: ${taskTime.toFixed(2)} seconds`;
+    if (durationBar) {
+        durationBar.textContent = "";
+        durationBar.textContent += ` - Time: ${taskTime.toFixed(2)} seconds`;
     }
 });
 connection.start().catch(err => console.error(err.toString()));
