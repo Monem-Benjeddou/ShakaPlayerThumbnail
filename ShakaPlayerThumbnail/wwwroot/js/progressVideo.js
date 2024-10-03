@@ -26,8 +26,13 @@ connection.on("ReceiveTaskTime", (videoName, taskTime) => {
     const durationBar = document.getElementById(`duration-${encodedVideoName}`);
 
     if (durationBar) {
-        durationBar.textContent = "";
-        durationBar.textContent += `${taskTime.toFixed(2)} s`;
+        // Calculate hours, minutes, and seconds from taskTime
+        let hours = Math.floor(taskTime / 3600);
+        let minutes = Math.floor((taskTime % 3600) / 60);
+        let seconds = Math.floor(taskTime % 60);
+
+        durationBar.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     }
 });
+
 connection.start().catch(err => console.error(err.toString()));
