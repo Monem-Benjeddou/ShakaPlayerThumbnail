@@ -219,6 +219,7 @@ namespace ShakaPlayerThumbnail.Tools
             {
                 var vttCompressedFilePath = Path.Combine(previewDirectory, $"{vttFileName}.gz");
                 FileTools.CompressFile(vttFilePath, vttCompressedFilePath);
+                FileTools.DeleteFile(vttFilePath);
             }
         }
 
