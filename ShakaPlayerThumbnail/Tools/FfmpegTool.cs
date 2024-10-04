@@ -13,7 +13,7 @@ namespace ShakaPlayerThumbnail.Tools
         private const string uploadUrl = $"https://api.cloudflare.com/client/v4/accounts/{accountId}/images/v1";
         private static (int Width, int Height) GetWebpDimensions(string webpFilePath)
         {
-            using Image image = Image.Load(webpFilePath);
+            using var image = Image.Load(webpFilePath);
             var width = image.Width;
             var height = image.Height;
             return (width / 10, height / 10);
@@ -31,7 +31,7 @@ namespace ShakaPlayerThumbnail.Tools
             string videoName)
         {
             return $"-i \"{videoPath}\" -vf \"fps=1,scale=-1:68,tile=10x10\" " +
-                   $"-quality 50 -compression_level 4 -preset ultrafast -threads 0 " +
+                   $"-quality 50 -compression_level 4 -threads 0 " +
                    $"-y \"{outputImagePath}/{videoName}{tileIndex}.webp\"";
         }
 

@@ -9,6 +9,8 @@ public class ThumbnailGenerationService(
     IProgressTracker progressTracker)
     : BackgroundService
 {
+    private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(2); // Limit to 2 concurrent tasks
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         logger.LogInformation("Thumbnail Generation Service is starting.");
@@ -16,17 +18,27 @@ public class ThumbnailGenerationService(
         while (!stoppingToken.IsCancellationRequested)
         {
             var workItem = await taskQueue.DequeueAsync(stoppingToken);
-            var taskId = Guid.NewGuid().ToString(); 
-            progressTracker.SetProcessingStatus(taskId, true);
 
-            try
+            _ = Task.Run(async () =>
             {
-                await workItem(stoppingToken);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error occurred executing thumbnail generation task.");
-            }
+                var taskId = Guid.NewGuid().ToString();
+                progressTracker.SetProcessingStatus(taskId, true);
+
+                await _semaphoreSlim.WaitAsync(stoppingToken);
+                try
+                {
+                    await workItem(stoppingToken);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error occurred executing thumbnail generation task.");
+                }
+                finally
+                {
+                    _semaphoreSlim.Release();
+                    progressTracker.SetProcessingStatus(taskId, false);
+                }
+            }, stoppingToken);
         }
 
         logger.LogInformation("Thumbnail Generation Service is stopping.");
@@ -41,7 +53,8 @@ public interface IBackgroundTaskQueue
 
 public class BackgroundTaskQueue : IBackgroundTaskQueue
 {
-    private readonly Channel<Func<CancellationToken, Task>> _queue = Channel.CreateUnbounded<Func<CancellationToken, Task>>();
+    private readonly Channel<Func<CancellationToken, Task>> _queue =
+        Channel.CreateUnbounded<Func<CancellationToken, Task>>();
 
     public void QueueBackgroundWorkItem(Func<CancellationToken, Task> workItem)
     {
@@ -63,7 +76,7 @@ public interface IProgressTracker
     int GetProgress(string taskId);
     bool IsProcessing(string taskId);
     void SetProcessingStatus(string taskId, bool isProcessing);
-    void SetTaskTime(string taskId, double timeInSeconds); 
+    void SetTaskTime(string taskId, double timeInSeconds);
     double GetTaskTime(string taskId);
 }
 

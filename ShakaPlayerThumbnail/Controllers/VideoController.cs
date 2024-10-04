@@ -89,7 +89,6 @@ namespace ShakaPlayerThumbnail.Controllers
                     progressTracker.SetProcessingStatus(nameOfVideoWithoutExtension, true);
                     progressTracker.SetProgress(nameOfVideoWithoutExtension, 0);
                     progressTracker.SetTaskTime(nameOfVideoWithoutExtension, 0);
-                    double thumbnailGenerationTime;
                     await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, nameOfVideoWithoutExtension, 1,
                         async progress =>
                         {
