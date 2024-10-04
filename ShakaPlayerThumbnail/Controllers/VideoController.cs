@@ -19,8 +19,8 @@ namespace ShakaPlayerThumbnail.Controllers
         IVideoRepository _videoRepository,
         ILogger<VideoController> _logger) : Controller
     {
-        private readonly string PreviewsFolderPath = "/etc/data/previews";
-        private readonly string VideoFolderPath = "/etc/data/video";
+        private const string PreviewsFolderPath = "/etc/data/previews";
+        private const string VideoFolderPath = "/etc/data/video";
 
         public ActionResult Upload()
         {
@@ -32,19 +32,15 @@ namespace ShakaPlayerThumbnail.Controllers
             IFormFile videoChunk,
             int chunkIndex,
             int totalChunks,
-            string fileName,
+            string videoName,
             CancellationToken cancellationToken)
         {
             _logger.LogInformation(
-                "Starting video chunk upload. FileName: {FileName}, ChunkIndex: {ChunkIndex}/{TotalChunks}", fileName,
+                "Starting video chunk upload. FileName: {FileName}, ChunkIndex: {ChunkIndex}/{TotalChunks}", videoName,
                 chunkIndex + 1, totalChunks);
+            var nameOfVideoWithoutExtension = FileTools.GetFileNameWithoutExtension(videoName);
 
-            int fileExtPos = fileName.LastIndexOf(".");
-            var nameOfVideoWithoutExtension = string.Empty;
-            if (fileExtPos >= 0)
-                nameOfVideoWithoutExtension = fileName.Substring(0, fileExtPos);
-
-            var videoPath = Path.Combine(VideoFolderPath, fileName);
+            var videoPath = Path.Combine(VideoFolderPath, videoName);
 
             if (!Directory.Exists(VideoFolderPath))
             {
@@ -62,7 +58,6 @@ namespace ShakaPlayerThumbnail.Controllers
                     await videoChunk.CopyToAsync(stream, cancellationToken);
                 }
 
-                // Log progress when not complete yet
                 if (chunkIndex + 1 != totalChunks)
                 {
                     _logger.LogInformation("Chunk {ChunkIndex}/{TotalChunks} uploaded successfully.", chunkIndex + 1,
@@ -71,7 +66,7 @@ namespace ShakaPlayerThumbnail.Controllers
                 }
 
                 _logger.LogInformation(
-                    "All chunks uploaded successfully for file {FileName}, starting thumbnail generation.", fileName);
+                    "All chunks uploaded successfully for file {FileName}, starting thumbnail generation.", videoName);
 
                 var outputImagePath = Path.Combine(PreviewsFolderPath, nameOfVideoWithoutExtension);
                 if (!Directory.Exists(outputImagePath))
@@ -89,7 +84,7 @@ namespace ShakaPlayerThumbnail.Controllers
                     progressTracker.SetProcessingStatus(nameOfVideoWithoutExtension, true);
                     progressTracker.SetProgress(nameOfVideoWithoutExtension, 0);
                     progressTracker.SetTaskTime(nameOfVideoWithoutExtension, 0);
-                    await FfmpegTool.GenerateSpritePreview(videoPath, outputImagePath, nameOfVideoWithoutExtension, 1,
+                    await FfmpegTool.GenerateSpritePreviewAsync(videoPath, outputImagePath, nameOfVideoWithoutExtension, videoName, 1,
                         async progress =>
                         {
                             _logger.LogInformation("Thumbnail generation progress: {Progress}% for {VideoName}",
@@ -117,7 +112,7 @@ namespace ShakaPlayerThumbnail.Controllers
             }
             catch (OperationCanceledException)
             {
-                _logger.LogWarning("Upload canceled for file {FileName}. Deleting incomplete file.", fileName);
+                _logger.LogWarning("Upload canceled for file {FileName}. Deleting incomplete file.", videoName);
 
                 if (System.IO.File.Exists(videoPath))
                 {
@@ -129,7 +124,7 @@ namespace ShakaPlayerThumbnail.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex,
-                    "An error occurred while uploading video chunk or generating thumbnails for {FileName}", fileName);
+                    "An error occurred while uploading video chunk or generating thumbnails for {FileName}", videoName);
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -144,17 +139,17 @@ namespace ShakaPlayerThumbnail.Controllers
             var taskDurations = _videoRepository.LoadTaskDurationsFromJson();
 
             var videoExtensions = new[]
-                { ".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv" }; // Add other formats as needed
+                { ".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv" }; 
 
             var videoFiles = Directory.GetFiles(VideoFolderPath)
-                .Where(file => videoExtensions.Contains(Path.GetExtension(file).ToLower())) // Filter video files
+                .Where(file => videoExtensions.Contains(Path.GetExtension(file).ToLower())) 
                 .Select(file =>
                 {
-                    var fileNameWithoutExtension = GetFileNameWithoutExtension(Path.GetFileName(file));
+                    var fileNameWithoutExtension =  FileTools.GetFileNameWithoutExtension(Path.GetFileName(file));
 
                     taskDurations.TryGetValue(fileNameWithoutExtension, out double taskDuration);
 
-                    var fileName = GetFileNameWithoutExtension(Path.GetFileName(file));
+                    var fileName =  FileTools.GetFileNameWithoutExtension(Path.GetFileName(file));
                     return new Video
                     {
                         Name = Path.GetFileName(file),
@@ -172,8 +167,9 @@ namespace ShakaPlayerThumbnail.Controllers
 
         public ActionResult DisplayVideo([FromQuery] string videoName)
         {
-            var fileNameWithoutExtension = GetFileNameWithoutExtension(videoName);
-            var returnedVttFilePath = $"/data/previews/{fileNameWithoutExtension}/{fileNameWithoutExtension}.vtt";
+            var fileNameWithoutExtension =  FileTools.GetFileNameWithoutExtension(videoName);
+            var vttFileName = FileTools.GetUniqueVideoName(videoName);
+            var returnedVttFilePath = $"/data/previews/{fileNameWithoutExtension}/{vttFileName}.gz";
             var returnedVideoPath = $"/data/video/{videoName}";
             var model = new Tuple<string, string>(returnedVideoPath, returnedVttFilePath);
             return View((object)model);
@@ -184,14 +180,6 @@ namespace ShakaPlayerThumbnail.Controllers
         {
             var progress = progressTracker.GetProgress(fileName);
             return Ok(new { progress });
-        }
-
-        private string GetFileNameWithoutExtension(string fileName)
-        {
-            int fileExtPos = fileName.LastIndexOf(".");
-            if (fileExtPos >= 0)
-                return fileName.Substring(0, fileExtPos);
-            return string.Empty;
         }
     }
 }

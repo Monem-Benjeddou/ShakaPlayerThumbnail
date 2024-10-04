@@ -1,5 +1,5 @@
 ﻿<div id="video-container" class="video-container">
-    <video id="video" controls></video>
+  <video id="video" controls></video>
   <div id="seekbar-container" style="display: none;">
     <div id="seek-bar"></div>
     <div id="thumb" class="thumbnail">
@@ -7,10 +7,10 @@
     </div>
   </div>
 
-    <button id="fullscreen-toggle-btn"></button>
-    <div id="error" class="error-message"></div>
+  <button id="fullscreen-toggle-btn"></button>
+  <div id="error" class="error-message"></div>
 </div>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js" integrity="sha512-g2TeAWw5GPnX7z0Kn8nFbYfeHcvAu/tx6d6mrLe/90mkCxO+RcptyYpksUz35EO337F83bZwcmUyHiHamspkfg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async () => {
     const fullscreenToggleBtn = document.getElementById('fullscreen-toggle-btn');
@@ -67,9 +67,37 @@
       handleError('Player error', event.detail);
     });
 
+    async function fetchAndDecompressVtt(vttUrl) {
+      try {
+        const response = await fetch(vttUrl);
+        if (!response.ok) throw new Error('Failed to fetch the compressed VTT file.');
+
+        const compressedData = await response.arrayBuffer();
+        const decompressedData = pako.inflate(new Uint8Array(compressedData));
+        const decoder = new TextDecoder('utf-8');
+        const decompressedVttContent = decoder.decode(decompressedData);
+
+        // Ensure the decompressed content starts with "WEBVTT"
+        if (!decompressedVttContent.startsWith('WEBVTT')) {
+          throw new Error('Decompressed data is not a valid VTT file.');
+        }
+
+        // Create a Blob from the decompressed VTT content
+        const vttBlob = new Blob([decompressedVttContent], { type: 'text/vtt' });
+
+        // Generate a URL for the Blob
+        const vttBlobUrl = URL.createObjectURL(vttBlob);
+
+        return vttBlobUrl;  // Return the Blob URL
+      } catch (error) {
+        throw new Error(`Failed to fetch and decompress VTT: ${error.message}`);
+      }
+    }
     async function setupThumbnails(player, thumbElement, vttUrl, aspectRatio) {
       try {
-        const thumbnailTrack = await player.addThumbnailsTrack(vttUrl);
+        const vttBlobUrl = await fetchAndDecompressVtt(vttUrl);
+
+        const thumbnailTrack = await player.addThumbnailsTrack(vttBlobUrl);
         if (!thumbnailTrack) throw new Error('Thumbnail track could not be added.');
 
         thumbElement.style.aspectRatio = `${aspectRatio}`;
@@ -126,7 +154,7 @@
     function simulateVideoClick() {
       document.body.addEventListener('click', () => {
         video.focus();
-        video.dispatchEvent(new Event('click')); 
+        video.dispatchEvent(new Event('click'));
       }, { once: true });
     }
 

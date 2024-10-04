@@ -8,46 +8,39 @@ namespace ShakaPlayerThumbnail.Tools
 {
     public static class FfmpegTool
     {
-        private const string apiKey = "fCqVJMv6IYrJS3F8eH3iDTGo2Dh57kQRRAL4aARL";
-        private const string accountId = "68f8f060e3f2d742fdf6a28eb9239fff";
-        private const string uploadUrl = $"https://api.cloudflare.com/client/v4/accounts/{accountId}/images/v1";
+        private const string ApiKey = "fCqVJMv6IYrJS3F8eH3iDTGo2Dh57kQRRAL4aARL";
+        private const string AccountId = "68f8f060e3f2d742fdf6a28eb9239fff";
+        private const string UploadUrl = $"https://api.cloudflare.com/client/v4/accounts/{AccountId}/images/v1";
+
         private static (int Width, int Height) GetWebpDimensions(string webpFilePath)
         {
             using var image = Image.Load(webpFilePath);
-            var width = image.Width;
-            var height = image.Height;
-            return (width / 10, height / 10);
+            return (image.Width / 10, image.Height / 10);  // Scaling by 10
         }
 
-        private static string BuildFfmpegArguments(string videoPath, double startTime, double endTime,
-            string outputImagePath, int tileIndex, int intervalSeconds, string videoName)
-        {
-            return $"-i \"{videoPath}\" -ss {startTime} -t {endTime - startTime} " +
-                   $"-vf \"select=not(mod(t\\,{intervalSeconds})),scale=-1:68,tile=10x10\" " +
-                   $"-quality 50 -compression_level 6 -threads 0 -y \"{outputImagePath}/{videoName}{tileIndex}.webp\"";
-        }
+        private static string BuildFfmpegArguments(string videoPath, double startTime, double endTime, 
+            string outputImagePath, int tileIndex, int intervalSeconds, string videoName) =>
+            $"-i \"{videoPath}\" -ss {startTime} -t {endTime - startTime} " +
+            $"-vf \"select=not(mod(t\\,{intervalSeconds})),scale=-1:68,tile=10x10\" " +
+            $"-quality 50 -compression_level 6 -threads 0 -y \"{outputImagePath}/{videoName}{tileIndex}.webp\"";
 
-        private static string BuildSimplifiedFfmpegArguments(string videoPath, string outputImagePath, int tileIndex,
-            string videoName)
-        {
-            return $"-i \"{videoPath}\" -vf \"fps=1,scale=-1:68,tile=10x10\" " +
-                   $"-quality 50 -compression_level 4 -threads 0 " +
-                   $"-y \"{outputImagePath}/{videoName}{tileIndex}.webp\"";
-        }
-
+        private static string BuildSimplifiedFfmpegArguments(string videoPath, string outputImagePath, 
+            int tileIndex, string videoName) =>
+            $"-i \"{videoPath}\" -vf \"fps=1,scale=-1:68,tile=10x10\" " +
+            $"-quality 50 -compression_level 4 -threads 0 " +
+            $"-y \"{outputImagePath}/{videoName}{tileIndex}.webp\"";
 
         private static double GetVideoDuration(string videoPath)
         {
-            string arguments =
-                $"-v error -select_streams v:0 -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{videoPath}\"";
+            string arguments = $"-v error -select_streams v:0 -show_entries format=duration " +
+                               $"-of default=noprint_wrappers=1:nokey=1 \"{videoPath}\"";
             return ExecuteProcess("ffprobe", arguments);
         }
 
-        private static async Task RunFFmpeg(string arguments)
+        private static async Task RunFFmpegAsync(string arguments)
         {
             await ExecuteProcessAsync("ffmpeg", arguments);
         }
-
 
         private static double ExecuteProcess(string fileName, string arguments)
         {
@@ -63,14 +56,14 @@ namespace ShakaPlayerThumbnail.Tools
                     CreateNoWindow = true
                 }
             };
-
             process.Start();
 
             string output = process.StandardOutput.ReadToEnd();
             string errorOutput = process.StandardError.ReadToEnd();
             process.WaitForExit();
 
-            Console.WriteLine(errorOutput);
+            if (!string.IsNullOrWhiteSpace(errorOutput))
+                Console.WriteLine(errorOutput);
 
             return double.TryParse(output.Trim(), out var result)
                 ? result
@@ -79,15 +72,17 @@ namespace ShakaPlayerThumbnail.Tools
 
         private static async Task ExecuteProcessAsync(string fileName, string arguments)
         {
-            using var process = new Process();
-            process.StartInfo = new ProcessStartInfo
+            using var process = new Process
             {
-                FileName = fileName,
-                Arguments = arguments,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = fileName,
+                    Arguments = arguments,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
             };
 
             process.OutputDataReceived += (sender, args) => Console.WriteLine("Output: " + args.Data);
@@ -96,13 +91,13 @@ namespace ShakaPlayerThumbnail.Tools
             process.Start();
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
-
             await process.WaitForExitAsync();
         }
 
-        public static async Task GenerateSpritePreview(
+        public static async Task GenerateSpritePreviewAsync(
             string videoPath,
             string outputImagePath,
+            string videoNameWithoutExtension,
             string videoName,
             int intervalSeconds,
             Func<int, Task> reportProgressToHub,
@@ -110,14 +105,11 @@ namespace ShakaPlayerThumbnail.Tools
         {
             var videoDuration = GetVideoDuration(videoPath);
             if (videoDuration <= 0)
-            {
                 throw new InvalidOperationException("Invalid video duration.");
-            }
 
-            var isLongVideo = videoDuration > 30 * 60; // Longer than 30 minutes
+            var isLongVideo = videoDuration > 30 * 60;
             var totalFrames = (int)Math.Ceiling(videoDuration / intervalSeconds);
-            const int tileWidth = 10;
-            const int tileHeight = 10;
+            const int tileWidth = 10, tileHeight = 10;
             var framesPerTile = tileWidth * tileHeight;
             var numberOfTiles = (int)Math.Ceiling((double)totalFrames / framesPerTile);
 
@@ -127,8 +119,7 @@ namespace ShakaPlayerThumbnail.Tools
                 Directory.CreateDirectory(outputImagePath);
 
             var (frameWidth, frameHeight) = (0, 0);
-
-            var stopwatch = Stopwatch.StartNew(); 
+            var stopwatch = Stopwatch.StartNew();
 
             for (var i = 1; i <= numberOfTiles; i++)
             {
@@ -137,21 +128,20 @@ namespace ShakaPlayerThumbnail.Tools
                 var framesInThisSection = Math.Min(totalFrames - (i - 1) * framesPerTile, framesPerTile);
 
                 var arguments = isLongVideo
-                    ? BuildFfmpegArguments(videoPath, startTime, endTime, outputImagePath, i, intervalSeconds,
-                        videoName)
-                    : BuildSimplifiedFfmpegArguments(videoPath, outputImagePath, i, videoName);
+                    ? BuildFfmpegArguments(videoPath, startTime, endTime, outputImagePath, i, intervalSeconds, videoNameWithoutExtension)
+                    : BuildSimplifiedFfmpegArguments(videoPath, outputImagePath, i, videoNameWithoutExtension);
 
-                await RunFFmpeg(arguments);
-
-                string imagePath = $"{outputImagePath}/{videoName}{i}.webp";
-                (frameWidth, frameHeight) = GetWebpDimensions(imagePath);
+                await RunFFmpegAsync(arguments);
+                string imagePath = $"{outputImagePath}/{videoNameWithoutExtension}{i}.webp";
+                if (i == 1)
+                {
+                    (frameWidth, frameHeight) = GetWebpDimensions(imagePath);
+                }
                 string id = $"{ShortId.Generate()}.webp";
-
                 try
                 {
-                    string cloudflareUrl = await UploadToCloudflareImages(imagePath, id);
-                    thumbnailInfo[i - 1] =
-                        new ThumbnailInfo(i, startTime, endTime, framesInThisSection, cloudflareUrl, id);
+                    string cloudflareUrl = await UploadToCloudflareImagesAsync(imagePath, id);
+                    thumbnailInfo[i - 1] = new ThumbnailInfo(i, startTime, endTime, framesInThisSection, cloudflareUrl, id);
                 }
                 catch (Exception ex)
                 {
@@ -159,100 +149,92 @@ namespace ShakaPlayerThumbnail.Tools
                     continue;
                 }
 
-                int progress = (i * 100) / numberOfTiles;
-                double elapsedTime = stopwatch.Elapsed.TotalSeconds;
+                var progress = (i * 100) / numberOfTiles;
+                var elapsedTime = stopwatch.Elapsed.TotalSeconds;
 
-                await reportProgressToHub(progress); 
-                await reportTimeToHub(elapsedTime); 
+                await reportProgressToHub(progress);
+                await reportTimeToHub(elapsedTime);
             }
-            stopwatch.Stop(); 
+            stopwatch.Stop();
 
-            GenerateVttFile(videoName, thumbnailInfo, intervalSeconds, tileWidth, tileHeight, outputImagePath,
-                frameWidth, frameHeight);
+            GenerateVttFile(videoName, thumbnailInfo, intervalSeconds, tileWidth, tileHeight, outputImagePath, frameWidth, frameHeight);
         }
 
-
-        private static (double startTime, double endTime, int xOffset, int yOffset) CalculateOffsets(ThumbnailInfo info,
-            int frameIndex, int intervalSeconds, int tileWidth, int tileHeight, int frameWidth, int frameHeight)
-        {
-            var startTime = info.StartTime + frameIndex * intervalSeconds;
-            var endTime = startTime + intervalSeconds;
-
-            var rowIndex = frameIndex / tileWidth;
-            var columnIndex = frameIndex % tileWidth;
-
-            var xOffset = columnIndex * frameWidth;
-            var yOffset = rowIndex * frameHeight;
-
-            return (startTime, endTime, xOffset, yOffset);
-        }
-
-        private static async Task<string> UploadToCloudflareImages(string imagePath, string id)
+        private static async Task<string> UploadToCloudflareImagesAsync(string imagePath, string id)
         {
             using var client = new HttpClient();
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ApiKey);
 
             using var content = new MultipartFormDataContent();
             await using var fileStream = new FileStream(imagePath, FileMode.Open, FileAccess.Read);
-
             content.Add(new StreamContent(fileStream), "file", id);
 
-            var response = await client.PostAsync(uploadUrl, content);
+            var response = await client.PostAsync(UploadUrl, content);
             var responseContent = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
-            {
                 throw new InvalidOperationException($"Cloudflare Image Upload Failed: {responseContent}");
-            }
 
             var jsonResponse = JObject.Parse(responseContent);
-            var imageUrl = jsonResponse["result"]?["variants"]?.First?.ToString();
-
-            return imageUrl ?? throw new InvalidOperationException("Failed to retrieve Cloudflare image URL");
+            return jsonResponse["result"]?["variants"]?.First?.ToString() 
+                ?? throw new InvalidOperationException("Failed to retrieve Cloudflare image URL");
         }
 
         private static void GenerateVttFile(string videoName, ThumbnailInfo[] thumbnailInfo, int intervalSeconds,
             int tileWidth, int tileHeight, string outputImagePath, int frameWidth, int frameHeight)
         {
-            var previewDirectory = $"/etc/data/previews/{videoName}";
+            if (thumbnailInfo == null || thumbnailInfo.Length == 0)
+                throw new ArgumentException("Thumbnail information cannot be null or empty.", nameof(thumbnailInfo));
+
+            var videoNameWithoutExtension = FileTools.GetFileNameWithoutExtension(videoName);
+            var previewDirectory = $"/etc/data/previews/{videoNameWithoutExtension}";
             if (!Directory.Exists(previewDirectory))
                 Directory.CreateDirectory(previewDirectory);
 
-            var vttFilePath = Path.Combine(previewDirectory, $"{videoName}.vtt");
+            var vttFileName = FileTools.GetUniqueVideoName(videoName);
+            var vttFilePath = Path.Combine(previewDirectory, $"{vttFileName}.vtt");
 
-            using var writer = new StreamWriter(vttFilePath);
-            writer.WriteLine("WEBVTT");
-            foreach (var info in thumbnailInfo)
+            try
             {
-                for (int i = 0; i < info.FrameCount; i++)
+                using var writer = new StreamWriter(vttFilePath);
+                writer.WriteLine("WEBVTT");
+                foreach (var info in thumbnailInfo)
                 {
-                    var (startTime, endTime, xOffset, yOffset) =
-                        CalculateOffsets(info, i, intervalSeconds, tileWidth, tileHeight, frameWidth, frameHeight);
-
-                    writer.WriteLine(
-                        $"{TimeSpan.FromSeconds(startTime):hh\\:mm\\:ss\\.fff} --> {TimeSpan.FromSeconds(endTime):hh\\:mm\\:ss\\.fff}");
-                    writer.WriteLine(
-                        $"{info.CloudflareImageUrl}#xywh={xOffset},{yOffset},{frameWidth},{frameHeight}");
-                    writer.WriteLine();
+                    for (var i = 0; i < info.FrameCount; i++)
+                    {
+                        var (startTime, endTime, xOffset, yOffset) =
+                            CalculateOffsets(info, i, intervalSeconds, tileWidth, tileHeight, frameWidth, frameHeight);
+                        writer.WriteLine(
+                            $"{TimeSpan.FromSeconds(startTime):hh\\:mm\\:ss\\.fff} --> {TimeSpan.FromSeconds(endTime):hh\\:mm\\:ss\\.fff}");
+                        writer.WriteLine($"{info.CloudflareUrl}#xywh={xOffset},{yOffset},{frameWidth},{frameHeight}");
+                        writer.WriteLine();
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while generating the VTT file: {ex.Message}");
+            }
+            finally
+            {
+                var vttCompressedFilePath = Path.Combine(previewDirectory, $"{vttFileName}.gz");
+                FileTools.CompressFile(vttFilePath, vttCompressedFilePath);
             }
         }
 
-
-        public class ThumbnailInfo(
-            int tileIndex,
-            double startTime,
-            double endTime,
-            int frameCount,
-            string cloudflareImageUrl,
-            string id)
+        private static (double StartTime, double EndTime, int XOffset, int YOffset) CalculateOffsets(ThumbnailInfo info, int frameIndex,
+            int intervalSeconds, int tileWidth, int tileHeight, int frameWidth, int frameHeight)
         {
-            public int TileIndex { get; } = tileIndex;
-            public double StartTime { get; } = startTime;
-            public double EndTime { get; } = endTime;
-            public int FrameCount { get; } = frameCount;
-            public string CloudflareImageUrl { get; } = cloudflareImageUrl;
-            public string Id { get; } = id;
+            double startTime = info.StartTime + frameIndex * intervalSeconds;
+            double endTime = Math.Min(startTime + intervalSeconds, info.EndTime);
+            int tileX = frameIndex % tileWidth;
+            int tileY = frameIndex / tileWidth;
+            int xOffset = tileX * frameWidth;
+            int yOffset = tileY * frameHeight;
+
+            return (startTime, endTime, xOffset, yOffset);
         }
     }
+
+    public record ThumbnailInfo(int TileNumber, double StartTime, double EndTime, int FrameCount, string CloudflareUrl, string Id);
 }

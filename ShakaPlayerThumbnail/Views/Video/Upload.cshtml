@@ -67,7 +67,7 @@
                 formData.append('videoChunk', chunk);
                 formData.append('chunkIndex', i);
                 formData.append('totalChunks', totalChunks);
-                formData.append('fileName', file.name);
+                formData.append('videoName', file.name);
 
                 const response = await fetch('@Url.Action("UploadVideoChunk", "Video")', {
                     method: 'POST',
