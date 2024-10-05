@@ -244,21 +244,13 @@
 
     seekBar.addEventListener('click', (e) => {
       const { position } = getSeekBarInfo(e);
-      const seekable = video.seekable;
+      const roundedPosition = Math.floor(position);
 
-      if (seekable.length > 0) {
-        const start = seekable.start(0);
-        const end = seekable.end(0);
-
-        // Clamp position to seekable range
-        const clampedPosition = Math.max(start, Math.min(position, end));
-
-        console.log(`Seekable range: ${start} - ${end}`);
-        console.log('Clamped position:', clampedPosition);
-
-        video.currentTime = clampedPosition;
+      if (roundedPosition >= 0 && roundedPosition <= video.duration) {
+        video.currentTime = roundedPosition;
+        console.log('Setting currentTime to:', roundedPosition);
       } else {
-        console.error('No seekable range available.');
+        console.error('Invalid position:', roundedPosition);
       }
     });
 
