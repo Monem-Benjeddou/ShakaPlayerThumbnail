@@ -184,9 +184,9 @@
 
     function getSeekBarInfo(event) {
       const seekBarRect = seekBar.getBoundingClientRect();
-      const duration = video.duration;
+      const duration = video.duration; // Use video.duration for a standard video
 
-      let offsetX = 0;
+      let offsetX;
       if (event.touches && event.touches.length > 0) {
         offsetX = event.touches[0].clientX - seekBarRect.left;
       } else if (event.changedTouches && event.changedTouches.length > 0) {
@@ -195,10 +195,7 @@
         offsetX = event.pageX - seekBarRect.left;
       }
 
-      offsetX = Math.max(0, Math.min(offsetX, seekBarRect.width));
-
       const position = (offsetX / seekBarRect.width) * duration;
-
       return { offsetX, position };
     }
 
@@ -247,16 +244,8 @@
 
     seekBar.addEventListener('click', (e) => {
       const { position } = getSeekBarInfo(e);
-      console.log('Calculated seek position:', position);
-
-      if (position >= 0 && position <= video.duration) {
-        video.currentTime = position;
-        console.log('Setting video currentTime to:', position);
-      } else {
-        console.error('Invalid seek position:', position);
-      }
+      video.currentTime = position;
     });
-
     video.addEventListener('mouseover', () => {
       video.setAttribute('controls', 'controls');
     });
