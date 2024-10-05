@@ -244,16 +244,8 @@
 
     seekBar.addEventListener('click', (e) => {
       const { position } = getSeekBarInfo(e);
-      const roundedPosition = Math.floor(position);
-
-      if (roundedPosition >= 0 && roundedPosition <= video.duration) {
-        video.currentTime = roundedPosition.toString();
-        console.log('Setting currentTime to:', roundedPosition);
-      } else {
-        console.error('Invalid position:', roundedPosition);
-      }
+      video.currentTime = position.toString();
     });
-
     video.addEventListener('mouseover', () => {
       video.setAttribute('controls', 'controls');
     });
