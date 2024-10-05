@@ -244,7 +244,7 @@
 
     seekBar.addEventListener('click', (e) => {
       const { position } = getSeekBarInfo(e);
-      player.setCurrentTime(position) ;
+      player.seek(position) ;
     });
     video.addEventListener('mouseover', () => {
       video.setAttribute('controls', 'controls');
