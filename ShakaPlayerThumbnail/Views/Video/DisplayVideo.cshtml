@@ -247,7 +247,7 @@
       const roundedPosition = Math.floor(position);
 
       if (roundedPosition >= 0 && roundedPosition <= video.duration) {
-        video.currentTime = roundedPosition;
+        video.currentTime = roundedPosition.toString();
         console.log('Setting currentTime to:', roundedPosition);
       } else {
         console.error('Invalid position:', roundedPosition);
