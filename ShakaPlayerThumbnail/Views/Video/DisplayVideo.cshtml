@@ -184,7 +184,7 @@
 
     function getSeekBarInfo(event) {
       const seekBarRect = seekBar.getBoundingClientRect();
-      const duration = player.seekRange().end;
+      const duration = video.duration;
 
       let offsetX = 0;
       if (event.touches && event.touches.length > 0) {
