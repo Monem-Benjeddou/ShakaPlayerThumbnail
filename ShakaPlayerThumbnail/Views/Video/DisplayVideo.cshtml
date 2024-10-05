@@ -247,8 +247,16 @@
 
     seekBar.addEventListener('click', (e) => {
       const { position } = getSeekBarInfo(e);
-      video.currentTime = position;
+      console.log('Calculated seek position:', position);
+
+      if (position >= 0 && position <= video.duration) {
+        video.currentTime = position;
+        console.log('Setting video currentTime to:', position);
+      } else {
+        console.error('Invalid seek position:', position);
+      }
     });
+
     video.addEventListener('mouseover', () => {
       video.setAttribute('controls', 'controls');
     });
