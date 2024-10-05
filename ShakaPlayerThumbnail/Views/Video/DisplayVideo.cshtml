@@ -186,7 +186,7 @@
       const seekBarRect = seekBar.getBoundingClientRect();
       const duration = player.seekRange().end;
 
-      let offsetX;
+      let offsetX = 0;
       if (event.touches && event.touches.length > 0) {
         offsetX = event.touches[0].clientX - seekBarRect.left;
       } else if (event.changedTouches && event.changedTouches.length > 0) {
@@ -195,7 +195,10 @@
         offsetX = event.pageX - seekBarRect.left;
       }
 
+      offsetX = Math.max(0, Math.min(offsetX, seekBarRect.width));
+
       const position = (offsetX / seekBarRect.width) * duration;
+
       return { offsetX, position };
     }
 
