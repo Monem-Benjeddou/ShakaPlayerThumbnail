@@ -244,8 +244,24 @@
 
     seekBar.addEventListener('click', (e) => {
       const { position } = getSeekBarInfo(e);
-      video.currentTime = position;
+      const seekable = video.seekable;
+
+      if (seekable.length > 0) {
+        const start = seekable.start(0);
+        const end = seekable.end(0);
+
+        // Clamp position to seekable range
+        const clampedPosition = Math.max(start, Math.min(position, end));
+
+        console.log(`Seekable range: ${start} - ${end}`);
+        console.log('Clamped position:', clampedPosition);
+
+        video.currentTime = clampedPosition;
+      } else {
+        console.error('No seekable range available.');
+      }
     });
+
     video.addEventListener('mouseover', () => {
       video.setAttribute('controls', 'controls');
     });
