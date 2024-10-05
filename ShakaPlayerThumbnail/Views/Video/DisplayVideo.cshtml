@@ -124,7 +124,9 @@
             video.pause();
           });
         });
-
+        video.addEventListener('loadedmetadata', function() {
+          console.log('Metadata loaded, video is ready');
+        });
         ['mouseleave', 'touchend', 'mouseup'].forEach((event) => {
           seekBar.addEventListener(event, () => {
             hideTimeout = setTimeout(() => {
@@ -244,7 +246,7 @@
 
     seekBar.addEventListener('click', (e) => {
       const { position } = getSeekBarInfo(e);
-      player.seek(position) ;
+      video.currentTime = position;
     });
     video.addEventListener('mouseover', () => {
       video.setAttribute('controls', 'controls');
