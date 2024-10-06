@@ -22,11 +22,6 @@
     const imageElement = document.getElementById('thumbImage');
     const videoContainer = document.getElementById('video-container');
     const player = new shaka.Player(video);
-    player.configure({
-      streaming: {
-        jumpLargeGaps: true  // Allows the player to skip gaps and seek accurately
-      }
-    });
     let lastPreviewPosition = 0, thumbnailTrack, isHovering = false;
     let hideTimeout, isDraggingSeekbar = false;
 
@@ -147,6 +142,7 @@
           seekBar.addEventListener(event, (e) => {
             if (isDraggingSeekbar) {
               const { position } = getSeekBarInfo(e);
+              video.currentTime = 0;
               video.currentTime = position;
             }
           });
