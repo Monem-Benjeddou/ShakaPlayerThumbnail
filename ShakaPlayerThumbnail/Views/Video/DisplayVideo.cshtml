@@ -144,7 +144,7 @@
             if (isDraggingSeekbar) {
               const { position } = getSeekBarInfo(e);
               video.pause();
-              video.currentTime = position;
+              video.currentTime = Math.round(position * 100) / 100;
               video.play();
             }
           });
