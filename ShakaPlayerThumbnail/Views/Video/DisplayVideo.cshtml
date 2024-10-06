@@ -142,8 +142,9 @@
           seekBar.addEventListener(event, (e) => {
             if (isDraggingSeekbar) {
               const { position } = getSeekBarInfo(e);
-              video.currentTime = 0;
+              video.pause();
               video.currentTime = position;
+              video.play();
             }
           });
         });
