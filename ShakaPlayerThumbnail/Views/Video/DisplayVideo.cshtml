@@ -149,6 +149,14 @@
             }
           });
         });
+        video.addEventListener('loadedmetadata', () => {
+          // Now the video duration and other metadata are ready
+          console.log('Video metadata loaded');
+        });
+        video.addEventListener('canplay', () => {
+          // Safe to seek now
+          console.log('Video is ready to play');
+        });
 
         return thumbnailTrack;
       } catch (error) {
