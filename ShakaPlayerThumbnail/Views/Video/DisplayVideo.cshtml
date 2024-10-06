@@ -11,6 +11,7 @@
   <div id="error" class="error-message"></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js" integrity="sha512-g2TeAWw5GPnX7z0Kn8nFbYfeHcvAu/tx6d6mrLe/90mkCxO+RcptyYpksUz35EO337F83bZwcmUyHiHamspkfg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js" integrity="sha512-g2TeAWw5GPnX7z0Kn8nFbYfeHcvAu/tx6d6mrLe/90mkCxO+RcptyYpksUz35EO337F83bZwcmUyHiHamspkfg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async () => {
     const fullscreenToggleBtn = document.getElementById('fullscreen-toggle-btn');
@@ -21,7 +22,11 @@
     const imageElement = document.getElementById('thumbImage');
     const videoContainer = document.getElementById('video-container');
     const player = new shaka.Player(video);
-
+    player.configure({
+      streaming: {
+        jumpLargeGaps: true  // Allows the player to skip gaps and seek accurately
+      }
+    });
     let lastPreviewPosition = 0, thumbnailTrack, isHovering = false;
     let hideTimeout, isDraggingSeekbar = false;
 
@@ -93,6 +98,7 @@
         throw new Error(`Failed to fetch and decompress VTT: ${error.message}`);
       }
     }
+
     async function setupThumbnails(player, thumbElement, vttUrl, aspectRatio) {
       try {
         const vttBlobUrl = await fetchAndDecompressVtt(vttUrl);
@@ -124,9 +130,7 @@
             video.pause();
           });
         });
-        video.addEventListener('loadedmetadata', function() {
-          console.log('Metadata loaded, video is ready');
-        });
+
         ['mouseleave', 'touchend', 'mouseup'].forEach((event) => {
           seekBar.addEventListener(event, () => {
             hideTimeout = setTimeout(() => {
@@ -153,6 +157,7 @@
         handleError('Failed to set up thumbnails', error);
       }
     }
+
     function simulateVideoClick() {
       document.body.addEventListener('click', () => {
         video.focus();
@@ -171,6 +176,7 @@
         }
       }).catch((error) => handleError('Error getting thumbnail', error));
     }
+
     function adjustSeekbarPosition() {
       const seekbarContainer = document.getElementById('seekbar-container');
       seekbarContainer.classList.toggle('fullscreen', !!document.fullscreenElement);
@@ -186,7 +192,7 @@
 
     function getSeekBarInfo(event) {
       const seekBarRect = seekBar.getBoundingClientRect();
-      const duration = video.duration; // Use video.duration for a standard video
+      const duration = video.duration;
 
       let offsetX;
       if (event.touches && event.touches.length > 0) {
@@ -248,27 +254,14 @@
       const { position } = getSeekBarInfo(e);
       video.currentTime = position;
     });
+
     video.addEventListener('mouseover', () => {
       video.setAttribute('controls', 'controls');
     });
 
-    videoContainer.addEventListener('mouseleave', () => {
-      hideTimeout = setTimeout(() => {
-        if (!isHoveringSeekbar() && !video.paused) {
-          video.removeAttribute('controls');
-        }
-      }, 5);
+    video.addEventListener('mouseleave', () => {
+      if (!isHovering) video.removeAttribute('controls');
     });
-
-    document.addEventListener('click', (event) => {
-      if (!videoContainer.contains(event.target) && !isHoveringSeekbar()) {
-        video.removeAttribute('controls');
-      }
-    });
-
-    function isHoveringSeekbar() {
-      return seekBar.matches(':hover');
-    }
 
     function handleError(message, error) {
       console.error(`${message}:`, error);
