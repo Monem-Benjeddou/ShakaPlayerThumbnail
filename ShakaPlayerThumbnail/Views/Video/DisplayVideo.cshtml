@@ -1,5 +1,5 @@
 ﻿<div id="video-container" class="video-container">
-  <video id="video" controls></video>
+  <video id="video" controls preload="auto"></video>
   <div id="seekbar-container" style="display: none;">
     <div id="seek-bar"></div>
     <div id="thumb" class="thumbnail">
@@ -257,8 +257,22 @@
 
     seekBar.addEventListener('click', (e) => {
       const { position } = getSeekBarInfo(e);
-      video.currentTime = position;
+      video.pause();  // Pause the video first
+      video.currentTime = Math.round(position);  // Set the new time
+      video.load();  // Reload to ensure buffering
+      waitForBuffer();  // Custom function to handle buffering
     });
+
+    function waitForBuffer() {
+      const checkBuffer = () => {
+        if (video.readyState >= 3) {  
+          video.play(); 
+          clearInterval(bufferCheckInterval);  
+        }
+      };
+      const bufferCheckInterval = setInterval(checkBuffer, 200);
+    }
+
     video.addEventListener('mouseover', () => {
       video.setAttribute('controls', 'controls');
     });
