@@ -142,10 +142,10 @@
         ['mousemove', 'touchmove', 'mouseup'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
             if (isDraggingSeekbar) {
-              let position  = getSeekBarInfo(e);
-              position = Math.round(position * 100) / 100;;
+              const { position } = getSeekBarInfo(e);
+              let roundedPosition = Math.round(position * 100) / 100;
               video.pause();
-              video.currentTime = position;
+              video.currentTime = roundedPosition
               video.play();
             }
           });
