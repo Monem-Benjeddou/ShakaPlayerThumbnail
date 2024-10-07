@@ -249,10 +249,7 @@
 
     seekBar.addEventListener('click', (e) => {
       const { position } = getSeekBarInfo(e);
-      video.pause();  // Pause the video first
-      video.currentTime = Math.round(position);  // Set the new time
-      video.load();  // Reload to ensure buffering
-      waitForBuffer();  // Custom function to handle buffering
+      video.currentTime = Math.round(position);
     });
 
     function waitForBuffer() {
