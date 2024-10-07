@@ -51,6 +51,12 @@
       const videoUrl = "@Html.Raw(Model.Item1)";
       const vttUrl = "@Html.Raw(Model.Item2)";
       await player.load(videoUrl);
+      player.configure({
+        streaming: {
+          gapDetectionThreshold: 1.5,
+        },
+      });
+
       console.log('Video loaded successfully!');
       const videoWidth = video.videoWidth;
       const videoHeight = video.videoHeight;
