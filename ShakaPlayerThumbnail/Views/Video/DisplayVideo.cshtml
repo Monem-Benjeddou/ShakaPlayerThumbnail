@@ -147,10 +147,7 @@
           seekBar.addEventListener(event, (e) => {
             if (isDraggingSeekbar) {
               const { position } = getSeekBarInfo(e);
-              let roundedPosition = Math.round(position);
-              video.pause();
-              video.currentTime = roundedPosition
-              video.play();
+              video.currentTime = Math.round(position);
             }
           });
         });
