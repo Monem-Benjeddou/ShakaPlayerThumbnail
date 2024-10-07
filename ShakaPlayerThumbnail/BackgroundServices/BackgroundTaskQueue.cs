@@ -1,22 +1,28 @@
-using System.Threading.Channels;
+using System.Collections.Concurrent;
+using System.Threading;
 
-namespace ShakaPlayerThumbnail.BackgroundServices;
-
-public class BackgroundTaskQueue : IBackgroundTaskQueue
+namespace ShakaPlayerThumbnail.BackgroundServices
 {
-    private readonly Channel<Func<CancellationToken, Task>> _queue =
-        Channel.CreateUnbounded<Func<CancellationToken, Task>>();
-
-    public void QueueBackgroundWorkItem(Func<CancellationToken, Task> workItem)
+    public class BackgroundTaskQueue : IBackgroundTaskQueue
     {
-        if (workItem == null)
-            throw new ArgumentNullException(nameof(workItem));
+        private readonly ConcurrentQueue<Func<CancellationToken, Task>> _queue = 
+            new ConcurrentQueue<Func<CancellationToken, Task>>();
+        private readonly SemaphoreSlim _signal = new SemaphoreSlim(0);
 
-        _queue.Writer.TryWrite(workItem);
-    }
+        public void QueueBackgroundWorkItem(Func<CancellationToken, Task> workItem)
+        {
+            ArgumentNullException.ThrowIfNull(workItem);
 
-    public async Task<Func<CancellationToken, Task>> DequeueAsync(CancellationToken cancellationToken)
-    {
-        return await _queue.Reader.ReadAsync(cancellationToken);
+            _queue.Enqueue(workItem);
+            _signal.Release(); 
+        }
+
+        public async Task<Func<CancellationToken, Task>> DequeueAsync(CancellationToken cancellationToken)
+        {
+            await _signal.WaitAsync(cancellationToken); 
+
+            _queue.TryDequeue(out var workItem);
+            return workItem ?? throw new InvalidOperationException("Dequeued null work item.");
+        }
     }
 }

@@ -83,18 +83,15 @@
         const decoder = new TextDecoder('utf-8');
         const decompressedVttContent = decoder.decode(decompressedData);
 
-        // Ensure the decompressed content starts with "WEBVTT"
         if (!decompressedVttContent.startsWith('WEBVTT')) {
           throw new Error('Decompressed data is not a valid VTT file.');
         }
 
-        // Create a Blob from the decompressed VTT content
         const vttBlob = new Blob([decompressedVttContent], { type: 'text/vtt' });
 
-        // Generate a URL for the Blob
         const vttBlobUrl = URL.createObjectURL(vttBlob);
 
-        return vttBlobUrl;  // Return the Blob URL
+        return vttBlobUrl; 
       } catch (error) {
         throw new Error(`Failed to fetch and decompress VTT: ${error.message}`);
       }
@@ -251,18 +248,7 @@
       const { position } = getSeekBarInfo(e);
       video.currentTime = Math.round(position);
     });
-
-    function waitForBuffer() {
-      const checkBuffer = () => {
-        if (video.readyState >= 3) {  
-        
-          video.play(); 
-          clearInterval(bufferCheckInterval);  
-        }
-      };
-      const bufferCheckInterval = setInterval(checkBuffer, 200);
-    }
-
+    
     video.addEventListener('mouseover', () => {
       video.setAttribute('controls', 'controls');
     });

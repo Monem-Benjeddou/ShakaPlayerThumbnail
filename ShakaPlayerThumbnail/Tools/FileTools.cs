@@ -15,7 +15,6 @@ public static class FileTools
     {
         try
         {
-            // Open input and output file streams
             using var inputFileStream = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, 1024 * 1024);
             using var outputFileStream = new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024);
             using var compressionStream = new GZipStream(outputFileStream, CompressionMode.Compress, true);

@@ -9,17 +9,18 @@ public class ThumbnailGenerationService(
     IProgressTracker progressTracker)
     : BackgroundService
 {
-    private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(2); // Limit to 2 concurrent tasks
+    private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(2); 
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         logger.LogInformation("Thumbnail Generation Service is starting.");
+        var runningTasks = new List<Task>();
 
         while (!stoppingToken.IsCancellationRequested)
         {
             var workItem = await taskQueue.DequeueAsync(stoppingToken);
 
-            _ = Task.Run(async () =>
+            var task = Task.Run(async () =>
             {
                 var taskId = Guid.NewGuid().ToString();
                 progressTracker.SetProcessingStatus(taskId, true);
@@ -39,7 +40,11 @@ public class ThumbnailGenerationService(
                     progressTracker.SetProcessingStatus(taskId, false);
                 }
             }, stoppingToken);
+
+            runningTasks.Add(task);
         }
+
+        await Task.WhenAll(runningTasks);
 
         logger.LogInformation("Thumbnail Generation Service is stopping.");
     }
