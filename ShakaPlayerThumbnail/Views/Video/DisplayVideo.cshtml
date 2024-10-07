@@ -124,9 +124,6 @@
             video.pause();
           });
         });
-        video.addEventListener('loadedmetadata', function() {
-          console.log('Metadata loaded, video is ready');
-        });
         ['mouseleave', 'touchend', 'mouseup'].forEach((event) => {
           seekBar.addEventListener(event, () => {
             hideTimeout = setTimeout(() => {
@@ -153,10 +150,6 @@
         video.addEventListener('loadedmetadata', () => {
           // Now the video duration and other metadata are ready
           console.log('Video metadata loaded');
-        });
-        video.addEventListener('canplay', () => {
-          // Safe to seek now
-          console.log('Video is ready to play');
         });
 
         return thumbnailTrack;
@@ -266,6 +259,7 @@
     function waitForBuffer() {
       const checkBuffer = () => {
         if (video.readyState >= 3) {  
+        
           video.play(); 
           clearInterval(bufferCheckInterval);  
         }
