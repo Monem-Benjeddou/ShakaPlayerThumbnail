@@ -124,6 +124,7 @@
             video.pause();
           });
         });
+
         ['mouseleave', 'touchend', 'mouseup'].forEach((event) => {
           seekBar.addEventListener(event, () => {
             hideTimeout = setTimeout(() => {
@@ -147,11 +148,6 @@
             }
           });
         });
-        video.addEventListener('loadedmetadata', () => {
-          // Now the video duration and other metadata are ready
-          console.log('Video metadata loaded');
-        });
-
         return thumbnailTrack;
       } catch (error) {
         handleError('Failed to set up thumbnails', error);
