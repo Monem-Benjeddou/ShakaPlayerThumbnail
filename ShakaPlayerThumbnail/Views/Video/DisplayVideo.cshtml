@@ -110,7 +110,7 @@
         const seekbarContainer = document.getElementById('seekbar-container');
         seekbarContainer.style.display = 'block';
 
-        const showThumbnail = debounce(§handleThumbnailPreview, 5);
+        const showThumbnail = debounce(handleThumbnailPreview, 5);
 
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
