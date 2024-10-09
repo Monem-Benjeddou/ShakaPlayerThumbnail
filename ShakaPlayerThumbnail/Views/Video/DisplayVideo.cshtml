@@ -136,8 +136,9 @@
             }, 5);
             if (isDraggingSeekbar) {
               isDraggingSeekbar = false;
+              video.play();
               setTimeout(() => {
-                debouncePause = false; // Re-enable play functionality after user interaction ends
+                debouncePause = false; 
               }, 300);
             }
           });
