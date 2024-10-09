@@ -116,7 +116,12 @@
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
             clearTimeout(hideTimeout);
+            if (!isHovering) {
+              video.removeAttribute('controls');
+              video.setAttribute('controls', 'controls');
+            }
             isHovering = true;
+           
             showThumbnail(e);
           });
         });
@@ -266,7 +271,9 @@
         }
       }, 5);
     });
-
+    function isHoveringSeekbar() {
+      return seekBar.matches(':hover');
+    }
     document.addEventListener('fullscreenchange', () => {
       const isFullScreen = !!document.fullscreenElement;
       videoContainer.classList.toggle('fullscreen', isFullScreen);
