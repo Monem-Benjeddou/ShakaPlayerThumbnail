@@ -23,7 +23,8 @@
     const player = new shaka.Player(video);
 
     let lastPreviewPosition = 0, thumbnailTrack, isHovering = false;
-    let hideTimeout, isDraggingSeekbar = false, isInteractingWithSeekBar = false;
+    let hideTimeout, isDraggingSeekbar = false;
+    let debouncePause = false;
 
     fullscreenToggleBtn?.addEventListener('click', toggleFullscreen);
 
@@ -73,6 +74,30 @@
       handleError('Player error', event.detail);
     });
 
+    async function fetchAndDecompressVtt(vttUrl) {
+      try {
+        const response = await fetch(vttUrl);
+        if (!response.ok) throw new Error('Failed to fetch the compressed VTT file.');
+
+        const compressedData = await response.arrayBuffer();
+        const decompressedData = pako.inflate(new Uint8Array(compressedData));
+        const decoder = new TextDecoder('utf-8');
+        const decompressedVttContent = decoder.decode(decompressedData);
+
+        if (!decompressedVttContent.startsWith('WEBVTT')) {
+          throw new Error('Decompressed data is not a valid VTT file.');
+        }
+
+        const vttBlob = new Blob([decompressedVttContent], { type: 'text/vtt' });
+
+        const vttBlobUrl = URL.createObjectURL(vttBlob);
+
+        return vttBlobUrl;
+      } catch (error) {
+        throw new Error(`Failed to fetch and decompress VTT: ${error.message}`);
+      }
+    }
+
     async function setupThumbnails(player, thumbElement, vttUrl, aspectRatio) {
       try {
         const vttBlobUrl = await fetchAndDecompressVtt(vttUrl);
@@ -82,6 +107,7 @@
 
         thumbElement.style.aspectRatio = `${aspectRatio}`;
 
+        // Show the seekbar container once the thumbnails are ready
         const seekbarContainer = document.getElementById('seekbar-container');
         seekbarContainer.style.display = 'block';
 
@@ -89,7 +115,6 @@
 
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
-            isInteractingWithSeekBar = true;
             clearTimeout(hideTimeout);
             isHovering = true;
             showThumbnail(e);
@@ -99,24 +124,44 @@
         ['mousedown', 'touchstart'].forEach((event) => {
           seekBar.addEventListener(event, () => {
             isDraggingSeekbar = true;
-            video.pause(); // Only pause the video when the user starts interacting with the seek bar
+            video.pause();
+            debouncePause = true; // Prevents immediate play when dragging starts
           });
         });
 
         ['mouseleave', 'touchend', 'mouseup'].forEach((event) => {
           seekBar.addEventListener(event, () => {
-            isDraggingSeekbar = false;
-            isInteractingWithSeekBar = false; // Reset the interaction flag
             hideTimeout = setTimeout(() => {
               hideThumbnail();
             }, 5);
+            if (isDraggingSeekbar) {
+              isDraggingSeekbar = false;
+              setTimeout(() => {
+                debouncePause = false; // Re-enable play functionality after user interaction ends
+              }, 300);
+            }
           });
         });
 
+        ['mousemove', 'touchmove', 'mouseup'].forEach((event) => {
+          seekBar.addEventListener(event, (e) => {
+            if (isDraggingSeekbar) {
+              const { position } = getSeekBarInfo(e);
+              video.currentTime = Math.round(position);
+            }
+          });
+        });
         return thumbnailTrack;
       } catch (error) {
         handleError('Failed to set up thumbnails', error);
       }
+    }
+
+    function simulateVideoClick() {
+      document.body.addEventListener('click', () => {
+        video.focus();
+        video.dispatchEvent(new Event('click'));
+      }, { once: true });
     }
 
     function handleThumbnailPreview(event) {
@@ -131,20 +176,86 @@
       }).catch((error) => handleError('Error getting thumbnail', error));
     }
 
+    function adjustSeekbarPosition() {
+      const seekbarContainer = document.getElementById('seekbar-container');
+      seekbarContainer.classList.toggle('fullscreen', !!document.fullscreenElement);
+    }
+
+    function debounce(func, delay) {
+      let timer;
+      return function (...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => func.apply(this, args), delay);
+      };
+    }
+
+    function getSeekBarInfo(event) {
+      const seekBarRect = seekBar.getBoundingClientRect();
+      const duration = video.duration; // Use video.duration for a standard video
+
+      let offsetX;
+      if (event.touches && event.touches.length > 0) {
+        offsetX = event.touches[0].clientX - seekBarRect.left;
+      } else if (event.changedTouches && event.changedTouches.length > 0) {
+        offsetX = event.changedTouches[0].clientX - seekBarRect.left;
+      } else {
+        offsetX = event.pageX - seekBarRect.left;
+      }
+
+      const position = (offsetX / seekBarRect.width) * duration;
+      return { offsetX, position };
+    }
+
+    function parseThumbnailData(thumbnail) {
+      const imageUrl = thumbnail.uris[0].split('#')[0];
+      const fragment = thumbnail.uris[0].split('#')[1];
+      let x = 0, y = 0, width = 122, height = 70;
+
+      if (fragment && fragment.startsWith("xywh=")) {
+        const [, coords] = fragment.split("=");
+        const [xValue, yValue, widthValue, heightValue] = coords.split(",");
+        x = parseInt(xValue, 10);
+        y = parseInt(yValue, 10);
+        width = parseInt(widthValue, 10);
+        height = parseInt(heightValue, 10);
+      }
+
+      return [imageUrl, { x, y, width, height }];
+    }
+
+    function displayThumbnail(thumbElement, imageElement, imageUrl, x, y, width, height, offsetX) {
+      if (imageElement.src !== imageUrl) {
+        imageElement.src = imageUrl;
+      }
+
+      thumbElement.style.width = '122px';
+      thumbElement.style.height = '70px';
+
+      imageElement.style.objectPosition = `-${x}px -${y}px`;
+
+      const thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(seekBar.clientWidth - thumbElement.clientWidth / 2, offsetX));
+      if (width < 120) {
+        imageElement.style.marginLeft = `${60 - width / 2}px`;
+      }
+
+      thumbElement.style.left = `${thumbX}px`;
+      thumbElement.style.top = `-80px`;
+
+      thumbElement.style.display = 'block';
+      video.focus();
+    }
+
     function hideThumbnail() {
       thumbElement.style.display = 'none';
     }
 
-    // Prevent automatic play/pause when interacting with the seek bar
-    video.addEventListener('touchstart', (e) => {
-      if (isInteractingWithSeekBar) {
-        e.preventDefault();
-      }
-    });
-
     seekBar.addEventListener('click', (e) => {
       const { position } = getSeekBarInfo(e);
       video.currentTime = Math.round(position);
+    });
+
+    video.addEventListener('mouseover', () => {
+      video.setAttribute('controls', 'controls');
     });
 
     videoContainer.addEventListener('mouseleave', () => {
@@ -155,21 +266,15 @@
       }, 5);
     });
 
-    document.addEventListener('click', (event) => {
-      if (!videoContainer.contains(event.target) && !isHoveringSeekbar()) {
-        video.removeAttribute('controls');
-      }
+    document.addEventListener('fullscreenchange', () => {
+      const isFullScreen = !!document.fullscreenElement;
+      videoContainer.classList.toggle('fullscreen', isFullScreen);
     });
 
-    function isHoveringSeekbar() {
-      return seekBar.matches(':hover');
-    }
-
     function handleError(message, error) {
-      console.error(`${message}:`, error);
-      if (errorDisplay) {
-        errorDisplay.textContent = `${message}: ${error.message}`;
-      }
+      errorDisplay.textContent = `${message}: ${error.message || error}`;
+      errorDisplay.style.display = 'block';
+      console.error(message, error);
     }
   });
 </script>
