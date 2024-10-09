@@ -107,7 +107,6 @@
 
         thumbElement.style.aspectRatio = `${aspectRatio}`;
 
-        // Show the seekbar container once the thumbnails are ready
         const seekbarContainer = document.getElementById('seekbar-container');
         seekbarContainer.style.display = 'block';
 
@@ -130,7 +129,7 @@
           seekBar.addEventListener(event, () => {
             isDraggingSeekbar = true;
             video.pause();
-            debouncePause = true; // Prevents immediate play when dragging starts
+            debouncePause = true;
           });
         });
 
