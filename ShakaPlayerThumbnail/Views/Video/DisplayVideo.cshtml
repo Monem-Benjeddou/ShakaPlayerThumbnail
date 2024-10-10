@@ -115,11 +115,11 @@
         ['mousemove', 'touchmove'].forEach((event) => {
           seekBar.addEventListener(event, (e) => {
             clearTimeout(hideTimeout);
+            if (!isDraggingSeekbar){
               video.removeAttribute('controls');
               video.setAttribute('controls', 'controls');
-            
+            }
             isHovering = true;
-           
             showThumbnail(e);
           });
         });
