@@ -198,8 +198,9 @@ namespace ShakaPlayerThumbnail.Controllers
             try
             {
                 var uniqueVideoName = FileTools.GetUniqueVideoName(videoName);
-                var previewFolderPath =
-                    Path.Combine(PreviewsFolderPath, FileTools.GetFileNameWithoutExtension(videoName));
+                var previewFolderPath = Path.Combine(PreviewsFolderPath, FileTools.GetFileNameWithoutExtension(videoName));
+                var videoVttPath = Path.Combine(previewFolderPath,$"{uniqueVideoName}.gz");
+
                 var videoFilePath = Path.Combine(VideoFolderPath, videoName);
 
                 if (System.IO.File.Exists(videoFilePath))
@@ -223,7 +224,7 @@ namespace ShakaPlayerThumbnail.Controllers
                     _logger.LogWarning("Preview folder not found: {PreviewFolderPath}", previewFolderPath);
                 }
 
-                var deletionResult = await _videoRepository.DeleteImagesFromCloudflareAsync(uniqueVideoName);
+                var deletionResult = await _videoRepository.DeleteImagesFromCloudflareAsync(videoVttPath);
                 if (!deletionResult)
                 {
                     _logger.LogWarning("Video not found in Cloudflare: {UniqueVideoName}", uniqueVideoName);

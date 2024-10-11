@@ -18,7 +18,7 @@ ViewData["Title"] = "Video List";
                 <th scope="col">Upload Date</th>
                 <th scope="col">Status</th>
                 <th scope="col">Duration</th>
-                <th scope="col">Transcoding Duration</th>
+                <th scope="col">Task Duration</th>
                 <th scope="col">Actions</th>
             </tr>
             </thead>
@@ -52,11 +52,11 @@ ViewData["Title"] = "Video List";
                 <td>
                     @if (video.Duration != 0)
                     {
-                    <span>@TimeSpan.FromSeconds(video.Duration).ToString(@"hh\:mm\:ss")</span>
+                        <span>@TimeSpan.FromSeconds(video.Duration).ToString(@"hh\:mm\:ss")</span>
                     }
                     else
                     {
-                    <span class="badge bg-secondary">Unknown</span>
+                            <span class="badge bg-secondary">Unknown</span>
                     }
                 </td>
                 <td>
