@@ -1,76 +1,125 @@
-@using System.Web
 @model IEnumerable<ShakaPlayerThumbnail.Data.Video>
+@using System.Web
 
 @{
-    ViewData["Title"] = "Video List";
+ViewData["Title"] = "Video List";
 }
 
 <div class="container mt-5">
-    <h2 class="mb-4">Uploaded Videos</h2>
+    <h2 class="mb-4 text-center">Uploaded Videos</h2>
 
     @if (Model != null && Model.Any())
     {
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th scope="col">Video Title</th>
-                    <th scope="col">Upload Date</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Duration</th>
-                    <th scope="col">Actions</th>
-                </tr>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-dark">
+            <tr>
+                <th scope="col">Video Title</th>
+                <th scope="col">Upload Date</th>
+                <th scope="col">Status</th>
+                <th scope="col">Duration</th>
+                <th scope="col">Transcoding Duration</th>
+                <th scope="col">Actions</th>
+            </tr>
             </thead>
             <tbody>
-                @foreach (var video in Model)
-                {
-                    <tr>
-                        <td>@video.Name</td>
-                        <td>@video.UploadDate.ToString("yyyy-MM-dd HH:mm")</td>
-                        <td>
-                            @if (video.IsProcessing)
-                            {
-                                <span>Processing...</span>
-                                <div class="progress">
-                                    <div class="progress-bar" id="progress-@HttpUtility.UrlPathEncode(video.FileName)" 
-                                         role="progressbar" style="width: @video.Progress%;" 
-                                         aria-valuenow="@video.Progress" aria-valuemin="0" aria-valuemax="100">
-                                        @video.Progress%
-                                    </div>
-                                </div>
-                            }
-                            else
-                            {
-                                <span>Processing complete</span>
-                            }
-                        </td>
-                        <td>
-                            <span id="duration-@HttpUtility.UrlPathEncode(video.FileName)">
-                                @if (video.TaskDuration != 0)
-                                {
-                                    @TimeSpan.FromSeconds(video.TaskDuration).ToString(@"hh\:mm\:ss")
-                                }
-                                else
-                                {
-                                    <span>Duration not ready</span>
-                                }
-                            </span>
-                        </td>
-                        <td>
-                            <a href="@Url.Action("DisplayVideo", "Video", new { videoName = video.Name })"
-                               class="btn btn-secondary mt-1 @(video.IsProcessing ? "disabled" : "")"
-                               id="btn-display-@HttpUtility.UrlPathEncode(video.FileName)">
-                                Display Video
-                            </a>
-                        </td>
-                    </tr>
-                }
+            @foreach (var video in Model)
+            {
+            <tr id="video-row-@HttpUtility.UrlPathEncode(video.FileName)">
+                <td>
+                    <span class="fw-bold">@video.Name</span>
+                </td>
+                <td>@video.UploadDate.ToString("yyyy-MM-dd HH:mm")</td>
+                <td>
+                    @if (video.IsProcessing)
+                    {
+                    <span class="badge bg-warning text-dark">Processing...</span>
+                    <div class="progress mt-2">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated"
+                             id="progress-@HttpUtility.UrlPathEncode(video.FileName)"
+                             role="progressbar"
+                             style="width: @video.Progress%;"
+                             aria-valuenow="@video.Progress" aria-valuemin="0" aria-valuemax="100">
+                            @video.Progress%
+                        </div>
+                    </div>
+                    }
+                    else
+                    {
+                    <span class="badge bg-success">Processing complete</span>
+                    }
+                </td>
+                <td>
+                    @if (video.Duration != 0)
+                    {
+                    <span>@TimeSpan.FromSeconds(video.Duration).ToString(@"hh\:mm\:ss")</span>
+                    }
+                    else
+                    {
+                    <span class="badge bg-secondary">Unknown</span>
+                    }
+                </td>
+                <td>
+                    @if (video.TaskDuration != 0)
+                    {
+                    <span>@TimeSpan.FromSeconds(video.TaskDuration).ToString(@"hh\:mm\:ss")</span>
+                    }
+                    else
+                    {
+                    <span class="badge bg-info text-dark">Duration not ready</span>
+                    }
+                </td>
+                <td>
+                    <a href="@Url.Action("DisplayVideo", "Video", new { videoName = video.Name })"
+                       class="btn btn-outline-secondary mt-1 @(video.IsProcessing ? "disabled" : "")"
+                       id="btn-display-@HttpUtility.UrlPathEncode(video.FileName)">
+                        Display Video
+                    </a>
+
+                    <button type="button" class="btn btn-outline-danger mt-1"
+                            onclick="deleteVideo('@video.Name')" data-bs-toggle="tooltip"
+                            title="Delete this video">
+                        Delete
+                    </button>
+                </td>
+            </tr>
+            }
             </tbody>
         </table>
+    </div>
     }
     else
     {
-        <div class="alert alert-info">No videos uploaded yet.</div>
-        <a href="@Url.Action("Upload", "Video")" class="btn btn-secondary mt-3">Upload Your First Video</a>
+    <div class="alert alert-info text-center">No videos uploaded yet.</div>
+    <div class="text-center">
+        <a href="@Url.Action("Upload", "Video")" class="btn btn-primary mt-3">Upload Your First Video</a>
+    </div>
     }
 </div>
 
+<script>
+    // Bootstrap tooltips initialization
+    document.addEventListener("DOMContentLoaded", function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    });
+
+    function deleteVideo(videoName) {
+        if (confirm('Are you sure you want to delete this video?')) {
+            fetch('@Url.Action("DeleteVideo", "Video")?videoName=' + encodeURIComponent(videoName), {
+                method: 'DELETE'
+            }).then(response => {
+                if (response.ok) {
+                    alert("Video deleted successfully.");
+                    location.reload(); // Reload the page to reflect the changes
+                } else {
+                    alert("Error deleting video.");
+                }
+            }).catch(error => {
+                console.error("There was an error:", error);
+            });
+        }
+    }
+</script>

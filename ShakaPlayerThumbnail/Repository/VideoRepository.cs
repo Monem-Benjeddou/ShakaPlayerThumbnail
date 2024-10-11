@@ -1,3 +1,5 @@
+using System.IO.Compression;
+using System.Net.Http.Headers;
 using Newtonsoft.Json;
 using ShakaPlayerThumbnail.Models;
 
@@ -5,7 +7,10 @@ namespace ShakaPlayerThumbnail.Repository;
 
 public class VideoRepository : IVideoRepository
 {
-    private readonly string _videoFolderPath="/etc/data/video";
+    private const string ApiKey = "fCqVJMv6IYrJS3F8eH3iDTGo2Dh57kQRRAL4aARL";
+    private const string UploadUrl = $"https://api.cloudflare.com/client/v4/accounts/{AccountId}/images/v1";
+    private const string AccountId = "68f8f060e3f2d742fdf6a28eb9239fff";
+    private readonly string _videoFolderPath = "/etc/data/video";
     private readonly string _taskDurationFilePath = "/etc/data/video/TaskDurations.json";
 
     public VideoRepository()
@@ -28,7 +33,7 @@ public class VideoRepository : IVideoRepository
 
         if (File.Exists(videoPath))
         {
-            var uniqueId = DateTime.Now.Ticks.ToString(); 
+            var uniqueId = DateTime.Now.Ticks.ToString();
             var nameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
             var extension = Path.GetExtension(fileName);
 
@@ -38,14 +43,13 @@ public class VideoRepository : IVideoRepository
 
         return videoPath;
     }
-    
 
-    public void DeleteFileIfExists(string filePath)
+
+    public bool DeleteFileIfExists(string filePath)
     {
-        if (File.Exists(filePath))
-        {
-            File.Delete(filePath);
-        }
+        if (!File.Exists(filePath)) return false;
+        File.Delete(filePath);
+        return true;
     }
 
     private void EnsureFileExists(string filePath)
@@ -113,4 +117,73 @@ public class VideoRepository : IVideoRepository
         return taskDurations;
     }
 
+    public async Task<bool> DeleteImagesFromCloudflareAsync(string gzFilePath)
+    {
+        try
+        {
+            var vttFileContent = await DecompressGzFileAsync(gzFilePath);
+            var imageIds = ExtractImageIdsFromVtt(vttFileContent);
+
+            foreach (var imageId in imageIds)
+            {
+                try
+                {
+                    await DeleteImageFromCloudflareAsync(imageId);
+                    Console.WriteLine($"Successfully deleted image {imageId} from Cloudflare.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to delete image {imageId}: {ex.Message}");
+                }
+            }
+
+            File.Delete(gzFilePath);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during image deletion process: {ex.Message}");
+            return false;
+        }
+    }
+
+    private async Task<string> DecompressGzFileAsync(string gzFilePath)
+    {
+        var tempVttFilePath = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(gzFilePath));
+
+        using (var compressedFileStream = File.OpenRead(gzFilePath))
+        using (var decompressedFileStream = File.Create(tempVttFilePath))
+        using (var decompressionStream = new GZipStream(compressedFileStream, CompressionMode.Decompress))
+        {
+            await decompressionStream.CopyToAsync(decompressedFileStream);
+        }
+
+        return await File.ReadAllTextAsync(tempVttFilePath);
+    }
+
+    private static List<string> ExtractImageIdsFromVtt(string vttContent)
+    {
+        var lines = vttContent.Split('\n');
+
+        return (from line in lines
+            where line.Contains("#xywh")
+            select line.Split('#')[0].Trim()
+            into url
+            select Path.GetFileNameWithoutExtension(url)).ToList();
+    }
+
+    private static async Task DeleteImageFromCloudflareAsync(string imageId)
+    {
+        using var client = new HttpClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ApiKey);
+
+        var deleteUrl = $"{UploadUrl}/{imageId}";
+        var response = await client.DeleteAsync(deleteUrl);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            throw new InvalidOperationException($"Failed to delete image {imageId}: {errorContent}");
+        }
+    }
 }

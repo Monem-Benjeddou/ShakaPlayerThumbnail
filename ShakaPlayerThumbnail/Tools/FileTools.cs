@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -6,6 +7,8 @@ namespace ShakaPlayerThumbnail.Tools;
 
 public static class FileTools
 {
+
+
     public static string GetFileNameWithoutExtension(string fileName)
     {
         var fileExtPos = fileName.LastIndexOf('.');
@@ -67,4 +70,6 @@ public static class FileTools
 
         return sb.ToString();
     }
+    
+       
 }

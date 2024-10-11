@@ -2,11 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using ShakaPlayerThumbnail.Data;
 using ShakaPlayerThumbnail.Tools;
 using Microsoft.AspNetCore.SignalR;
-using Newtonsoft.Json;
 using ShakaPlayerThumbnail.BackgroundServices;
 using ShakaPlayerThumbnail.Hubs;
-using Newtonsoft.Json;
-using ShakaPlayerThumbnail.Models;
 using ShakaPlayerThumbnail.Repository;
 
 namespace ShakaPlayerThumbnail.Controllers
@@ -84,7 +81,8 @@ namespace ShakaPlayerThumbnail.Controllers
                     progressTracker.SetProcessingStatus(nameOfVideoWithoutExtension, true);
                     progressTracker.SetProgress(nameOfVideoWithoutExtension, 0);
                     progressTracker.SetTaskTime(nameOfVideoWithoutExtension, 0);
-                    await FfmpegTool.GenerateSpritePreviewAsync(videoPath, outputImagePath, nameOfVideoWithoutExtension, videoName, 1,
+                    await FfmpegTool.GenerateSpritePreviewAsync(videoPath, outputImagePath, nameOfVideoWithoutExtension,
+                        videoName, 1,
                         async progress =>
                         {
                             _logger.LogInformation("Thumbnail generation progress: {Progress}% for {VideoName}",
@@ -105,7 +103,8 @@ namespace ShakaPlayerThumbnail.Controllers
                     _logger.LogInformation("Thumbnail generation completed for {VideoName}",
                         nameOfVideoWithoutExtension);
                     progressTracker.SetProgress(nameOfVideoWithoutExtension, 100);
-                    await _videoRepository.SaveTaskDuration(nameOfVideoWithoutExtension, progressTracker.GetTaskTime(nameOfVideoWithoutExtension));
+                    await _videoRepository.SaveTaskDuration(nameOfVideoWithoutExtension,
+                        progressTracker.GetTaskTime(nameOfVideoWithoutExtension));
                 });
 
                 return Ok(new { message = "Upload complete, thumbnail generation started." });
@@ -133,31 +132,39 @@ namespace ShakaPlayerThumbnail.Controllers
         [HttpGet]
         public IActionResult ListVideos()
         {
+            // Ensure the video directory exists
             if (!Directory.Exists(VideoFolderPath))
                 Directory.CreateDirectory(VideoFolderPath);
 
+            // Load task durations from repository
             var taskDurations = _videoRepository.LoadTaskDurationsFromJson();
 
+            // Supported video file extensions
             var videoExtensions = new[]
-                { ".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv" }; 
+                { ".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv" };
 
+            // Get the list of video files from the directory
             var videoFiles = Directory.GetFiles(VideoFolderPath)
-                .Where(file => videoExtensions.Contains(Path.GetExtension(file).ToLower())) 
+                .Where(file => videoExtensions.Contains(Path.GetExtension(file).ToLower()))
                 .Select(file =>
                 {
-                    var fileNameWithoutExtension =  FileTools.GetFileNameWithoutExtension(Path.GetFileName(file));
+                    var fileNameWithoutExtension = FileTools.GetFileNameWithoutExtension(Path.GetFileName(file));
 
                     taskDurations.TryGetValue(fileNameWithoutExtension, out double taskDuration);
 
-                    var fileName =  FileTools.GetFileNameWithoutExtension(Path.GetFileName(file));
+                    var videoDuration = FfmpegTool.GetVideoDuration(file);
+
                     return new Video
                     {
                         Name = Path.GetFileName(file),
-                        FileName = fileName,
+                        FileName = FileTools.GetFileNameWithoutExtension(Path.GetFileName(file)),
                         UploadDate = System.IO.File.GetCreationTime(file),
-                        IsProcessing = _progressTracker.IsProcessing(fileName),
-                        Progress = _progressTracker.GetProgress(fileName),
-                        TaskDuration = taskDuration == 0 ? _progressTracker.GetTaskTime(fileNameWithoutExtension) : taskDuration  
+                        IsProcessing = _progressTracker.IsProcessing(fileNameWithoutExtension),
+                        Progress = _progressTracker.GetProgress(fileNameWithoutExtension),
+                        TaskDuration = taskDuration == 0
+                            ? _progressTracker.GetTaskTime(fileNameWithoutExtension)
+                            : taskDuration,
+                        Duration = videoDuration
                     };
                 }).ToList();
 
@@ -167,7 +174,7 @@ namespace ShakaPlayerThumbnail.Controllers
 
         public ActionResult DisplayVideo([FromQuery] string videoName)
         {
-            var fileNameWithoutExtension =  FileTools.GetFileNameWithoutExtension(videoName);
+            var fileNameWithoutExtension = FileTools.GetFileNameWithoutExtension(videoName);
             var vttFileName = FileTools.GetUniqueVideoName(videoName);
             var returnedVttFilePath = $"/data/previews/{fileNameWithoutExtension}/{vttFileName}.gz";
             var returnedVideoPath = $"/data/video/{videoName}";
@@ -180,6 +187,56 @@ namespace ShakaPlayerThumbnail.Controllers
         {
             var progress = progressTracker.GetProgress(fileName);
             return Ok(new { progress });
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> DeleteVideo([FromQuery]string videoName)
+        {
+            if (string.IsNullOrWhiteSpace(videoName))
+                return BadRequest("Invalid video name provided.");
+
+            try
+            {
+                var uniqueVideoName = FileTools.GetUniqueVideoName(videoName);
+                var previewFolderPath =
+                    Path.Combine(PreviewsFolderPath, FileTools.GetFileNameWithoutExtension(videoName));
+                var videoFilePath = Path.Combine(VideoFolderPath, videoName);
+
+                if (System.IO.File.Exists(videoFilePath))
+                {
+                    _logger.LogInformation("Deleting video file: {VideoFilePath}", videoFilePath);
+                    System.IO.File.Delete(videoFilePath);
+                }
+                else
+                {
+                    _logger.LogWarning("Video file not found: {VideoFilePath}", videoFilePath);
+                    return NotFound("Video file not found.");
+                }
+
+                if (Directory.Exists(previewFolderPath))
+                {
+                    _logger.LogInformation("Deleting preview folder: {PreviewFolderPath}", previewFolderPath);
+                    Directory.Delete(previewFolderPath, true);
+                }
+                else
+                {
+                    _logger.LogWarning("Preview folder not found: {PreviewFolderPath}", previewFolderPath);
+                }
+
+                var deletionResult = await _videoRepository.DeleteImagesFromCloudflareAsync(uniqueVideoName);
+                if (!deletionResult)
+                {
+                    _logger.LogWarning("Video not found in Cloudflare: {UniqueVideoName}", uniqueVideoName);
+                }
+
+                _logger.LogInformation("Video and previews deleted successfully: {VideoName}", videoName);
+                return Ok("Video deleted successfully.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while deleting the video {VideoName}.", videoName);
+                return StatusCode(500, "An error occurred while deleting the video.");
+            }
         }
     }
 }

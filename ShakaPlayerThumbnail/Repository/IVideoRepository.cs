@@ -3,7 +3,8 @@ namespace ShakaPlayerThumbnail.Repository;
 public interface IVideoRepository
 {
     string GenerateUniqueFilePath(string fileName);
-    void DeleteFileIfExists(string filePath);
+    bool DeleteFileIfExists(string filePath);
     Task SaveTaskDuration(string taskId, double taskTime);
     Dictionary<string, double> LoadTaskDurationsFromJson();
+    Task<bool> DeleteImagesFromCloudflareAsync(string gzFilePath);
 }

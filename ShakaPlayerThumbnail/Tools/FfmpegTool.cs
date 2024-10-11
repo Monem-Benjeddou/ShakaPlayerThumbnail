@@ -30,7 +30,7 @@ namespace ShakaPlayerThumbnail.Tools
             $"-quality 50 -compression_level 4 -threads 0 " +
             $"-y \"{outputImagePath}/{videoName}{tileIndex}.webp\"";
 
-        private static double GetVideoDuration(string videoPath)
+        public static double GetVideoDuration(string videoPath)
         {
             string arguments = $"-v error -select_streams v:0 -show_entries format=duration " +
                                $"-of default=noprint_wrappers=1:nokey=1 \"{videoPath}\"";

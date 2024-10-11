@@ -10,5 +10,7 @@ public class Video
     public bool IsProcessing { get; set; }
     public int Progress { get; set; }
     public double TaskDuration { get; set; } 
+    public double Duration { get; set; } 
+
 }
 
