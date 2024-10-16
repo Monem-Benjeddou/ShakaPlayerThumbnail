@@ -1,7 +1,9 @@
 using System.IO.Compression;
 using System.Net.Http.Headers;
+using System.Text;
 using Newtonsoft.Json;
 using ShakaPlayerThumbnail.Models;
+using ShakaPlayerThumbnail.Tools;
 
 namespace ShakaPlayerThumbnail.Repository;
 
@@ -186,4 +188,49 @@ public class VideoRepository : IVideoRepository
             throw new InvalidOperationException($"Failed to delete image {imageId}: {errorContent}");
         }
     }
+
+    public async Task<bool> CreateVideoChapters(string videoName, List<((int, int), string)> chapters)
+    {
+        try
+        {
+            Console.WriteLine($"video name is:{videoName}");
+            var vttFileName = $"{videoName}.vtt";
+            var previewDirectory = $"/etc/data/previews/{videoName}";
+            var vttFilePath = Path.Combine(previewDirectory, vttFileName);
+
+            if (File.Exists(vttFilePath))
+            {
+                Console.WriteLine($"The VTT file '{vttFileName}' already exists.");
+                return false;
+            }
+
+            var vttContent = new StringBuilder();
+            vttContent.AppendLine("WEBVTT");
+            vttContent.AppendLine();
+
+            foreach (var chapter in chapters)
+            {
+                var start = chapter.Item1.Item1;
+                var end = chapter.Item1.Item2;
+                var title = chapter.Item2;
+
+                string startTime = TimeSpan.FromSeconds(start).ToString(@"hh\:mm\:ss\.fff");
+                string endTime = TimeSpan.FromSeconds(end).ToString(@"hh\:mm\:ss\.fff");
+
+                vttContent.AppendLine($"{startTime} --> {endTime}");
+                vttContent.AppendLine(title);
+                vttContent.AppendLine();
+            }
+
+            await File.WriteAllTextAsync(vttFilePath, vttContent.ToString());
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error creating VTT chapters: {ex.Message}");
+            return false;
+        }
+    }
+
 }

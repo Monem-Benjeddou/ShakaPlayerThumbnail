@@ -110,10 +110,10 @@ namespace ShakaPlayerThumbnail.Tools
             var isLongVideo = videoDuration > 30 * 60;
             var totalFrames = (int)Math.Ceiling(videoDuration / intervalSeconds);
             const int tileWidth = 10, tileHeight = 10;
-            var framesPerTile = tileWidth * tileHeight;
+            const int framesPerTile = tileWidth * tileHeight;
             var numberOfTiles = (int)Math.Ceiling((double)totalFrames / framesPerTile);
 
-            ThumbnailInfo[] thumbnailInfo = new ThumbnailInfo[numberOfTiles];
+            var thumbnailInfo = new ThumbnailInfo[numberOfTiles];
 
             if (!Directory.Exists(outputImagePath))
                 Directory.CreateDirectory(outputImagePath);
@@ -132,15 +132,15 @@ namespace ShakaPlayerThumbnail.Tools
                     : BuildSimplifiedFfmpegArguments(videoPath, outputImagePath, i, videoNameWithoutExtension);
 
                 await RunFFmpegAsync(arguments);
-                string imagePath = $"{outputImagePath}/{videoNameWithoutExtension}{i}.webp";
+                var imagePath = $"{outputImagePath}/{videoNameWithoutExtension}{i}.webp";
                 if (i == 1)
                 {
                     (frameWidth, frameHeight) = GetWebpDimensions(imagePath);
                 }
-                string id = $"{ShortId.Generate()}.webp";
+                var id = $"{ShortId.Generate()}.webp";
                 try
                 {
-                    string cloudflareUrl = await UploadToCloudflareImagesAsync(imagePath, id);
+                    var cloudflareUrl = await UploadToCloudflareImagesAsync(imagePath, id);
                     thumbnailInfo[i - 1] = new ThumbnailInfo(i, startTime, endTime, framesInThisSection, cloudflareUrl, id);
                 }
                 catch (Exception ex)

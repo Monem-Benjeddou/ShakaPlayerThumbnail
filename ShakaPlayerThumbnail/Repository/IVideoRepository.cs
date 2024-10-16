@@ -7,4 +7,6 @@ public interface IVideoRepository
     Task SaveTaskDuration(string taskId, double taskTime);
     Dictionary<string, double> LoadTaskDurationsFromJson();
     Task<bool> DeleteImagesFromCloudflareAsync(string gzFilePath);
+    Task<bool> CreateVideoChapters(string videoName, List<((int, int), string)> chapters);
+
 }

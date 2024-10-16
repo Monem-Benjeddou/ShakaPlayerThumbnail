@@ -1,14 +1,15 @@
 ﻿<div id="video-container" class="video-container">
-  <video id="video" controls preload="auto"></video>
-  <div id="seekbar-container" style="display: none;">
-    <div id="seek-bar"></div>
-    <div id="thumb" class="thumbnail">
-      <img id="thumbImage" />
+    <video id="video" controls preload="auto"></video>
+    <div id="seekbar-container" style="display: none;">
+      <div id="chapters-container" class="chapters-container d-flex flex-row "></div>
+      <div id="seek-bar"></div>
+      <div id="thumb" class="thumbnail">
+        <img id="thumbImage"/>
+      </div>
     </div>
-  </div>
 
-  <button id="fullscreen-toggle-btn"></button>
-  <div id="error" class="error-message"></div>
+    <button id="fullscreen-toggle-btn"></button>
+    <div id="error" class="error-message"></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js" integrity="sha512-g2TeAWw5GPnX7z0Kn8nFbYfeHcvAu/tx6d6mrLe/90mkCxO+RcptyYpksUz35EO337F83bZwcmUyHiHamspkfg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
@@ -20,8 +21,11 @@
     const errorDisplay = document.getElementById('error');
     const imageElement = document.getElementById('thumbImage');
     const videoContainer = document.getElementById('video-container');
+    
+    const chaptersContainer = document.getElementById('chapters-container');
+    
     const player = new shaka.Player(video);
-
+    let chapters;
     let lastPreviewPosition = 0, thumbnailTrack, isHovering = false;
     let hideTimeout, isDraggingSeekbar = false;
     let debouncePause = false;
@@ -42,7 +46,10 @@
         video.play();
       }, 300);
     }
-
+    window.addEventListener('resize', () => {
+      seekBar.innerHTML = ''; // Clear current markers and labels
+      addChapterMarkersToSeekBar(chapters); // Recalculate and re-add markers
+    });
     document.addEventListener('fullscreenchange', () => {
       videoContainer.classList.toggle('fullscreen', !!document.fullscreenElement);
       adjustSeekbarPosition();
@@ -51,6 +58,8 @@
     try {
       const videoUrl = "@Html.Raw(Model.Item1)";
       const vttUrl = "@Html.Raw(Model.Item2)";
+      const chapterVtt = "@Html.Raw(Model.Item3)";
+
       await player.load(videoUrl);
       player.configure({
         streaming: {
@@ -63,6 +72,9 @@
       const videoHeight = video.videoHeight;
       const aspectRatio = videoWidth / videoHeight;
       thumbnailTrack = await setupThumbnails(player, thumbElement, vttUrl, aspectRatio);
+      if (chapterVtt){
+        await loadAndDisplayChapters(chapterVtt);
+      }
 
       simulateVideoClick();
 
@@ -73,7 +85,84 @@
     player.addEventListener('error', (event) => {
       handleError('Player error', event.detail);
     });
+    async function loadAndDisplayChapters(vttUrl) {
+      try {
+        const response = await fetch(vttUrl);
+        let vttText;
+        if (response.ok) {
+          vttText = await response.text();
+          console.log('Fetched VTT Text:', vttText);
+        } else {
+          console.error('Failed to fetch VTT file:', response.statusText);
+        }
+        chapters = parseChaptersFromVTT(vttText);
+        addChapterMarkersToSeekBar(chapters);
+      } catch (error) {
+        handleError('Failed to load chapters', error);
+      }
+    }
+    function addChapterMarkersToSeekBar(chapters) {
+      const seekBarWidth = seekBar.clientWidth;
+      const videoDuration = video.duration;
 
+      chapters.forEach(chapter => {
+        const chapterMarker = document.createElement('div');
+        chapterMarker.classList.add('chapter-marker');
+
+        // Calculate position and size based on video duration
+        const startPercentage = (chapter.start / videoDuration) * 100;
+        const durationPercentage = ((chapter.end - chapter.start) / videoDuration) * 100;
+
+        chapterMarker.style.left = `${startPercentage}%`;
+        chapterMarker.style.width = `${durationPercentage}%`;
+
+        // Add event listener to jump to chapter when clicked
+        chapterMarker.addEventListener('click', () => {
+          video.currentTime = chapter.start;
+          video.play();
+        });
+
+        // Create chapter label
+        const chapterLabel = document.createElement('div');
+        chapterLabel.classList.add('chapter-label');
+        chapterLabel.textContent = chapter.title;
+
+        // Position the label above the seekbar
+        chapterLabel.style.left = `${startPercentage}%`;
+
+        // Append chapter marker and label
+        seekBar.appendChild(chapterMarker);
+        seekBar.appendChild(chapterLabel);
+      });
+    }
+    function parseChaptersFromVTT(vttText) {
+      // Updated regex to handle possible line breaks and more flexible patterns
+      const chapterRegex = /(\d{2}:\d{2}:\d{2}\.\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}\.\d{3})\s*\n(.*?)(?:\n|$)/g;
+
+      let chapters = [];
+      let match;
+
+      while ((match = chapterRegex.exec(vttText)) !== null) {
+        const chapterStart = parseTimeString(match[1]);
+        const chapterEnd = parseTimeString(match[2]);
+        const chapterTitle = match[3].trim(); // The text after the timestamp
+
+        chapters.push({
+          title: chapterTitle,
+          start: chapterStart,
+          end: chapterEnd
+        });
+      }
+
+      return chapters;
+    }
+
+
+    function parseTimeString(timeString) {
+      const [hours, minutes, seconds] = timeString.split(':');
+      return parseFloat(hours) * 3600 + parseFloat(minutes) * 60 + parseFloat(seconds);
+    }
+    
     async function fetchAndDecompressVtt(vttUrl) {
       try {
         const response = await fetch(vttUrl);
@@ -260,6 +349,7 @@
 
     video.addEventListener('mouseover', () => {
       video.setAttribute('controls', 'controls');
+      
     });
 
     videoContainer.addEventListener('mouseleave', () => {

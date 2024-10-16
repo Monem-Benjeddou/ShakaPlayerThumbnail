@@ -62,11 +62,11 @@ ViewData["Title"] = "Video List";
                 <td>
                     @if (video.TaskDuration != 0)
                     {
-                    <span>@TimeSpan.FromSeconds(video.TaskDuration).ToString(@"hh\:mm\:ss")</span>
+                        <span>@TimeSpan.FromSeconds(video.TaskDuration).ToString(@"hh\:mm\:ss")</span>
                     }
                     else
                     {
-                    <span class="badge bg-info text-dark">Duration not ready</span>
+                        <span class="badge bg-info text-dark">Duration not ready</span>
                     }
                 </td>
                 <td>
@@ -75,12 +75,17 @@ ViewData["Title"] = "Video List";
                        id="btn-display-@HttpUtility.UrlPathEncode(video.FileName)">
                         Display Video
                     </a>
-
+                    <a href="@Url.Action("CreateChapters", "Video", new { videoName = video.Name })"
+                       class="btn btn-outline-primary mt-1 @(video.IsProcessing ? "disabled" : "")"
+                       id="btn-create-chapters-@HttpUtility.UrlPathEncode(video.FileName)">
+                        Create Chapters
+                    </a>
                     <button type="button" class="btn btn-outline-danger mt-1"
                             onclick="deleteVideo('@video.Name')" data-bs-toggle="tooltip"
                             title="Delete this video">
                         Delete
                     </button>
+                    
                 </td>
             </tr>
             }

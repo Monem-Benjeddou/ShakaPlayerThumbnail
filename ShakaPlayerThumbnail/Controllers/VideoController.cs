@@ -4,6 +4,7 @@ using ShakaPlayerThumbnail.Tools;
 using Microsoft.AspNetCore.SignalR;
 using ShakaPlayerThumbnail.BackgroundServices;
 using ShakaPlayerThumbnail.Hubs;
+using ShakaPlayerThumbnail.Models;
 using ShakaPlayerThumbnail.Repository;
 
 namespace ShakaPlayerThumbnail.Controllers
@@ -132,18 +133,14 @@ namespace ShakaPlayerThumbnail.Controllers
         [HttpGet]
         public IActionResult ListVideos()
         {
-            // Ensure the video directory exists
             if (!Directory.Exists(VideoFolderPath))
                 Directory.CreateDirectory(VideoFolderPath);
 
-            // Load task durations from repository
             var taskDurations = _videoRepository.LoadTaskDurationsFromJson();
 
-            // Supported video file extensions
             var videoExtensions = new[]
                 { ".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv" };
 
-            // Get the list of video files from the directory
             var videoFiles = Directory.GetFiles(VideoFolderPath)
                 .Where(file => videoExtensions.Contains(Path.GetExtension(file).ToLower()))
                 .Select(file =>
@@ -174,11 +171,17 @@ namespace ShakaPlayerThumbnail.Controllers
 
         public ActionResult DisplayVideo([FromQuery] string videoName)
         {
-            var fileNameWithoutExtension = FileTools.GetFileNameWithoutExtension(videoName);
+            var videoNameWithoutExtension = FileTools.GetFileNameWithoutExtension(videoName);
             var vttFileName = FileTools.GetUniqueVideoName(videoName);
-            var returnedVttFilePath = $"/data/previews/{fileNameWithoutExtension}/{vttFileName}.gz";
+            var returnedVttFilePath = $"/data/previews/{videoNameWithoutExtension}/{vttFileName}.gz";
             var returnedVideoPath = $"/data/video/{videoName}";
-            var model = new Tuple<string, string>(returnedVideoPath, returnedVttFilePath);
+            var previewDirectory = $"/data/previews/{videoNameWithoutExtension}";
+            var returnedVideoChapters = Path.Combine(previewDirectory, $"{videoNameWithoutExtension}.vtt");
+            if (System.IO.File.Exists(Path.Combine("/etc",returnedVideoChapters)))
+            {
+                returnedVideoChapters = null;
+            }
+            var model = new Tuple<string, string,string?>(returnedVideoPath, returnedVttFilePath, returnedVideoChapters);
             return View((object)model);
         }
 
@@ -239,5 +242,29 @@ namespace ShakaPlayerThumbnail.Controllers
                 return StatusCode(500, "An error occurred while deleting the video.");
             }
         }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateChapters(string videoName, List<ChapterViewModel> chapters)
+        {
+            var formattedChapters = chapters.Select(c => ((c.Start, c.End), c.Title)).ToList();
+            var videoNameWithoutExtension = FileTools.GetFileNameWithoutExtension(videoName);
+            await _videoRepository.CreateVideoChapters(videoNameWithoutExtension, formattedChapters);
+            return RedirectToAction("DisplayVideo", "Video", new { videoName });
+        }
+
+        public IActionResult CreateChapters(string videoName)
+        {
+            var videoPath = Path.Combine("/etc", "data", "video", videoName);
+            var videoDuration = FfmpegTool.GetVideoDuration(videoPath);
+
+            var model = new VideoChaptersViewModel
+            {
+                VideoName = videoName,
+                VideoDuration = videoDuration
+            };
+
+            return View(model);
+        }
+
     }
 }
