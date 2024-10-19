@@ -244,11 +244,17 @@ namespace ShakaPlayerThumbnail.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateChapters(string videoName, List<ChapterViewModel> chapters)
+        public async Task<IActionResult> CreateChapters(string videoName, string chaptersDescription)
         {
-            var formattedChapters = chapters.Select(c => ((c.Start, c.End), c.Title)).ToList();
+            if (string.IsNullOrEmpty(chaptersDescription))
+            {
+                return BadRequest("Invalid chapter format.");
+            }
+
             var videoNameWithoutExtension = FileTools.GetFileNameWithoutExtension(videoName);
-            await _videoRepository.CreateVideoChapters(videoNameWithoutExtension, formattedChapters);
+
+            await _videoRepository.CreateVideoChapters(videoNameWithoutExtension, chaptersDescription);
+
             return RedirectToAction("DisplayVideo", "Video", new { videoName });
         }
 

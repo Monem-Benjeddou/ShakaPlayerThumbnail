@@ -21,7 +21,7 @@
 #seekbar-container {
     position: absolute;
     width: calc(100% - 30px);
-    bottom: 5px;
+    bottom: 18px;
     left: 16px;
     display: flex;
     align-items: center;
@@ -36,9 +36,9 @@
 }
 
 #seek-bar {
-    height: 20px;
+    height: 8px;
     cursor: pointer;
-    width: 99%;
+    width: 100%;
     border-radius: 2px;
     position: relative;
     z-index: 1000;
@@ -161,14 +161,32 @@
 
 .chapter-marker {
     position: absolute;
-    height: 8px;
-    background-color: #ff0000;
-    cursor: pointer;
-    z-index: 5;
+    width: 8px; /* Dot size */
+    height: 8px; /* Dot size */
+    background-color: #ffffff; /* Dot color */
+    border-radius: 50%; /* Makes it a circle */
     top: 0;
-    border-radius: 2px;
+    z-index: 5;
+    cursor: pointer;
+    transition: background-color 0.3s ease; /* Smooth transition */
 }
-
+.chapter-marker:hover {
+    background-color: #00aaff; /* Dot color on hover */
+}
+.chapter-label {
+    position: absolute;
+    display: none;
+    padding: 2px 5px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: #ffffff;
+    border-radius: 3px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 6;
+}
+.chapter-marker:hover .chapter-label {
+    display: block; /* Show label when hovered */
+}
 .thumbnail {
     position: absolute;
     display: none;
@@ -194,4 +212,25 @@
 .hide-markers .chapter-marker,
 .hide-markers .chapter-label {
     display: none;
+}
+#seek-bar .chapter-marker, #seek-bar .chapter-label {
+    display: none;
+    position: absolute;
+}
+
+#seek-bar:hover .chapter-marker, #seek-bar:hover .chapter-label {
+    display: block;
+}
+
+.chapter-title {
+    position: absolute;
+    top: 75px; 
+    left: 0;
+    width: 100%;
+    text-align: center;
+    color: #fff;
+    background-color: rgba(0, 0, 0, 0.7);
+    font-size: 12px;
+    padding: 2px;
+    display: block;
 }

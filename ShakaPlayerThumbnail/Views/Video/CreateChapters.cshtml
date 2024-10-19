@@ -11,100 +11,16 @@ var videoDuration = Model.VideoDuration;
 
     <p>Video Duration: @videoDuration seconds</p>
 
-    <div class="mb-3">
-        <button type="button" class="btn btn-primary" onclick="addNewChapter()">Add New Chapter</button>
-    </div>
-
     <form method="post" action="/Video/CreateChapters">
         <input type="hidden" name="videoName" value="@videoName" />
 
-        <div id="chapters-container" class="mb-4"></div>
+        <div class="mb-4">
+            <label for="chaptersDescription" class="form-label">Enter Chapters (format: <em>0:00 Chapter Title</em>)</label>
+            <textarea id="chaptersDescription" name="chaptersDescription" class="form-control" rows="10"
+                      placeholder="0:00 What are video chapters?&#10;2:31 How to try them out&#10;5:00 Tips"
+                      required></textarea>
+        </div>
 
-        <button type="submit" class="btn btn-success">Submit All Chapters</button>
+        <button type="submit" class="btn btn-success">Submit Chapters</button>
     </form>
 </div>
-
-<script>
-    let chapterIndex = 0;
-    const videoDuration = @videoDuration; // Get video duration from the model
-
-    function addNewChapter() {
-        const chaptersContainer = document.getElementById('chapters-container');
-
-        const chapterDiv = document.createElement("div");
-        chapterDiv.classList.add("card", "mb-3", "p-3");
-
-        const chapterHeader = document.createElement("h5");
-        chapterHeader.classList.add("card-title");
-        chapterHeader.innerText = `Chapter ${chapterIndex + 1}`;
-        chapterDiv.appendChild(chapterHeader);
-
-        const rowDiv = document.createElement("div");
-        rowDiv.classList.add("row", "g-3");
-
-        // Start time input
-        const startTimeDiv = document.createElement("div");
-        startTimeDiv.classList.add("col-md-4");
-
-        const startLabel = document.createElement("label");
-        startLabel.innerText = "Start Time (seconds)";
-        startLabel.classList.add("form-label");
-        const startInput = document.createElement("input");
-        startInput.type = "number";
-        startInput.name = `chapters[${chapterIndex}].Start`;
-        startInput.classList.add("form-control");
-        startInput.min = 0;
-        startInput.max = videoDuration;
-        startInput.required = true;
-
-        startTimeDiv.appendChild(startLabel);
-        startTimeDiv.appendChild(startInput);
-
-        // End time input
-        const endTimeDiv = document.createElement("div");
-        endTimeDiv.classList.add("col-md-4");
-
-        const endLabel = document.createElement("label");
-        endLabel.innerText = "End Time (seconds)";
-        endLabel.classList.add("form-label");
-        const endInput = document.createElement("input");
-        endInput.type = "number";
-        endInput.name = `chapters[${chapterIndex}].End`;
-        endInput.classList.add("form-control");
-        endInput.min = 0;
-        endInput.max = videoDuration;
-        endInput.required = true;
-
-        endTimeDiv.appendChild(endLabel);
-        endTimeDiv.appendChild(endInput);
-
-        // Chapter title input
-        const titleDiv = document.createElement("div");
-        titleDiv.classList.add("col-md-4");
-
-        const titleLabel = document.createElement("label");
-        titleLabel.innerText = "Chapter Title";
-        titleLabel.classList.add("form-label");
-        const titleInput = document.createElement("input");
-        titleInput.type = "text";
-        titleInput.name = `chapters[${chapterIndex}].Title`;
-        titleInput.classList.add("form-control");
-        titleInput.required = true;
-
-        titleDiv.appendChild(titleLabel);
-        titleDiv.appendChild(titleInput);
-
-        // Append all input groups to the row
-        rowDiv.appendChild(startTimeDiv);
-        rowDiv.appendChild(endTimeDiv);
-        rowDiv.appendChild(titleDiv);
-
-        // Append the row to the chapter card div
-        chapterDiv.appendChild(rowDiv);
-
-        // Append the chapter card to the chapters container
-        chaptersContainer.appendChild(chapterDiv);
-
-        chapterIndex++; // Increment the chapter index for the next chapter
-    }
-</script>

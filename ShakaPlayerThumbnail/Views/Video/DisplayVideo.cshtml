@@ -5,6 +5,7 @@
       <div id="seek-bar"></div>
       <div id="thumb" class="thumbnail">
         <img id="thumbImage"/>
+        <div id="chapterTitle" class="chapter-title"></div> 
       </div>
     </div>
 
@@ -47,8 +48,8 @@
       }, 300);
     }
     window.addEventListener('resize', () => {
-      seekBar.innerHTML = ''; // Clear current markers and labels
-      addChapterMarkersToSeekBar(chapters); // Recalculate and re-add markers
+      seekBar.innerHTML = ''; 
+      addChapterMarkersToSeekBar(chapters); 
     });
     document.addEventListener('fullscreenchange', () => {
       videoContainer.classList.toggle('fullscreen', !!document.fullscreenElement);
@@ -105,38 +106,23 @@
       const seekBarWidth = seekBar.clientWidth;
       const videoDuration = video.duration;
 
-      chapters.forEach(chapter => {
+      chapters.forEach((chapter, index) => {
         const chapterMarker = document.createElement('div');
         chapterMarker.classList.add('chapter-marker');
 
-        // Calculate position and size based on video duration
         const startPercentage = (chapter.start / videoDuration) * 100;
-        const durationPercentage = ((chapter.end - chapter.start) / videoDuration) * 100;
-
         chapterMarker.style.left = `${startPercentage}%`;
-        chapterMarker.style.width = `${durationPercentage}%`;
+        
 
-        // Add event listener to jump to chapter when clicked
         chapterMarker.addEventListener('click', () => {
           video.currentTime = chapter.start;
           video.play();
         });
 
-        // Create chapter label
-        const chapterLabel = document.createElement('div');
-        chapterLabel.classList.add('chapter-label');
-        chapterLabel.textContent = chapter.title;
-
-        // Position the label above the seekbar
-        chapterLabel.style.left = `${startPercentage}%`;
-
-        // Append chapter marker and label
         seekBar.appendChild(chapterMarker);
-        seekBar.appendChild(chapterLabel);
       });
     }
     function parseChaptersFromVTT(vttText) {
-      // Updated regex to handle possible line breaks and more flexible patterns
       const chapterRegex = /(\d{2}:\d{2}:\d{2}\.\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}\.\d{3})\s*\n(.*?)(?:\n|$)/g;
 
       let chapters = [];
@@ -145,7 +131,7 @@
       while ((match = chapterRegex.exec(vttText)) !== null) {
         const chapterStart = parseTimeString(match[1]);
         const chapterEnd = parseTimeString(match[2]);
-        const chapterTitle = match[3].trim(); // The text after the timestamp
+        const chapterTitle = match[3].trim(); 
 
         chapters.push({
           title: chapterTitle,
@@ -265,9 +251,45 @@
         if (thumbnail?.uris.length) {
           const [imageUrl, { x, y, width, height }] = parseThumbnailData(thumbnail);
           displayThumbnail(thumbElement, imageElement, imageUrl, x, y, width, height, offsetX);
+
+          const currentChapter = findChapterForTime(position);
+          displayChapterTitle(currentChapter);
+          const chapterTitleElement = document.getElementById('chapterTitle');
+
+          if (chapterTitleElement){
+            let chapterHeight = -chapterTitleElement.offsetHeight-80;
+            thumbElement.style.top = chapterHeight+"px";
+          }else{
+            thumbElement.style.top = "-80px";
+
+          }
+          if (chapterTitleElement){
+            let chapterHeight = chapterTitleElement.offsetHeight-80;
+            thumbElement.style.top = {chapterHeight}+"px";
+          }else{
+            thumbElement.style.top = "-80px";
+
+          }
         }
       }).catch((error) => handleError('Error getting thumbnail', error));
     }
+    function findChapterForTime(currentTime) {
+      return chapters.find(chapter => currentTime >= chapter.start && currentTime < chapter.end);
+    }
+    function displayChapterTitle(chapter) {
+      const chapterTitleElement = document.getElementById('chapterTitle');
+      seekBar.style.backgroundColor = 'rgba(255,255,255,.2)';
+
+      if (chapter) {
+        chapterTitleElement.textContent = chapter.title;
+        chapterTitleElement.style.display = 'block';
+      } else {
+        chapterTitleElement.style.display = 'none';
+        chapterTitleElement.style.display = 'none';
+
+      }
+    }
+
 
     function adjustSeekbarPosition() {
       const seekbarContainer = document.getElementById('seekbar-container');
@@ -332,7 +354,9 @@
       }
 
       thumbElement.style.left = `${thumbX}px`;
-      thumbElement.style.top = `-80px`;
+      const chapterTitleElement = document.getElementById('chapterTitle');
+
+
 
       thumbElement.style.display = 'block';
       video.focus();
@@ -340,6 +364,7 @@
 
     function hideThumbnail() {
       thumbElement.style.display = 'none';
+      seekBar.style.backgroundColor = '';
     }
 
     seekBar.addEventListener('click', (e) => {
@@ -359,6 +384,7 @@
         }
       }, 5);
     });
+    
     function isHoveringSeekbar() {
       return seekBar.matches(':hover');
     }

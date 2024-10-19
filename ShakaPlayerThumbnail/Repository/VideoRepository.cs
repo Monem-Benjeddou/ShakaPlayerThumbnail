@@ -3,7 +3,6 @@ using System.Net.Http.Headers;
 using System.Text;
 using Newtonsoft.Json;
 using ShakaPlayerThumbnail.Models;
-using ShakaPlayerThumbnail.Tools;
 
 namespace ShakaPlayerThumbnail.Repository;
 
@@ -98,10 +97,10 @@ public class VideoRepository : IVideoRepository
         var taskDurations = new Dictionary<string, double>();
         var jsonFilePath = "/etc/data/video/TaskDurations.json";
 
-        if (!System.IO.File.Exists(jsonFilePath))
+        if (!File.Exists(jsonFilePath))
             return taskDurations;
 
-        var jsonContent = System.IO.File.ReadAllText(jsonFilePath);
+        var jsonContent = File.ReadAllText(jsonFilePath);
 
         var tasksInfo = JsonConvert.DeserializeObject<List<TaskInfo>>(jsonContent);
 
@@ -189,11 +188,12 @@ public class VideoRepository : IVideoRepository
         }
     }
 
-    public async Task<bool> CreateVideoChapters(string videoName, List<((int, int), string)> chapters)
+    public async Task<bool> CreateVideoChapters(string videoName, string chapterDescription)
     {
         try
         {
-            Console.WriteLine($"video name is:{videoName}");
+            var chapters = ParseChapters(chapterDescription);
+            Console.WriteLine($"video name is: {videoName}");
             var vttFileName = $"{videoName}.vtt";
             var previewDirectory = $"/etc/data/previews/{videoName}";
             var vttFilePath = Path.Combine(previewDirectory, vttFileName);
@@ -205,17 +205,23 @@ public class VideoRepository : IVideoRepository
             }
 
             var vttContent = new StringBuilder();
-            vttContent.AppendLine("WEBVTT");
-            vttContent.AppendLine();
-
-            foreach (var chapter in chapters)
+            for (int i = 0; i < chapters.Count; i++)
             {
-                var start = chapter.Item1.Item1;
-                var end = chapter.Item1.Item2;
-                var title = chapter.Item2;
+                var start = chapters[i].Item1;
+                var title = chapters[i].Item2;
+                var end = (i < chapters.Count - 1) ? chapters[i + 1].Item1 : -1;
 
                 string startTime = TimeSpan.FromSeconds(start).ToString(@"hh\:mm\:ss\.fff");
-                string endTime = TimeSpan.FromSeconds(end).ToString(@"hh\:mm\:ss\.fff");
+                string endTime;
+
+                if (end != -1)
+                {
+                    endTime = TimeSpan.FromSeconds(end).ToString(@"hh\:mm\:ss\.fff");
+                }
+                else
+                {
+                    endTime = "To be calculated based on video length"; 
+                }
 
                 vttContent.AppendLine($"{startTime} --> {endTime}");
                 vttContent.AppendLine(title);
@@ -232,5 +238,35 @@ public class VideoRepository : IVideoRepository
             return false;
         }
     }
+    private List<(int, string)> ParseChapters(string chaptersDescription)
+    {
+        var chapters = new List<(int, string)>();
+        var lines = chaptersDescription.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
+        foreach (var line in lines)
+        {
+            var parts = line.Split(' ', 2);
+            if (parts.Length != 2) continue; 
+
+            var timePart = parts[0];
+            var title = parts[1];
+
+            var startTime = ParseTimeString(timePart);
+            if (startTime == -1) continue;
+
+            chapters.Add((startTime, title));
+        }
+
+        return chapters;
+    }
+    private int ParseTimeString(string timeString)
+    {
+        var parts = timeString.Split(':');
+        if (parts.Length < 2) return -1;
+
+        int minutes = int.Parse(parts[0]);
+        int seconds = int.Parse(parts[1]);
+
+        return (minutes * 60) + seconds; 
+    }
 }
