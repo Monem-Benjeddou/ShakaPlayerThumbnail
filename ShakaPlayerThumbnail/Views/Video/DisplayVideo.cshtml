@@ -274,7 +274,12 @@
       }).catch((error) => handleError('Error getting thumbnail', error));
     }
     function findChapterForTime(currentTime) {
-      return chapters.find(chapter => currentTime >= chapter.start);
+      return chapters.find(chapter => {
+        if (chapter.end === undefined) {
+          return currentTime >= chapter.start;
+        }
+        return currentTime >= chapter.start && currentTime < chapter.end;
+      });
     }
     function displayChapterTitle(chapter) {
       const chapterTitleElement = document.getElementById('chapterTitle');
