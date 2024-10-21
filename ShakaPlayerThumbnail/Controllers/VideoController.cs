@@ -253,7 +253,7 @@ namespace ShakaPlayerThumbnail.Controllers
 
             var videoNameWithoutExtension = FileTools.GetFileNameWithoutExtension(videoName);
 
-            await _videoRepository.CreateVideoChapters(videoNameWithoutExtension, chaptersDescription);
+            await _videoRepository.CreateVideoChapters(videoNameWithoutExtension, chaptersDescription, videoLength);
 
             return RedirectToAction("DisplayVideo", "Video", new { videoName });
         }
