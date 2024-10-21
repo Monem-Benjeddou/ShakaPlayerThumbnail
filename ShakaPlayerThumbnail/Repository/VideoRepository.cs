@@ -188,7 +188,7 @@ public class VideoRepository : IVideoRepository
         }
     }
 
-    public async Task<bool> CreateVideoChapters(string videoName, string chapterDescription)
+    public async Task<bool> CreateVideoChapters(string videoName, string chapterDescription, double videoDuration)
     {
         try
         {
@@ -220,7 +220,7 @@ public class VideoRepository : IVideoRepository
                 }
                 else
                 {
-                    endTime = "To be calculated based on video length"; 
+                    endTime = TimeSpan.FromSeconds(videoDuration).ToString(@"hh\:mm\:ss\.fff") ; 
                 }
 
                 vttContent.AppendLine($"{startTime} --> {endTime}");

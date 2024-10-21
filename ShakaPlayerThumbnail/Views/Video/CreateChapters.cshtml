@@ -1,9 +1,9 @@
 @model VideoChaptersViewModel
 
 @{
-ViewData["Title"] = "Create Video Chapters";
-var videoName = Model.VideoName;
-var videoDuration = Model.VideoDuration;
+    ViewData["Title"] = "Create Video Chapters";
+    var videoName = Model.VideoName;
+    var videoDuration = Model.VideoDuration;
 }
 
 <div class="container mt-5">
@@ -20,6 +20,7 @@ var videoDuration = Model.VideoDuration;
                       placeholder="0:00 What are video chapters?&#10;2:31 How to try them out&#10;5:00 Tips"
                       required></textarea>
         </div>
+        <input type="hidden" name="videoLength" value="@videoDuration" />
 
         <button type="submit" class="btn btn-success">Submit Chapters</button>
     </form>

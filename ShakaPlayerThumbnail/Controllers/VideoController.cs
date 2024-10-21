@@ -244,7 +244,7 @@ namespace ShakaPlayerThumbnail.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateChapters(string videoName, string chaptersDescription)
+        public async Task<IActionResult> CreateChapters(string videoName, string chaptersDescription, double videoLength)
         {
             if (string.IsNullOrEmpty(chaptersDescription))
             {
