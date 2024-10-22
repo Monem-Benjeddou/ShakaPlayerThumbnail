@@ -6,7 +6,7 @@ public interface IVideoRepository
     bool DeleteFileIfExists(string filePath);
     Task SaveTaskDuration(string taskId, double taskTime);
     Dictionary<string, double> LoadTaskDurationsFromJson();
-    Task<bool> DeleteImagesFromCloudflareAsync(string gzFilePath);
+    Task<bool> DeleteVideo(string videoName);
     Task<bool> CreateVideoChapters(string videoName, string chapterDescription, double videoDuration);
 
 }

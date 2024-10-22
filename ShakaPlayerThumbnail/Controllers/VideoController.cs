@@ -17,9 +17,7 @@ namespace ShakaPlayerThumbnail.Controllers
         IVideoRepository _videoRepository,
         ILogger<VideoController> _logger) : Controller
     {
-        private const string PreviewsFolderPath = "/etc/data/previews";
-        private const string VideoFolderPath = "/etc/data/video";
-
+      
         public ActionResult Upload()
         {
             return View(new Video());
@@ -38,12 +36,12 @@ namespace ShakaPlayerThumbnail.Controllers
                 chunkIndex + 1, totalChunks);
             var nameOfVideoWithoutExtension = FileTools.GetFileNameWithoutExtension(videoName);
 
-            var videoPath = Path.Combine(VideoFolderPath, videoName);
+            var videoPath = Path.Combine(VideoFolders.VideoFolderPath, videoName);
 
-            if (!Directory.Exists(VideoFolderPath))
+            if (!Directory.Exists(VideoFolders.VideoFolderPath))
             {
-                _logger.LogInformation("Creating directory: {VideoFolderPath}", VideoFolderPath);
-                Directory.CreateDirectory(VideoFolderPath);
+                _logger.LogInformation("Creating directory: {VideoFolders.VideoFolderPath}", VideoFolders.VideoFolderPath);
+                Directory.CreateDirectory(VideoFolders.VideoFolderPath);
             }
 
             try
@@ -66,7 +64,7 @@ namespace ShakaPlayerThumbnail.Controllers
                 _logger.LogInformation(
                     "All chunks uploaded successfully for file {FileName}, starting thumbnail generation.", videoName);
 
-                var outputImagePath = Path.Combine(PreviewsFolderPath, nameOfVideoWithoutExtension);
+                var outputImagePath = Path.Combine(VideoFolders.PreviewsFolderPath, nameOfVideoWithoutExtension);
                 if (!Directory.Exists(outputImagePath))
                 {
                     _logger.LogInformation("Creating output directory for previews: {OutputImagePath}",
@@ -133,15 +131,15 @@ namespace ShakaPlayerThumbnail.Controllers
         [HttpGet]
         public IActionResult ListVideos()
         {
-            if (!Directory.Exists(VideoFolderPath))
-                Directory.CreateDirectory(VideoFolderPath);
+            if (!Directory.Exists(VideoFolders.VideoFolderPath))
+                Directory.CreateDirectory(VideoFolders.VideoFolderPath);
 
             var taskDurations = _videoRepository.LoadTaskDurationsFromJson();
 
             var videoExtensions = new[]
                 { ".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv" };
 
-            var videoFiles = Directory.GetFiles(VideoFolderPath)
+            var videoFiles = Directory.GetFiles(VideoFolders.VideoFolderPath)
                 .Where(file => videoExtensions.Contains(Path.GetExtension(file).ToLower()))
                 .Select(file =>
                 {
@@ -193,56 +191,25 @@ namespace ShakaPlayerThumbnail.Controllers
         }
 
         [HttpDelete]
-        public async Task<IActionResult> DeleteVideo([FromQuery]string videoName)
+        public async Task<IActionResult> DeleteVideo([FromQuery] string videoName)
         {
             if (string.IsNullOrWhiteSpace(videoName))
                 return BadRequest("Invalid video name provided.");
 
             try
             {
-                var uniqueVideoName = FileTools.GetUniqueVideoName(videoName);
-                var previewFolderPath = Path.Combine(PreviewsFolderPath, FileTools.GetFileNameWithoutExtension(videoName));
-                var videoVttPath = Path.Combine(previewFolderPath,$"{uniqueVideoName}.gz");
+                var deletionResult = await _videoRepository.DeleteVideo(videoName);
 
-                var videoFilePath = Path.Combine(VideoFolderPath, videoName);
-
-                if (System.IO.File.Exists(videoFilePath))
-                {
-                    _logger.LogInformation("Deleting video file: {VideoFilePath}", videoFilePath);
-                    System.IO.File.Delete(videoFilePath);
-                }
-                else
-                {
-                    _logger.LogWarning("Video file not found: {VideoFilePath}", videoFilePath);
-                    return NotFound("Video file not found.");
-                }
-
-                if (Directory.Exists(previewFolderPath))
-                {
-                    _logger.LogInformation("Deleting preview folder: {PreviewFolderPath}", previewFolderPath);
-                    Directory.Delete(previewFolderPath, true);
-                }
-                else
-                {
-                    _logger.LogWarning("Preview folder not found: {PreviewFolderPath}", previewFolderPath);
-                }
-
-                var deletionResult = await _videoRepository.DeleteImagesFromCloudflareAsync(videoVttPath);
-                if (!deletionResult)
-                {
-                    _logger.LogWarning("Video not found in Cloudflare: {UniqueVideoName}", uniqueVideoName);
-                }
-
-                _logger.LogInformation("Video and previews deleted successfully: {VideoName}", videoName);
-                return Ok("Video deleted successfully.");
+                if (deletionResult)
+                    return Ok("Video and associated resources deleted successfully.");
+                return NotFound("Video or associated resources not found.");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while deleting the video {VideoName}.", videoName);
+                Console.WriteLine($"Error occurred while deleting the video {videoName}: {ex.Message}");
                 return StatusCode(500, "An error occurred while deleting the video.");
             }
         }
-
         [HttpPost]
         public async Task<IActionResult> CreateChapters(string videoName, string chaptersDescription, double videoLength)
         {

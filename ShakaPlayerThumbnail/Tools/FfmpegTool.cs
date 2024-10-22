@@ -142,6 +142,8 @@ namespace ShakaPlayerThumbnail.Tools
                 {
                     var cloudflareUrl = await UploadToCloudflareImagesAsync(imagePath, id);
                     thumbnailInfo[i - 1] = new ThumbnailInfo(i, startTime, endTime, framesInThisSection, cloudflareUrl, id);
+                    if(File.Exists(imagePath))
+                        File.Delete(imagePath);
                 }
                 catch (Exception ex)
                 {

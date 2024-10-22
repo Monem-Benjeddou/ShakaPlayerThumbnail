@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using Newtonsoft.Json;
 using ShakaPlayerThumbnail.Models;
+using ShakaPlayerThumbnail.Tools;
 
 namespace ShakaPlayerThumbnail.Repository;
 
@@ -11,12 +12,11 @@ public class VideoRepository : IVideoRepository
     private const string ApiKey = "fCqVJMv6IYrJS3F8eH3iDTGo2Dh57kQRRAL4aARL";
     private const string UploadUrl = $"https://api.cloudflare.com/client/v4/accounts/{AccountId}/images/v1";
     private const string AccountId = "68f8f060e3f2d742fdf6a28eb9239fff";
-    private readonly string _videoFolderPath = "/etc/data/video";
     private readonly string _taskDurationFilePath = "/etc/data/video/TaskDurations.json";
 
     public VideoRepository()
     {
-        EnsureDirectoryExists(_videoFolderPath);
+        EnsureDirectoryExists(VideoFolders.VideoFolderPath);
         EnsureFileExists(_taskDurationFilePath);
     }
 
@@ -30,7 +30,7 @@ public class VideoRepository : IVideoRepository
 
     public string GenerateUniqueFilePath(string fileName)
     {
-        var videoPath = Path.Combine(_videoFolderPath, fileName);
+        var videoPath = Path.Combine(VideoFolders.VideoFolderPath, fileName);
 
         if (File.Exists(videoPath))
         {
@@ -39,7 +39,7 @@ public class VideoRepository : IVideoRepository
             var extension = Path.GetExtension(fileName);
 
             fileName = $"{nameWithoutExtension}_{uniqueId}{extension}";
-            videoPath = Path.Combine(_videoFolderPath, fileName);
+            videoPath = Path.Combine(VideoFolders.VideoFolderPath, fileName);
         }
 
         return videoPath;
@@ -104,21 +104,60 @@ public class VideoRepository : IVideoRepository
 
         var tasksInfo = JsonConvert.DeserializeObject<List<TaskInfo>>(jsonContent);
 
-        if (tasksInfo != null)
+        if (tasksInfo == null) return taskDurations;
+        foreach (var taskInfo in tasksInfo.Where(taskInfo => !string.IsNullOrEmpty(taskInfo.TaskId)))
         {
-            foreach (var taskInfo in tasksInfo)
-            {
-                if (!string.IsNullOrEmpty(taskInfo.TaskId))
-                {
-                    taskDurations[taskInfo.TaskId] = taskInfo.Duration;
-                }
-            }
+            taskDurations[taskInfo.TaskId] = taskInfo.Duration;
         }
 
         return taskDurations;
     }
+    
+    public async Task<bool> DeleteVideo(string videoName)
+    {
+        if (string.IsNullOrWhiteSpace(videoName))
+        {
+            Console.WriteLine("Invalid video name provided.");
+            return false;
+        }
+        try
+        {
+            var uniqueVideoName = FileTools.GetUniqueVideoName(videoName);
+            var previewFolderPath = Path.Combine(VideoFolders.PreviewsFolderPath,
+                FileTools.GetFileNameWithoutExtension(videoName));
+            var videoVttPath = Path.Combine(previewFolderPath, $"{uniqueVideoName}.gz");
+            var videoFilePath = Path.Combine(VideoFolders.VideoFolderPath, videoName);
 
-    public async Task<bool> DeleteImagesFromCloudflareAsync(string gzFilePath)
+            if (System.IO.File.Exists(videoFilePath))
+            {
+                Console.WriteLine($"Deleting video file: {videoFilePath}");
+                System.IO.File.Delete(videoFilePath);
+            }
+            else
+            {
+                Console.WriteLine($"Video file not found: {videoFilePath}");
+                return false;
+            }
+            
+
+            if (System.IO.File.Exists(videoVttPath))
+                await DeleteImagesFromCloudflareAsync(videoVttPath);
+            else
+                Console.WriteLine($"VTT file not found: {videoVttPath}");
+            if (System.IO.Directory.Exists(previewFolderPath))
+                Directory.Delete(previewFolderPath);
+            else
+                Console.WriteLine($"Directory not found: {previewFolderPath}");
+            Console.WriteLine($"Video and previews deleted successfully: {videoName}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error occurred while deleting the video {videoName}: {ex.Message}");
+            return false;
+        }
+    }
+    private async Task<bool> DeleteImagesFromCloudflareAsync(string gzFilePath)
     {
         try
         {
@@ -127,7 +166,7 @@ public class VideoRepository : IVideoRepository
 
             foreach (var imageId in imageIds)
             {
-                try
+                try 
                 {
                     await DeleteImageFromCloudflareAsync(imageId);
                     Console.WriteLine($"Successfully deleted image {imageId} from Cloudflare.");
@@ -152,9 +191,9 @@ public class VideoRepository : IVideoRepository
     {
         var tempVttFilePath = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(gzFilePath));
 
-        using (var compressedFileStream = File.OpenRead(gzFilePath))
-        using (var decompressedFileStream = File.Create(tempVttFilePath))
-        using (var decompressionStream = new GZipStream(compressedFileStream, CompressionMode.Decompress))
+        await using (var compressedFileStream = File.OpenRead(gzFilePath))
+        await using (var decompressedFileStream = File.Create(tempVttFilePath))
+        await using (var decompressionStream = new GZipStream(compressedFileStream, CompressionMode.Decompress))
         {
             await decompressionStream.CopyToAsync(decompressedFileStream);
         }
@@ -167,11 +206,14 @@ public class VideoRepository : IVideoRepository
         var lines = vttContent.Split('\n');
 
         return (from line in lines
-            where line.Contains("#xywh")
-            select line.Split('#')[0].Trim()
-            into url
-            select Path.GetFileNameWithoutExtension(url)).ToList();
+                where line.Contains("https://imagedelivery.net")
+                let urlWithoutFragment = line.Split('#')[0].Trim()
+                let uri = new Uri(urlWithoutFragment)
+                select uri.Segments[uri.Segments.Length - 2].Trim('/')
+            ).ToList();
     }
+
+
 
     private static async Task DeleteImageFromCloudflareAsync(string imageId)
     {
@@ -196,6 +238,7 @@ public class VideoRepository : IVideoRepository
             Console.WriteLine($"video name is: {videoName}");
             var vttFileName = $"{videoName}.vtt";
             var previewDirectory = $"/etc/data/previews/{videoName}";
+            Console.WriteLine(videoName);
             var vttFilePath = Path.Combine(previewDirectory, vttFileName);
 
             if (File.Exists(vttFilePath))
@@ -220,7 +263,7 @@ public class VideoRepository : IVideoRepository
                 }
                 else
                 {
-                    endTime = TimeSpan.FromSeconds(videoDuration).ToString(@"hh\:mm\:ss\.fff") ; 
+                    endTime = TimeSpan.FromSeconds(videoDuration).ToString(@"hh\:mm\:ss\.fff");
                 }
 
                 vttContent.AppendLine($"{startTime} --> {endTime}");
@@ -238,6 +281,7 @@ public class VideoRepository : IVideoRepository
             return false;
         }
     }
+
     private List<(int, string)> ParseChapters(string chaptersDescription)
     {
         var chapters = new List<(int, string)>();
@@ -246,7 +290,7 @@ public class VideoRepository : IVideoRepository
         foreach (var line in lines)
         {
             var parts = line.Split(' ', 2);
-            if (parts.Length != 2) continue; 
+            if (parts.Length != 2) continue;
 
             var timePart = parts[0];
             var title = parts[1];
@@ -259,6 +303,7 @@ public class VideoRepository : IVideoRepository
 
         return chapters;
     }
+
     private int ParseTimeString(string timeString)
     {
         var parts = timeString.Split(':');
@@ -267,6 +312,6 @@ public class VideoRepository : IVideoRepository
         int minutes = int.Parse(parts[0]);
         int seconds = int.Parse(parts[1]);
 
-        return (minutes * 60) + seconds; 
+        return (minutes * 60) + seconds;
     }
 }
