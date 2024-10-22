@@ -243,28 +243,22 @@ public class VideoRepository : IVideoRepository
 
             if (File.Exists(vttFilePath))
             {
-                Console.WriteLine($"The VTT file '{vttFileName}' already exists.");
-                return false;
+                Console.WriteLine($"The VTT file '{vttFileName}' already exists. Deleting in progress");
+                File.Delete(vttFilePath);
             }
 
             var vttContent = new StringBuilder();
-            for (int i = 0; i < chapters.Count; i++)
+            for (var i = 0; i < chapters.Count; i++)
             {
                 var start = chapters[i].Item1;
                 var title = chapters[i].Item2;
                 var end = (i < chapters.Count - 1) ? chapters[i + 1].Item1 : -1;
 
-                string startTime = TimeSpan.FromSeconds(start).ToString(@"hh\:mm\:ss\.fff");
-                string endTime;
+                var startTime = TimeSpan.FromSeconds(start).ToString(@"hh\:mm\:ss\.fff");
 
-                if (end != -1)
-                {
-                    endTime = TimeSpan.FromSeconds(end).ToString(@"hh\:mm\:ss\.fff");
-                }
-                else
-                {
-                    endTime = TimeSpan.FromSeconds(videoDuration).ToString(@"hh\:mm\:ss\.fff");
-                }
+                var endTime = end != -1
+                    ? TimeSpan.FromSeconds(end).ToString(@"hh\:mm\:ss\.fff") 
+                    : TimeSpan.FromSeconds(videoDuration).ToString(@"hh\:mm\:ss\.fff");
 
                 vttContent.AppendLine($"{startTime} --> {endTime}");
                 vttContent.AppendLine(title);
