@@ -12,12 +12,11 @@ public class VideoRepository : IVideoRepository
     private const string ApiKey = "fCqVJMv6IYrJS3F8eH3iDTGo2Dh57kQRRAL4aARL";
     private const string UploadUrl = $"https://api.cloudflare.com/client/v4/accounts/{AccountId}/images/v1";
     private const string AccountId = "68f8f060e3f2d742fdf6a28eb9239fff";
-    private readonly string _taskDurationFilePath = "/etc/data/video/TaskDurations.json";
 
     public VideoRepository()
     {
         EnsureDirectoryExists(VideoFolders.VideoFolderPath);
-        EnsureFileExists(_taskDurationFilePath);
+        EnsureFileExists(VideoFolders.TaskDurationFilePath);
     }
 
     private void EnsureDirectoryExists(string path)
@@ -60,6 +59,48 @@ public class VideoRepository : IVideoRepository
             File.WriteAllText(filePath, string.Empty);
         }
     }
+    private async Task DeleteTaskDuration(string taskId)
+    {
+        if (!File.Exists(VideoFolders.TaskDurationFilePath))
+        {
+            Console.WriteLine($"Task duration file not found.");
+            return;
+        }
+
+        var existingData = await File.ReadAllTextAsync(VideoFolders.TaskDurationFilePath);
+    
+        if (string.IsNullOrWhiteSpace(existingData))
+        {
+            Console.WriteLine($"No tasks found in the file.");
+            return;
+        }
+
+        var taskInfos = JsonConvert.DeserializeObject<List<TaskInfo>>(existingData);
+
+        if (taskInfos == null || taskInfos.Count == 0)
+        {
+            Console.WriteLine($"No tasks to delete.");
+            return;
+        }
+
+        // Find and remove the task by its ID
+        var taskToRemove = taskInfos.FirstOrDefault(t => t.TaskId == taskId);
+
+        if (taskToRemove != null)
+        {
+            taskInfos.Remove(taskToRemove);
+
+            // Serialize the updated list back to the file
+            var updatedJson = JsonConvert.SerializeObject(taskInfos, Formatting.Indented);
+            await File.WriteAllTextAsync(VideoFolders.TaskDurationFilePath, updatedJson);
+
+            Console.WriteLine($"Task with ID '{taskId}' has been successfully deleted.");
+        }
+        else
+        {
+            Console.WriteLine($"No task found with ID '{taskId}'.");
+        }
+    }
 
     public async Task SaveTaskDuration(string taskId, double taskTime)
     {
@@ -71,25 +112,21 @@ public class VideoRepository : IVideoRepository
             Timestamp = DateTime.Now
         };
 
-        List<TaskInfo> taskInfos = new List<TaskInfo>();
+        var taskInfos = new List<TaskInfo>();
 
-        // Check if the file exists
-        if (File.Exists(_taskDurationFilePath))
+        if (File.Exists(VideoFolders.TaskDurationFilePath))
         {
-            var existingData = await File.ReadAllTextAsync(_taskDurationFilePath);
+            var existingData = await File.ReadAllTextAsync(VideoFolders.TaskDurationFilePath);
 
             if (!string.IsNullOrWhiteSpace(existingData))
             {
-                taskInfos = JsonConvert.DeserializeObject<List<TaskInfo>>(existingData) ?? new List<TaskInfo>();
+                taskInfos = JsonConvert.DeserializeObject<List<TaskInfo>>(existingData) ?? [];
             }
         }
-
-        // Add the new task info
         taskInfos.Add(taskInfo);
 
-        // Serialize the updated list back to the file
         var updatedJson = JsonConvert.SerializeObject(taskInfos, Formatting.Indented);
-        await File.WriteAllTextAsync(_taskDurationFilePath, updatedJson);
+        await File.WriteAllTextAsync(VideoFolders.TaskDurationFilePath, updatedJson);
     }
 
     public Dictionary<string, double> LoadTaskDurationsFromJson()
@@ -140,14 +177,15 @@ public class VideoRepository : IVideoRepository
             }
             
 
-            if (System.IO.File.Exists(videoVttPath))
+            if (File.Exists(videoVttPath))
                 await DeleteImagesFromCloudflareAsync(videoVttPath);
             else
                 Console.WriteLine($"VTT file not found: {videoVttPath}");
-            if (System.IO.Directory.Exists(previewFolderPath))
+            if (Directory.Exists(previewFolderPath))
                 Directory.Delete(previewFolderPath);
             else
                 Console.WriteLine($"Directory not found: {previewFolderPath}");
+            await DeleteTaskDuration(videoName);
             Console.WriteLine($"Video and previews deleted successfully: {videoName}");
             return true;
         }
