@@ -210,7 +210,7 @@ public class VideoRepository : IVideoRepository
                 let urlWithoutFragment = line.Split('#')[0].Trim()
                 let uri = new Uri(urlWithoutFragment)
                 select uri.Segments[uri.Segments.Length - 2].Trim('/')
-            ).ToList();
+            ).Distinct().ToList();
     }
 
 
