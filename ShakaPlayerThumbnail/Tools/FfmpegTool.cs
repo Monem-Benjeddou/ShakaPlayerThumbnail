@@ -32,9 +32,16 @@ namespace ShakaPlayerThumbnail.Tools
 
         public static double GetVideoDuration(string videoPath)
         {
-            string arguments = $"-v error -select_streams v:0 -show_entries format=duration " +
-                               $"-of default=noprint_wrappers=1:nokey=1 \"{videoPath}\"";
-            return ExecuteProcess("ffprobe", arguments);
+            try
+            {
+                var arguments = $"-v error -select_streams v:0 -show_entries format=duration " +
+                                $"-of default=noprint_wrappers=1:nokey=1 \"{videoPath}\"";
+                return ExecuteProcess("ffprobe", arguments);
+            }
+            catch (Exception ex)
+            {
+                return 0;
+            }
         }
 
         private static async Task RunFFmpegAsync(string arguments)
