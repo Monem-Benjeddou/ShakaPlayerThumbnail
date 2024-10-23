@@ -254,28 +254,18 @@
 
           const currentChapter = findChapterForTime(position);
           displayChapterTitle(currentChapter);
-          const chapterTitleElement = document.getElementById('chapterTitle');
-
-          if (chapterTitleElement){
-            let chapterHeight = -chapterTitleElement.offsetHeight-80;
-            thumbElement.style.top = chapterHeight+"px";
-          }else{
-            thumbElement.style.top = "-80px";
-
-          }
-          if (chapterTitleElement){
-            let chapterHeight = chapterTitleElement.offsetHeight-80;
-            thumbElement.style.top = {chapterHeight}+"px";
-          }else{
-            thumbElement.style.top = "-80px";
-
-          }
+   
         }
       }).catch((error) => handleError('Error getting thumbnail', error));
     }
     function findChapterForTime(currentTime) {
+      if (!chapters || chapters.length === 0) {
+        console.warn('Chapters are not loaded yet.');
+        return null; 
+      }
       return chapters.find(chapter => currentTime >= chapter.start && currentTime < chapter.end);
     }
+
     function displayChapterTitle(chapter) {
       const chapterTitleElement = document.getElementById('chapterTitle');
       seekBar.style.backgroundColor = 'rgba(255,255,255,.2)';
@@ -286,6 +276,19 @@
       } else {
         chapterTitleElement.style.display = 'none';
         chapterTitleElement.style.display = 'none';
+
+      }
+      if (chapterTitleElement){
+        let chapterHeight = -chapterTitleElement.offsetHeight-80;
+        thumbElement.style.top = chapterHeight+"px";
+      }else{
+        thumbElement.style.top = "-80px";
+      }
+      if (chapterTitleElement){
+        let chapterHeight = chapterTitleElement.offsetHeight-80;
+        thumbElement.style.top = {chapterHeight}+"px";
+      }else{
+        thumbElement.style.top = "-80px";
 
       }
     }

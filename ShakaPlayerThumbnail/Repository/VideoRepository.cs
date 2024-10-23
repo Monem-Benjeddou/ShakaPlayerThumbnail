@@ -123,6 +123,7 @@ public class VideoRepository : IVideoRepository
                 taskInfos = JsonConvert.DeserializeObject<List<TaskInfo>>(existingData) ?? [];
             }
         }
+
         taskInfos.Add(taskInfo);
 
         var updatedJson = JsonConvert.SerializeObject(taskInfos, Formatting.Indented);
