@@ -183,7 +183,7 @@ public class VideoRepository : IVideoRepository
             else
                 Console.WriteLine($"VTT file not found: {videoVttPath}");
             if (Directory.Exists(previewFolderPath))
-                Directory.Delete(previewFolderPath);
+                Directory.Delete(previewFolderPath, recursive: true);
             else
                 Console.WriteLine($"Directory not found: {previewFolderPath}");
             await DeleteTaskDuration(videoName);
