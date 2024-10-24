@@ -180,7 +180,7 @@
         const thumbnailTrack = await player.addThumbnailsTrack(vttBlobUrl);
         if (!thumbnailTrack) throw new Error('Thumbnail track could not be added.');
 
-        thumbElement.style.aspectRatio = `${aspectRatio}`;
+        imageElement.style.aspectRatio = `${aspectRatio}`;
 
         const seekbarContainer = document.getElementById('seekbar-container');
         seekbarContainer.style.display = 'block';
@@ -268,27 +268,12 @@
 
     function displayChapterTitle(chapter) {
       const chapterTitleElement = document.getElementById('chapterTitle');
-      seekBar.style.backgroundColor = 'rgba(255,255,255,.2)';
-
       if (chapter) {
         chapterTitleElement.textContent = chapter.title;
         chapterTitleElement.style.display = 'block';
       } else {
         chapterTitleElement.style.display = 'none';
         chapterTitleElement.style.display = 'none';
-
-      }
-      if (chapterTitleElement){
-        let chapterHeight = -chapterTitleElement.offsetHeight-80;
-        thumbElement.style.top = chapterHeight+"px";
-      }else{
-        thumbElement.style.top = "-80px";
-      }
-      if (chapterTitleElement){
-        let chapterHeight = chapterTitleElement.offsetHeight-80;
-        thumbElement.style.top = {chapterHeight}+"px";
-      }else{
-        thumbElement.style.top = "-80px";
 
       }
     }
@@ -346,20 +331,21 @@
         imageElement.src = imageUrl;
       }
 
-      thumbElement.style.width = '122px';
-      thumbElement.style.height = '70px';
+      imageElement.style.width = `${width}px`;
+      imageElement.style.height = `${height}px`;
 
       imageElement.style.objectPosition = `-${x}px -${y}px`;
 
-      const thumbX = Math.max(thumbElement.clientWidth / 2, Math.min(seekBar.clientWidth - thumbElement.clientWidth / 2, offsetX));
-      if (width < 120) {
-        imageElement.style.marginLeft = `${60 - width / 2}px`;
-      }
+      const thumbHalfWidth = thumbElement.offsetWidth / 2;
+      const maxLeft = seekBar.clientWidth - thumbHalfWidth;
+      const thumbX = Math.min(Math.max(offsetX - thumbHalfWidth, 0), maxLeft);
 
       thumbElement.style.left = `${thumbX}px`;
-      const chapterTitleElement = document.getElementById('chapterTitle');
 
+      if (width < 120) {
+        imageElement.style.marginLeft = `${(120 - width) / 2}px`;
 
+      } 
 
       thumbElement.style.display = 'block';
       video.focus();
@@ -367,7 +353,6 @@
 
     function hideThumbnail() {
       thumbElement.style.display = 'none';
-      seekBar.style.backgroundColor = '';
     }
 
     seekBar.addEventListener('click', (e) => {

@@ -45,23 +45,23 @@
 }
 
 .thumbnail {
+    top: -90px;
     position: absolute;
     display: none;
-    width: 120px;
-    height: 68px;
-    background-color: rgba(0, 0, 0, 0.7); 
-    border: 2px solid #fff;
-    border-radius: 4px;
     pointer-events: none;
     z-index: 1000;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-    transform: translateX(-50%);
 }
 
 .thumbnail img {
     max-width: 100%;
     max-height: 100%;
     object-fit: none;
+    background-color: rgba(0, 0, 0, 0.7);
+    border: 2px solid #fff;
+    width: 120px;
+    height: 68px;
+    transform: translateX(-50%);
+    margin-left: 50%;
 }
 
 .video-container.fullscreen .thumbnail {
@@ -200,7 +200,6 @@
     color: white;
     padding: 2px 4px;
     border-radius: 4px;
-    transform: translateX(-50%);
 }
 .video-container.fullscreen .chapter-label {
     top: -35px; 
@@ -223,14 +222,13 @@
 }
 
 .chapter-title {
-    position: absolute;
-    top: 75px; 
-    left: 0;
-    width: 100%;
     text-align: center;
     color: #fff;
     background-color: rgba(0, 0, 0, 0.7);
     font-size: 12px;
     padding: 2px;
     display: block;
+    max-width: 200px; 
+    overflow: hidden;
+    text-overflow: ellipsis; 
 }
